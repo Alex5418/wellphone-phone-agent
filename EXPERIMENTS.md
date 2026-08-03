@@ -89,6 +89,40 @@ $am = "$env:ANDROID_HOME\cmdline-tools\latest\bin\avdmanager.bat"
 & "$env:ANDROID_HOME\emulator\emulator.exe" -avd wellphone_a14 -gpu host -writable-system
 ```
 
+### 配 PATH（Android Studio 不会自动做）
+
+装完 Android Studio 后在 cmd 里敲 `adb` 是**没反应**的 —— Studio 调用 SDK 工具走绝对路径，
+从不写系统 PATH。D1–D3 要大量敲 `adb shell dumpsys`，必须先配上。
+
+⚠️ **别用 `[Environment]::SetEnvironmentVariable('Path', ..., 'User')`**：
+本机 user PATH 的注册表类型是 `REG_EXPAND_SZ` 且含 `%USERPROFILE%`，
+该 API 读出来是**已展开**的值，写回时会把变量固化成绝对路径，类型也退化成 `REG_SZ`。
+正确做法是直连注册表并显式保持 `ExpandString`：
+
+```powershell
+$reg = Get-Item 'HKCU:\Environment'
+$raw = $reg.GetValue('Path','','DoNotExpandEnvironmentNames')   # 关键：不展开
+# ... 备份 $raw ...
+$add = @(
+  '%LOCALAPPDATA%\Android\Sdk\platform-tools'
+  '%LOCALAPPDATA%\Android\Sdk\emulator'
+  '%LOCALAPPDATA%\Android\Sdk\cmdline-tools\latest\bin'
+)
+$new = (($raw -split ';' | Where-Object {$_ -ne ''}) + $add) -join ';'
+Set-ItemProperty -Path 'HKCU:\Environment' -Name Path -Value $new -Type ExpandString
+Set-ItemProperty -Path 'HKCU:\Environment' -Name ANDROID_HOME     -Value '%LOCALAPPDATA%\Android\Sdk' -Type ExpandString
+Set-ItemProperty -Path 'HKCU:\Environment' -Name ANDROID_SDK_ROOT -Value '%LOCALAPPDATA%\Android\Sdk' -Type ExpandString
+```
+
+改完需广播 `WM_SETTINGCHANGE`（或直接新开窗口）才生效；**已经开着的窗口不会更新**。
+
+```
+$ where adb
+C:\Users\76982\AppData\Local\Android\Sdk\platform-tools\adb.exe
+$ adb version
+Android Debug Bridge version 1.0.41 / Version 37.0.1-15733141
+```
+
 ### 验证输出
 
 **环境自检四连**（2026-08-03，`wellphone_a14` 已启动至桌面）：
