@@ -1,0 +1,56 @@
+# ---- Android / Gradle ----
+*.iml
+.gradle/
+build/
+captures/
+local.properties
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+release/
+
+# ---- Android Studio / IntelliJ ----
+.idea/
+*.hprof
+
+# ---- Python (PC 侧 Agent) ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- 密钥与环境变量 ----
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+
+# ---- 实验产物 ----
+# 节点树 dump、logcat、截图等原始数据体积大且噪声多，
+# 只把结论和有代表性的片段写进 EXPERIMENTS.md，原始文件不入库
+dumps/
+logs/
+*.log
+window_dump.xml
+
+# 演示素材（体积大，走外链）
+*.mp4
+*.mov
+
+# 截图例外：EXPERIMENTS.md / README 引用的图放 docs/ 下，需要入库
+!docs/**/*.png
+!docs/**/*.gif
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
