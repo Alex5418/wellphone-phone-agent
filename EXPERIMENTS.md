@@ -91,22 +91,47 @@ $am = "$env:ANDROID_HOME\cmdline-tools\latest\bin\avdmanager.bat"
 
 ### 验证输出
 
+**环境自检四连**（2026-08-03，`wellphone_a14` 已启动至桌面）：
+
 ```
 $ adb devices
+List of devices attached
 emulator-5554   device
 
-$ adb shell "getprop ro.build.version.release; getprop ro.build.version.sdk; \
-             getprop ro.product.cpu.abi; getprop ro.build.type"
-14
+$ adb shell getprop ro.build.version.sdk      # 期望 >= 34
 34
-x86_64
-userdebug
+
+$ adb shell getprop ro.build.version.release
+14
 
 $ adb root
-restarting adbd as root
-$ adb shell id
-uid=0(root) gid=0(root) groups=0(root),1004(input),1007(log),1011(adb),... context=u:r:su:s0
+adbd is already running as root
 ```
+
+> 关于 `adb root` 的输出：首次执行打印的是 `restarting adbd as root`，
+> 本次因 adbd 已提权过，回的是 `adbd is already running as root` —— 两者都代表成功。
+> 判断 root 是否真的到手，**不要看这行字，要看 `adb shell id`**：
+
+```
+$ adb shell id
+uid=0(root) gid=0(root) groups=0(root),1004(input),1007(log),1011(adb),
+1015(sdcard_rw),1028(sdcard_r),1078(ext_data_rw),1079(ext_obb_rw),
+3001(net_bt_admin),3002(net_bt),3003(inet),3006(net_bw_stats),
+3009(readproc),3011(uhid),3012(readtracefs) context=u:r:su:s0
+```
+
+→ `uid=0(root)` + `context=u:r:su:s0`，**root 确实到手**。
+这一条是选 `google_apis` 而非 Play Store 镜像的直接回报：生产签名镜像在这里会卡死。
+
+**补充自检**（ABI 与构建类型）：
+
+```
+$ adb shell "getprop ro.product.cpu.abi; getprop ro.build.type"
+x86_64
+userdebug
+```
+
+→ `userdebug` 而非 `user`，是 `adb root` 可用的根本原因。
 
 **显示基线（R1 的对照组，必须先留档）**：
 
