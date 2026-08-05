@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Rect
+import android.os.Bundle
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -28,6 +29,7 @@ class AgentAccessibilityService : AccessibilityService() {
         const val ACT_ACCESSIBILITY_FOCUS = "ACCESSIBILITY_FOCUS"
         const val ACT_EXPAND = "EXPAND"
         const val ACT_COLLAPSE = "COLLAPSE"
+        const val ACT_SET_TEXT = "SET_TEXT"
     }
 
     private val receiver = object : BroadcastReceiver() {
@@ -43,12 +45,13 @@ class AgentAccessibilityService : AccessibilityService() {
                     intent.getStringExtra("vid") ?: return
                 )
                 ACTION_DO -> {
-                    Log.i(TAG, "DO received display=${intent.getIntExtra("display", -999)} vid=${intent.getStringExtra("vid")} text=${intent.getStringExtra("text")} act=${intent.getStringExtra("act")}")
+                    Log.i(TAG, "DO received display=${intent.getIntExtra("display", -999)} vid=${intent.getStringExtra("vid")} text=${intent.getStringExtra("text")} act=${intent.getStringExtra("act")} val=${intent.getStringExtra("val")}")
                     doAction(
                         intent.getIntExtra("display", 0),
                         intent.getStringExtra("vid"),
                         intent.getStringExtra("text"),
-                        intent.getStringExtra("act") ?: return
+                        intent.getStringExtra("act") ?: return,
+                        intent.getStringExtra("val")
                     )
                 }
                 ACTION_FIELD -> dumpField(intent.getIntExtra("display", 0))
@@ -154,7 +157,7 @@ class AgentAccessibilityService : AccessibilityService() {
         Log.i(TAG, "CLICK_ID display=$displayId id='$viewId' NOT FOUND")
     }
 
-    private fun doAction(displayId: Int, viewId: String?, text: String?, act: String) {
+    private fun doAction(displayId: Int, viewId: String?, text: String?, act: String, value: String?) {
         val action: Int = when (act) {
             ACT_SCROLL_FORWARD -> AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
             ACT_SCROLL_BACKWARD -> AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
@@ -163,6 +166,7 @@ class AgentAccessibilityService : AccessibilityService() {
             ACT_ACCESSIBILITY_FOCUS -> AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS
             ACT_EXPAND -> AccessibilityNodeInfo.ACTION_EXPAND
             ACT_COLLAPSE -> AccessibilityNodeInfo.ACTION_COLLAPSE
+            ACT_SET_TEXT -> AccessibilityNodeInfo.ACTION_SET_TEXT
             else -> {
                 Log.i(TAG, "DO display=$displayId vid='$viewId' act=$act UNKNOWN ACTION")
                 return
@@ -181,7 +185,17 @@ class AgentAccessibilityService : AccessibilityService() {
                 if (hits.isNullOrEmpty()) continue
                 var target: AccessibilityNodeInfo? = hits[0]
                 while (target != null && !target.actionList.any { it.id == action }) target = target.parent
-                val ok = target?.performAction(action)
+                val ok = if (action == AccessibilityNodeInfo.ACTION_SET_TEXT) {
+                    val args = Bundle().apply {
+                        putCharSequence(
+                            AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                            value ?: "hello"
+                        )
+                    }
+                    target?.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
+                } else {
+                    target?.performAction(action)
+                }
                 Log.i(TAG, "DO display=$displayId vid='$viewId' act=$act result=$ok node=${target?.className}")
                 return
             }

@@ -8,7 +8,7 @@
 
 ## 0 · 结论速览
 
-**没有找到任何"不抢焦点"的动作类型。** 在 5 个可测动作中：
+**没有找到任何"不抢焦点"的动作类型。** 在 6 个可测动作中（含后补的 SET_TEXT）：
 
 | 动作 | 是否执行成功 | 主屏 mCurrentFocus | 键盘 | 丢字 |
 |---|---|---|---|---|
@@ -18,13 +18,18 @@
 | FOCUS | ✅ result=true（view 焦点转移确认） | Chrome → **null** | **收起** | **有** |
 | ACCESSIBILITY_FOCUS | ❌ result=false（动作被框架拒绝，未执行） | 未变 | 未收起 | 无（动作未执行，无效观察） |
 | EXPAND / COLLAPSE | 未测 | —— | —— | ——（Settings 无 expandable 节点） |
+| **SET_TEXT** | ✅ result=true（文本替换确认） | Chrome → **null** | 未收起 | **有，且是输入重定向**（详见 §2-A7） |
 
 **关键观察**：连 `result=false` 的 SCROLL_FORWARD（列表已到底，动作实际无效果）**仍然夺走了主屏焦点**。
-→ 抢焦点发生在动作分发路径本身，与动作是否"真的做了什么"无关（与 E4 对 CLICK 的结论一致，且扩展到滚动/长按/焦点类动作）。
+→ 抢焦点发生在动作分发路径本身，与动作是否"真的做了什么"无关（与 E4 对 CLICK 的结论一致，且扩展到滚动/长按/焦点/写文本类动作）。
 
 **例外现象（需谨慎解读）**：ACCESSIBILITY_FOCUS 返回 `false` 时**没有**夺焦点。
 但这属于"动作未执行"（框架拒绝），不是"该动作类型不抢焦点"的证据 —— 按六条纪律第 6 条照实记录，
 **不能**据此断定 ACCESSIBILITY_FOCUS 安全。需要找到一个让该动作成功执行的目标才能定论。
+
+**SET_TEXT 的"写数据"假设被证伪**：它和所有交互类动作一样夺焦点，且因目标是可编辑框，
+用户的后续击键**被重定向进 Agent 的目标输入框**（主屏字段冻结、副屏字段继续增长）——
+比单纯的丢字更糟：用户以为在打字，字符却流进了 Agent 的字段。两次独立运行结论一致。
 
 ---
 
@@ -38,6 +43,7 @@
 | ACTION_FOCUS | `com.android.settings:id/switchWidget`（Switch，focusable） | true | ✅ dump 显示 Switch focused=true | Chrome → **null** | ✅ | ✅ 冻结 | [非root可复现] |
 | ACTION_ACCESSIBILITY_FOCUS | switchWidget / recycler_view / "SIM" 行（3 个目标均试） | **false**（框架拒绝） | ❌（a11yFocus 仍为 false） | 未变（Chrome 保持） | ❌ | ❌ | [非root可复现] · 动作未执行，观察无效 |
 | ACTION_EXPAND / COLLAPSE | 无 | —— | —— | —— | —— | —— | **未测**：Settings 全部页面（home/display/about/apps/notifications/app-notification）无 expandable 节点 |
+| **ACTION_SET_TEXT** | `com.google.android.settings.intelligence:id/open_search_view_edit_text`（Settings 搜索框 EditText） | true（两轮） | ✅ 字段内容被替换为 hello-world-123 | Chrome → **null** | ❌ | ✅ **输入重定向**：主屏冻结、副屏字段继续增长（两轮复现） | [非root可复现] |
 
 ---
 
@@ -175,6 +181,53 @@ I PHONEAGENT: DO display=3 vid='com.android.settings:id/switchWidget' act=ACCESS
 app-level Notifications）节点树中**不存在任何 expandable 节点**（全部 expand=false），
 无可用目标。未更换目标 app（纪律第 6 条）。
 
+### A7 · ACTION_SET_TEXT（后补测试，'写数据'语义假设验证）
+
+**假设**：SET_TEXT 是唯一有结构性理由不夺焦点的动作 —— "写数据"语义，不模拟按键、不经键盘。
+**目标**：`com.google.android.settings.intelligence:id/open_search_view_edit_text`
+（Settings 搜索框 EditText，editable，display 3）。定位方式：GLOBAL_SEARCH 打开 SearchActivity
+后由 FIELD 广播确认该 EditText 存在且 focused=true。
+
+**代码要点**（`DO` 指令新增 SET_TEXT 分支）：SET_TEXT 是 6 个动作中唯一需要 Bundle 参数的动作，
+`ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE` 携带写入值（`--es val`）。其余动作均无参调用。
+漏 Bundle 会静默失败或写入空串，是最容易写错的地方。
+
+**Run 1（23:56）**：
+```
+[before] FIELD d0: url_bar len=26（空，刚清过）
+[mid]    FIELD d0: url_bar len=190                          ← 触发前 8 秒 +164，数字正常流入主屏
+I PHONEAGENT: DO received display=3 vid=...open_search_view_edit_text act=SET_TEXT val=hello-world-123
+I PHONEAGENT: DO display=3 vid='...open_search_view_edit_text' act=SET_TEXT result=true node=android.widget.EditText
+[after]  dumpsys: Display 0 mCurrentFocus=null               ← 焦点被夺
+[after]  dumpsys: Display 3 mCurrentFocus=SearchActivity（保持）
+[after]  input_method: mInputShown=true                      ← 键盘未收起
+[after]  FIELD d0: url_bar len=190                           ← 主屏字段触发后零增长
+[after]  FIELD d3: open_search_view_edit_text len=195 tail='1234567890...'   ← 副屏字段在增长！
+```
+
+**副屏生效验证**：SET_TEXT 后立即 FIELD display=3 → `len=195 tail='hello-world-123'` 打头的字段，
+随后被持续增长的数字覆盖 —— **文本确实被写入**（先验证写入、后验证重定向）。
+
+**Run 2（23:57，复现）**：先把副屏字段清为 `marker`（len=6），再跑同一协议：
+```
+[mid]    FIELD d0: url_bar len=430                          ← 触发前 +240，正常
+I PHONEAGENT: DO display=3 vid='...open_search_view_edit_text' act=SET_TEXT result=true node=android.widget.EditText
+[after]  dumpsys: Display 0 mCurrentFocus=null               ← 焦点被夺（复现）
+[after]  FIELD d0: url_bar len=430                           ← 主屏字段冻结（复现）
+[after]  FIELD d3: len=325 = 6(marker) + 15(hello-world-123) + ~304 位数字   ← 副屏字段持续增长（复现）
+```
+
+**判读**：
+- `result=true` + 字段内容真实替换 → 动作执行成功，非哑动作。
+- 主屏 mCurrentFocus → null、主屏字段冻结 → **焦点被夺，丢字成立**。
+- **新观察：输入重定向** —— 主屏键入的字符没有丢失，而是**流进了副屏的目标输入框**
+  （6+15+304=325 精确对账）。这比"键盘收起"更隐蔽：用户以为在打字，字符却进了 Agent 的字段。
+- 两次独立运行（不同初始状态）结论一致 → `[非root可复现]`。
+
+**假设结论**：SET_TEXT 的"写数据语义不抢焦点"**假设不成立**。它与其他 5 个动作一样，
+通过无障碍动作分发路径夺走主屏焦点。且因目标为可编辑框，其打扰形态升级为"输入劫持"。
+唯一"结构性不抢焦点"的候选也被排除后，动作类型维度已无例外。
+
 ---
 
 ## 3 · 方法说明与已知限制
@@ -193,6 +246,7 @@ app-level Notifications）节点树中**不存在任何 expandable 节点**（�
 
 ## 4 · 一句话交付
 
-**在 5 个可测动作中，没有任何一个动作类型能避免夺走主屏焦点；连"动作失败"（result=false）都夺。**
+**在 6 个可测动作中（含后补 SET_TEXT），没有任何一个动作类型能避免夺走主屏焦点；连"动作失败"（result=false）都夺。**
 ACCESSIBILITY_FOCUS 的"不夺焦点"观察因动作未执行而无效，无法据此翻案。
-主线的「a11y 动作不打扰」假设在动作类型维度上仍然不成立。
+**SET_TEXT 的"写数据语义"假设也被证伪**，且其打扰形态升级为"输入劫持"：用户的击键被重定向进 Agent 的目标输入框。
+主线的「a11y 动作不打扰」假设在动作类型维度上已无例外。
