@@ -62,6 +62,7 @@ class AgentAccessibilityService : AccessibilityService() {
                 ACTION_DO_RESTORE -> doWithRestore(
                     intent.getIntExtra("display", 0),
                     intent.getStringExtra("vid"),
+                    intent.getStringExtra("text"),
                     intent.getStringExtra("act") ?: "CLICK",
                     intent.getStringExtra("val"),
                     intent.getBooleanExtra("restore", true),
@@ -262,6 +263,23 @@ class AgentAccessibilityService : AccessibilityService() {
         return null
     }
 
+    /** 按 text 锚点找副屏目标（id=null 的行用），逻辑与 nodeByVid 相同。 */
+    private fun nodeByText(displayId: Int, text: String, action: Int): AccessibilityNodeInfo? {
+        val all = windowsOnAllDisplays
+        for (i in 0 until all.size()) {
+            if (all.keyAt(i) != displayId) continue
+            for (w in all.valueAt(i)) {
+                val root = w.root ?: continue
+                val hits = root.findAccessibilityNodeInfosByText(text)
+                if (hits.isNullOrEmpty()) continue
+                var target: AccessibilityNodeInfo? = hits[0]
+                while (target != null && !target.actionList.any { it.id == action }) target = target.parent
+                return target ?: hits[0]
+            }
+        }
+        return null
+    }
+
     /** 把焦点还给 node。restoreAct: FOCUS / CLICK / BOTH。 */
     private fun restoreFocus(node: AccessibilityNodeInfo, restoreAct: String): String {
         val refreshed = node.refresh()   // 快照可能已 stale
@@ -276,6 +294,7 @@ class AgentAccessibilityService : AccessibilityService() {
     private fun doWithRestore(
         displayId: Int,
         vid: String?,
+        text: String?,
         act: String,
         value: String?,
         restore: Boolean,
@@ -292,6 +311,7 @@ class AgentAccessibilityService : AccessibilityService() {
             ACT_SCROLL_FORWARD -> AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
             ACT_SCROLL_BACKWARD -> AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
             ACT_LONG_CLICK -> AccessibilityNodeInfo.ACTION_LONG_CLICK
+            ACT_FOCUS -> AccessibilityNodeInfo.ACTION_FOCUS
             ACT_SET_TEXT -> AccessibilityNodeInfo.ACTION_SET_TEXT
             else -> {
                 Log.i(TAG, "RESTORE act=$act UNKNOWN ACTION")
@@ -299,9 +319,10 @@ class AgentAccessibilityService : AccessibilityService() {
             }
         }
 
-        val target = vid?.let { nodeByVid(displayId, it, action) }
+        val target = if (vid != null) nodeByVid(displayId, vid, action)
+            else nodeByText(displayId, text ?: "", action)
         if (target == null) {
-            Log.i(TAG, "RESTORE target NOT FOUND display=$displayId vid=$vid")
+            Log.i(TAG, "RESTORE target NOT FOUND display=$displayId vid=$vid text=$text")
             return
         }
 
