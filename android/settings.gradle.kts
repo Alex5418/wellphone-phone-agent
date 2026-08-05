@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "PhoneAgentService"
 include(":app")
+include(":composetest")

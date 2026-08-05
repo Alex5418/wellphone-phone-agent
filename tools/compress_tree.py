@@ -86,7 +86,7 @@ def is_editable(a):
 
 
 def own_text(a):
-    """节点自身的文字来源：text 优先，content-desc 兜底"""
+    """节点自身的文字来源：text 优先，content-desc 兜底（展示用）"""
     t = a.get("text")
     if t and t.strip():
         return t
@@ -94,6 +94,18 @@ def own_text(a):
     if cd and cd.strip():
         return cd
     return None
+
+
+def text_attr(a):
+    """text 属性（非空才返回）—— 参与 findByText 的查找宇宙"""
+    t = a.get("text")
+    return t if t and t.strip() else None
+
+
+def cd_attr(a):
+    """content-desc 属性（非空才返回）—— 参与 findByContentDescription 的查找宇宙"""
+    cd = a.get("content-desc")
+    return cd if cd and cd.strip() else None
 
 
 def screen_bounds(root_elem):
@@ -250,6 +262,25 @@ def build_l6(elem, nodes, node_index, text_ord):
     }
 
 
+def find_anchor(elem, depth=0):
+    """在 elem 往下的 ANCHOR_LOOKAHEAD 条边内找第一个非交互的文字节点。
+    返回 (text, class, anchor_elem, source)；source in ('text','cd')，无则 None"""
+    if depth > ANCHOR_LOOKAHEAD:
+        return None
+    a = elem.attrib
+    t = text_attr(a)
+    if t is not None and not is_interactive(a):
+        return (t, a.get("class"), elem, "text")
+    t = cd_attr(a)
+    if t is not None and not is_interactive(a):
+        return (t, a.get("class"), elem, "cd")
+    for c in elem:
+        r = find_anchor(c, depth + 1)
+        if r:
+            return r
+    return None
+
+
 # ---------------------------------------------------------------- 压缩
 
 class Entry:
@@ -270,10 +301,10 @@ class Entry:
 
     def render(self):
         label = self.text if self.text else "(no text)"
-        flags = "|".join(self.flattened + self.flags) if self.flattened else "|".join(self.flags)
-        flags = flags or "-"
+        flags = "|".join(self.flags) or "-"
+        mark = "~" if self.flattened else ""
         rid = f" id={self.rid}" if self.rid else ""
-        return f"[{self.id}] {label} | {flags} | {self.cls}{rid}"
+        return f"[{self.id}]{mark} {label} | {flags} | {self.cls}{rid}"
 
     def render_locator(self):
         return "    locator: " + fmt_locator(self.locator)
@@ -300,23 +331,7 @@ def compress(root_elem, max_depth=MAX_DEPTH_DEFAULT):
     counts = compute_tree_counts(nodes)
     text_ord = text_ordinals(nodes)
 
-    # 第一遍：判保留，解析文字锚点
-    def find_anchor(elem, depth=0):
-        """在 elem 往下的 ANCHOR_LOOKAHEAD 条边内找第一个非交互的文字节点
-        返回 (text, class, anchor_elem)"""
-        if depth > ANCHOR_LOOKAHEAD:
-            return None
-        a = elem.attrib
-        t = own_text(a)
-        if t is not None and not is_interactive(a):
-            return (t, a.get("class"), elem)
-        for c in elem:
-            r = find_anchor(c, depth + 1)
-            if r:
-                return r
-        return None
-
-    kept = []  # (elem, parent_idx, text, flags, anchor_cls, anchor_elem)
+    kept = []  # (elem, parent_idx, text, flags, anchor_cls, anchor_elem, anchor_source)
     for idx, (elem, p) in enumerate(nodes):
         a = elem.attrib
         b = parse_bounds(a.get("bounds"))
@@ -330,24 +345,28 @@ def compress(root_elem, max_depth=MAX_DEPTH_DEFAULT):
         text = own_text(a)
         anchor_cls = None
         anchor_elem = None
+        anchor_source = "text" if text_attr(a) else ("cd" if cd_attr(a) else None)
         if text is None:
             r = find_anchor(elem)
             if r:
-                text, anchor_cls, anchor_elem = r
+                text, anchor_cls, anchor_elem, anchor_source = r
                 stats["merged_anchors"] += 1
             else:
                 text = ""
-        kept.append((elem, p, text, flags, anchor_cls, anchor_elem))
+        kept.append((elem, p, text, flags, anchor_cls, anchor_elem, anchor_source))
 
-    # 第二遍：嵌套包装去重 —— 同一文字锚点下的多个交互层，保留**最内层**
-    # （锚点文字向上爬命中的是内层；保留外层会让 locator 解析到错误目标）
-    kept_info = {id(elem): (text, flags) for (elem, p, text, flags, ac, ae) in kept}
+    # 第二遍：嵌套包装去重 —— 同一**text 属性**锚点下的多个交互层，保留**最内层**
+    # （锚点文字向上爬命中的是内层；保留外层会让 locator 解析到错误目标。
+    #  仅 text 属性参与去重：cd 不参与 findByText 查找宇宙，不会与 text 锚点冲突）
+    kept_info = {}
+    for (elem, p, text, flags, anchor_cls, anchor_elem, anchor_source) in kept:
+        if text and anchor_source == "text":
+            kept_info[id(elem)] = (text, flags)
     deduped = []
     for k in kept:
-        elem, p, text, flags, anchor_cls, anchor_elem = k
-        # 沿子链向下找第一个已保留的交互后代，锚点文字相同（且非空）则本层是重复包装 -> 丢弃
+        elem, p, text, flags, anchor_cls, anchor_elem, anchor_source = k
         dup = False
-        if text:  # 空文字不参与去重：两个无文字的 scrollable 容器不是同一目标
+        if text and anchor_source == "text":  # 空文字/cd 锚点不参与去重
             stack = [(elem, 0)]
             while stack:
                 cur, depth = stack.pop()
@@ -367,9 +386,10 @@ def compress(root_elem, max_depth=MAX_DEPTH_DEFAULT):
     kept = deduped
 
     # 第三遍：层级（depth cap = 拍平）+ 短 ID + locator
-    node_kept_idx = {id(elem): i for i, (elem, p, text, flags, ac, ae) in enumerate(kept)}
+    node_kept_idx = {id(elem): i for i, (elem, p, text, flags, ac, ae, asrc)
+                     in enumerate(kept)}
     kept_ancestor = {}
-    for i, (elem, p, text, flags, ac, ae) in enumerate(kept):
+    for i, (elem, p, text, flags, ac, ae, asrc) in enumerate(kept):
         cur = p
         found = None
         while cur >= 0:
@@ -384,7 +404,7 @@ def compress(root_elem, max_depth=MAX_DEPTH_DEFAULT):
     lookup = []
     depth_of = {}
     elem_idx = {id(n): i for i, (n, _pp) in enumerate(nodes)}
-    for i, (elem, p, text, flags, anchor_cls, anchor_elem) in enumerate(kept):
+    for i, (elem, p, text, flags, anchor_cls, anchor_elem, anchor_source) in enumerate(kept):
         pa = kept_ancestor[i]
         d = 0 if pa is None else depth_of[pa] + 1
         flattened = d > max_depth
@@ -422,15 +442,18 @@ def assess(root_elem):
     counts = compute_tree_counts(nodes)
     text_ord = text_ordinals(nodes)
 
-    def find_anchor(elem, depth=0):
+    def find_anchor_local(elem, depth=0):
         if depth > ANCHOR_LOOKAHEAD:
             return None
         a = elem.attrib
-        t = own_text(a)
+        t = text_attr(a)
+        if t is not None and not is_interactive(a):
+            return (t, a.get("class"), elem)
+        t = cd_attr(a)
         if t is not None and not is_interactive(a):
             return (t, a.get("class"), elem)
         for c in elem:
-            r = find_anchor(c, depth + 1)
+            r = find_anchor_local(c, depth + 1)
             if r:
                 return r
         return None
@@ -446,24 +469,31 @@ def assess(root_elem):
             continue
         interactive.append((i, elem))
 
-    # 预解析每个交互节点的锚点文字（与压缩器同一套 find_anchor）
-    resolved = {}
+    # 预解析每个交互节点的文字信号（text 属性宇宙）与 cd 信号（cd 属性宇宙）
+    # 锚点合并只影响展示文字；定位冲突只看属性宇宙：
+    #   findByText 只看 text 属性；findByContentDescription 只看 content-desc 属性
+    signals = {}
     for i, elem in interactive:
         a = elem.attrib
-        text = own_text(a)
-        anchor_elem = None
-        if text is None:
-            r = find_anchor(elem)
-            if r:
-                text, _ac, anchor_elem = r
-        resolved[id(elem)] = (text, anchor_elem)
+        own_t = text_attr(a)
+        own_cd = cd_attr(a)
+        anchor_t = anchor_cd = None
+        r = find_anchor_local(elem) if (own_t is None and own_cd is None) else None
+        if r:
+            at, _ac, ael = r
+            if text_attr(ael.attrib):
+                anchor_t = at
+            else:
+                anchor_cd = at
+        signals[id(elem)] = (set([own_t, anchor_t]) - {None},
+                             set([own_cd, anchor_cd]) - {None})
 
-    # shadowed：交互节点 A 的锚点文字与某个交互后代 B（ANCHOR_LOOKAHEAD 内）相同
-    # 时，A 的 locator（锚点向上爬）实际解析到 B —— A 不可唯一定位
+    # shadowed：A 的信号与某个交互后代 B 的信号相同（A 的锚点向上爬会解析到 B，
+    # 或 A/B 文字相同导致查找命中不唯一）—— A 不可唯一定位
     shadowed_ids = set()
     for i, elem in interactive:
-        t_a = resolved[id(elem)][0]
-        if not t_a:
+        sig_t, sig_cd = signals[id(elem)]
+        if not sig_t and not sig_cd:
             continue
         stack = [(elem, 0)]
         while stack:
@@ -471,8 +501,10 @@ def assess(root_elem):
             if depth > ANCHOR_LOOKAHEAD:
                 continue
             for c in cur:
-                if id(c) in resolved and resolved[id(c)][0] == t_a:
-                    shadowed_ids.add(id(elem))
+                if id(c) in signals:
+                    dt, dcd = signals[id(c)]
+                    if (sig_t & dt) or (sig_cd & dcd):
+                        shadowed_ids.add(id(elem))
                 stack.append((c, depth + 1))
 
     strat = {"L1": 0, "L2": 0, "L3": 0, "L4": 0, "L5": 0, "L6": 0,
@@ -480,12 +512,17 @@ def assess(root_elem):
     details = []
     for i, elem in interactive:
         a = elem.attrib
-        text, anchor_elem = resolved[id(elem)]
         if id(elem) in shadowed_ids:
             strat["shadowed"] += 1
             details.append((elem, {"strategy": "shadowed",
-                                   "resolve": "锚点文字与交互后代相同，locator 解析到后代，本节点不可唯一定位"}))
+                                   "resolve": "信号与交互后代相同，查找命中不唯一，本节点不可唯一定位"}))
             continue
+        text = own_text(a)
+        anchor_elem = None
+        if text is None:
+            r = find_anchor_local(elem)
+            if r:
+                text, _ac, anchor_elem = r
         loc = build_locator(elem, text, anchor_elem, counts, text_ord)
         if loc is None:
             loc = build_l6(elem, nodes, i, text_ord)
