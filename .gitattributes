@@ -1,0 +1,21 @@
+# 默认按文本处理，提交时归一为 LF
+* text=auto
+
+# 必须是 LF：在 Unix 上以 sh 执行，CRLF 会导致 "bad interpreter"
+gradlew     text eol=lf
+*.sh        text eol=lf
+
+# 必须是 CRLF：Windows 批处理
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# 二进制，禁止任何换行符转换与 diff
+*.jar       binary
+*.webp      binary
+*.png       binary
+*.jpg       binary
+*.gif       binary
+*.mp4       binary
+*.apk       binary
+*.keystore  binary
+*.jks       binary
