@@ -14,12 +14,17 @@ class AgentAccessibilityService : AccessibilityService() {
     companion object {
         const val TAG = "PHONEAGENT"
         const val ACTION_DUMP = "com.example.phoneagent.DUMP"
+        const val ACTION_CLICK = "com.example.phoneagent.CLICK"
     }
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context?, intent: Intent?) {
             when (intent?.action) {
                 ACTION_DUMP -> dumpAllWindows()
+                ACTION_CLICK -> clickByText(
+                    intent.getIntExtra("display", 0),
+                    intent.getStringExtra("text") ?: return
+                )
             }
         }
     }
@@ -29,6 +34,7 @@ class AgentAccessibilityService : AccessibilityService() {
         Log.i(TAG, "=== service connected ===")
         val filter = IntentFilter().apply {
             addAction(ACTION_DUMP)
+            addAction(ACTION_CLICK)
         }
         registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
         dumpAllWindows()
@@ -71,6 +77,24 @@ class AgentAccessibilityService : AccessibilityService() {
         for (i in 0 until node.childCount) {
             node.getChild(i)?.let { printTree(it, depth + 1, maxDepth) }
         }
+    }
+
+    private fun clickByText(displayId: Int, text: String) {
+        val all = windowsOnAllDisplays
+        for (i in 0 until all.size()) {
+            if (all.keyAt(i) != displayId) continue
+            for (w in all.valueAt(i)) {
+                val root = w.root ?: continue
+                val hits = root.findAccessibilityNodeInfosByText(text)
+                if (hits.isNullOrEmpty()) continue
+                var target: AccessibilityNodeInfo? = hits[0]
+                while (target != null && !target.isClickable) target = target.parent
+                val ok = target?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                Log.i(TAG, "CLICK display=$displayId text='$text' result=$ok node=${target?.className}")
+                return
+            }
+        }
+        Log.i(TAG, "CLICK display=$displayId text='$text' NOT FOUND")
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
