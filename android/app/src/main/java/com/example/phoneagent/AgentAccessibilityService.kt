@@ -26,6 +26,7 @@ class AgentAccessibilityService : AccessibilityService() {
 
         const val ACTION_DO = "com.example.phoneagent.DO"
         const val ACTION_DO_RESTORE = "com.example.phoneagent.DORESTORE"
+        const val ACTION_LOCATE = "com.example.phoneagent.LOCATE"
         const val ACTION_FIELD = "com.example.phoneagent.FIELD"
         const val ACT_SCROLL_FORWARD = "SCROLL_FORWARD"
         const val ACT_SCROLL_BACKWARD = "SCROLL_BACKWARD"
@@ -69,6 +70,15 @@ class AgentAccessibilityService : AccessibilityService() {
                     intent.getStringExtra("restoreAct") ?: "FOCUS",
                     intent.getIntExtra("delay", 0)
                 )
+                ACTION_LOCATE -> locateAction(
+                    intent.getIntExtra("display", 0),
+                    intent.getStringExtra("strategy") ?: "L4",
+                    intent.getStringExtra("text"),
+                    intent.getStringExtra("cd"),
+                    intent.getIntExtra("ordinal", 0),
+                    intent.getStringExtra("act") ?: "CLICK",
+                    intent.getStringExtra("val")
+                )
                 ACTION_FIELD -> dumpField(intent.getIntExtra("display", 0))
             }
         }
@@ -83,6 +93,7 @@ class AgentAccessibilityService : AccessibilityService() {
             addAction(ACTION_CLICK_ID)
             addAction(ACTION_DO)
             addAction(ACTION_DO_RESTORE)
+            addAction(ACTION_LOCATE)
             addAction(ACTION_FIELD)
         }
         registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
@@ -217,6 +228,123 @@ class AgentAccessibilityService : AccessibilityService() {
             }
         }
         Log.i(TAG, "DO display=$displayId vid='$viewId' act=$act NOT FOUND")
+    }
+
+    // ---- C3: locator-based action (L1-L6 分层定位，与 tools/compress_tree.py 的 locator 对应) ----
+
+    /** 锚点文字：节点自身 text/cd 优先，否则向下找 ≤2 层后代的第一个文字（与压缩器 find_anchor 同语义） */
+    private fun anchorTextOf(node: AccessibilityNodeInfo?, depth: Int = 0): String? {
+        if (node == null || depth > 2) return null
+        node.text?.toString()?.takeIf { it.isNotBlank() }?.let { return it }
+        node.contentDescription?.toString()?.takeIf { it.isNotBlank() }?.let { return it }
+        for (i in 0 until node.childCount) {
+            node.getChild(i)?.let { c ->
+                anchorTextOf(c, depth + 1)?.let { return it }
+            }
+        }
+        return null
+    }
+
+    /** L3 定位：API 没有 findByContentDescription，遍历子树精确匹配 contentDescription */
+    private fun findNodesByContentDesc(root: AccessibilityNodeInfo, cd: String): List<AccessibilityNodeInfo> {
+        val out = mutableListOf<AccessibilityNodeInfo>()
+        val queue = ArrayDeque<AccessibilityNodeInfo>()
+        queue.add(root)
+        while (queue.isNotEmpty()) {
+            val n = queue.removeFirst()
+            if (n.contentDescription?.toString() == cd) out.add(n)
+            for (c in 0 until n.childCount) n.getChild(c)?.let { queue.add(it) }
+        }
+        return out
+    }
+
+    private fun locateAction(
+        displayId: Int,
+        strategy: String,
+        text: String?,
+        cd: String?,
+        ordinal: Int,
+        act: String,
+        value: String?
+    ) {
+        val action: Int = when (act) {
+            "CLICK" -> AccessibilityNodeInfo.ACTION_CLICK
+            ACT_SCROLL_FORWARD -> AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+            ACT_SCROLL_BACKWARD -> AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+            ACT_LONG_CLICK -> AccessibilityNodeInfo.ACTION_LONG_CLICK
+            ACT_FOCUS -> AccessibilityNodeInfo.ACTION_FOCUS
+            ACT_SET_TEXT -> AccessibilityNodeInfo.ACTION_SET_TEXT
+            else -> {
+                Log.i(TAG, "LOCATE act=$act UNKNOWN ACTION")
+                return
+            }
+        }
+
+        // ① 按策略取原始命中（ByText 是子串匹配，需精确过滤）
+        val all = windowsOnAllDisplays
+        var raw: List<AccessibilityNodeInfo>? = null
+        for (i in 0 until all.size()) {
+            if (all.keyAt(i) != displayId) continue
+            for (w in all.valueAt(i)) {
+                val root = w.root ?: continue
+                raw = when (strategy) {
+                    "L1", "L2" -> root.findAccessibilityNodeInfosByViewId(text ?: return)
+                    "L3" -> findNodesByContentDesc(root, cd ?: return)
+                    "L4", "L5" -> root.findAccessibilityNodeInfosByText(text ?: return)
+                    else -> {
+                        Log.i(TAG, "LOCATE strategy=$strategy UNKNOWN STRATEGY")
+                        return
+                    }
+                }
+                if (!raw.isNullOrEmpty()) break
+            }
+            if (!raw.isNullOrEmpty()) break
+        }
+        if (raw.isNullOrEmpty()) {
+            Log.i(TAG, "LOCATE strategy=$strategy text='$text' cd='$cd' act=$act NOT FOUND")
+            return
+        }
+
+        // ② 精确匹配过滤（locator 的唯一性按 findByText 宇宙 = text ∪ contentDescription，
+        //    与 compress_tree.py 的 find_text_count 一致 —— C3 实测 API 同时匹配两者）
+        val filtered = raw.filter { n ->
+            when (strategy) {
+                "L3" -> n.contentDescription?.toString() == cd
+                "L4", "L5" -> n.text?.toString() == text || n.contentDescription?.toString() == text
+                else -> true
+            }
+        }
+        // ③ 按 ordinal / 锚点文字取目标锚点
+        val anchor: AccessibilityNodeInfo? = when (strategy) {
+            "L5" -> filtered.getOrNull(ordinal)
+            "L2" -> filtered.firstOrNull { anchorTextOf(it) == text }
+            else -> filtered.firstOrNull()
+        }
+        if (anchor == null) {
+            Log.i(TAG, "LOCATE strategy=$strategy text='$text' cd='$cd' ordinal=$ordinal " +
+                "FILTERED EMPTY (raw=${raw.size})")
+            return
+        }
+
+        // ④ 锚点向上爬可执行节点；爬不到用原节点兜底（E6 教训 4：actionList 未登记 ≠ 不可用）
+        var target: AccessibilityNodeInfo? = anchor
+        while (target != null && !target.actionList.any { it.id == action }) target = target.parent
+        if (target == null) target = anchor
+
+        // ⑤ 执行动作（SET_TEXT 需 Bundle）
+        val ok = if (action == AccessibilityNodeInfo.ACTION_SET_TEXT) {
+            val args = Bundle().apply {
+                putCharSequence(
+                    AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                    value ?: "hello"
+                )
+            }
+            target.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
+        } else {
+            target.performAction(action)
+        }
+        Log.i(TAG, "LOCATE strategy=$strategy text='$text' cd='$cd' ordinal=$ordinal " +
+            "act=$act hit=${anchor.className} target=${target.className} ok=$ok")
     }
 
     // ---- EXP-FOCUS-RESTORE ----------------------------------------------

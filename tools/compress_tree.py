@@ -28,10 +28,14 @@ compress_tree.py — uiautomator XML 节点树压缩器 + 分层降级定位器�
 locator 六层策略（C1，唯一性一律在当前树的范围内判定）:
     L1 resource_id                —— id 存在且当前树内唯一
     L2 resource_id + text         —— id 存在但重复（用 text 消歧）
-    L3 content_desc               —— 无可用 id，contentDescription 存在且唯一
-    L4 text + class_name          —— 无可用 id/desc，text 唯一
-    L5 text + 同类序号             —— text 重复，取第 N 个（精确匹配的 DFS 序）
+    L3 content_desc               —— 无可用 id，contentDescription 存在且唯一（cd 宇宙独立）
+    L4 text + class_name          —— 无可用 id/desc，text 在 findByText 宇宙唯一
+    L5 text + 同类序号             —— text 重复，取第 N 个（DFS 序）
     L6 结构路径（父 text + 子序号） —— 以上全无（或父链也无文字 -> no-anchor）
+
+    findByText 宇宙 = text 属性 ∪ contentDescription 属性（C3 执行侧实测：
+    findAccessibilityNodeInfosByText 同时匹配两者），L4/L5 的唯一性与 ordinal
+    一律按合并宇宙计数。
 
 锚点合并（E3 附带发现 3）: 文字在子节点、可点在父节点，合并为一个逻辑条目；
 locator 的文字来自锚点，并在 resolve 中写明「按 text 找到锚点后向上爬可执行节点，
@@ -141,8 +145,11 @@ def collect_nodes(root_elem):
 
 
 def compute_tree_counts(nodes):
-    """当前树范围内的出现次数（唯一性判定依据）"""
+    """当前树范围内的出现次数（唯一性判定依据）。
+    find_text_count 是 **合并宇宙**：findAccessibilityNodeInfosByText 同时匹配
+    text 与 contentDescription（C3 实测），故 L4/L5 的唯一性必须按 text+cd 合计数。"""
     id_count, text_count, cd_count = {}, {}, {}
+    find_text_count = {}
     for elem, _p in nodes:
         a = elem.attrib
         rid = a.get("resource-id")
@@ -151,14 +158,16 @@ def compute_tree_counts(nodes):
         t = a.get("text")
         if t and t.strip():
             text_count[t] = text_count.get(t, 0) + 1
+            find_text_count[t] = find_text_count.get(t, 0) + 1
         cd = a.get("content-desc")
         if cd and cd.strip():
             cd_count[cd] = cd_count.get(cd, 0) + 1
-    return id_count, text_count, cd_count
+            find_text_count[cd] = find_text_count.get(cd, 0) + 1
+    return id_count, text_count, cd_count, find_text_count
 
 
 def text_ordinals(nodes):
-    """text 精确匹配的出现顺序（DFS 序）：id(elem) -> 第几个（从 0 起）"""
+    """findByText 精确匹配（text 或 cd）的出现顺序（DFS 序）：id(elem) -> 第几个（从 0 起）"""
     seen = {}
     ordinal = {}
     for elem, _p in nodes:
@@ -167,6 +176,11 @@ def text_ordinals(nodes):
             i = seen.get(t, 0)
             ordinal[id(elem)] = i
             seen[t] = i + 1
+        cd = elem.get("content-desc")
+        if cd and cd.strip():
+            i = seen.get(cd, 0)
+            ordinal[id(elem)] = i
+            seen[cd] = i + 1
     return ordinal
 
 
@@ -180,7 +194,7 @@ def build_locator(elem, resolved_text, anchor_elem, counts, text_ord):
     anchor_elem   : 锚点元素；None 表示文字就在执行节点自身
     """
     a = elem.attrib
-    id_count, text_count, cd_count = counts
+    id_count, text_count, cd_count, find_text_count = counts
     rid = a.get("resource-id") or ""
     cd = a.get("content-desc")
     if cd is not None and not cd.strip():
@@ -202,16 +216,16 @@ def build_locator(elem, resolved_text, anchor_elem, counts, text_ord):
                         f" -> 取锚点/自身文字 == '{t}' 的那个为执行节点"),
         }
 
-    # L3: content-desc（无可用 id 时，desc 先于 text）
+    # L3: content-desc（无可用 id 时，desc 先于 text；cd 宇宙独立判定）
     if cd is not None and cd_count.get(cd, 0) == 1:
         return {
             "strategy": "L3", "content_desc": cd,
-            "resolve": f"findAccessibilityNodeInfosByContentDescription('{cd}') -> hits[0] 为执行节点",
+            "resolve": f"遍历节点树精确匹配 contentDescription == '{cd}' -> 命中为执行节点",
         }
 
-    # L4 / L5: text（自身文字或锚点文字；唯一性按精确匹配计数）
+    # L4 / L5: findByText 宇宙 = text 属性 ∪ content-desc 属性（C3 实测 API 同时匹配两者）
     if resolved_text:
-        n = text_count.get(resolved_text, 0)
+        n = find_text_count.get(resolved_text, 0)
         climb = ("（文字在子节点：命中后向上爬第一个可执行节点，爬不到用原节点兜底）"
                  if anchor_child else "")
         if n == 1:
@@ -223,7 +237,7 @@ def build_locator(elem, resolved_text, anchor_elem, counts, text_ord):
         return {
             "strategy": "L5", "text": resolved_text, "ordinal": ord_idx,
             "class": a.get("class"),
-            "resolve": (f"findAccessibilityNodeInfosByText('{resolved_text}') 按精确匹配取第 {ord_idx} 个"
+            "resolve": (f"findAccessibilityNodeInfosByText('{resolved_text}') 按 text/cd 精确匹配取第 {ord_idx} 个"
                         f"（DFS 序）{climb}"),
         }
 
@@ -355,35 +369,34 @@ def compress(root_elem, max_depth=MAX_DEPTH_DEFAULT):
                 text = ""
         kept.append((elem, p, text, flags, anchor_cls, anchor_elem, anchor_source))
 
-    # 第二遍：嵌套包装去重 —— 同一**text 属性**锚点下的多个交互层，保留**最内层**
-    # （锚点文字向上爬命中的是内层；保留外层会让 locator 解析到错误目标。
-    #  仅 text 属性参与去重：cd 不参与 findByText 查找宇宙，不会与 text 锚点冲突）
-    kept_info = {}
-    for (elem, p, text, flags, anchor_cls, anchor_elem, anchor_source) in kept:
-        if text and anchor_source == "text":
-            kept_info[id(elem)] = (text, flags)
-    deduped = []
+    # 第二遍：嵌套包装去重 —— 按「锚点向上爬命中的目标」判定
+    # 锚点的最近可交互祖先若 ≠ 本节点，说明本节点在爬取路径之外（locator 会解析到内层），
+    # 丢弃外层保留内层。text 与 cd 锚点统一处理（findByText 查找宇宙 = text ∪ cd）。
+    interactive_ids = {id(n) for (n, _pp) in nodes if node_flags(n.attrib)}
+
+    def climb_target_of(anchor_elem):
+        """锚点沿父链向上，第一个可交互祖先（执行层的爬取目标）"""
+        idx = next(j for j, (n, _pp) in enumerate(nodes) if n is anchor_elem)
+        while idx >= 0:
+            idx = nodes[idx][1]
+            if idx < 0:
+                return None
+            if id(nodes[idx][0]) in interactive_ids:
+                return nodes[idx][0]
+        return None
+
+    kept_dedup = []
     for k in kept:
         elem, p, text, flags, anchor_cls, anchor_elem, anchor_source = k
-        dup = False
-        if text and anchor_source == "text":  # 空文字/cd 锚点不参与去重
-            stack = [(elem, 0)]
-            while stack:
-                cur, depth = stack.pop()
-                if depth > ANCHOR_LOOKAHEAD:
-                    continue
-                for c in cur:
-                    info = kept_info.get(id(c))
-                    if info is not None and info[1]:
-                        if info[0] == text:
-                            dup = True
-                        continue
-                    stack.append((c, depth + 1))
-        if dup:
+        if anchor_elem is None:
+            kept_dedup.append(k)  # 自身文字节点：locator 直指自身，无爬取
+            continue
+        tgt = climb_target_of(anchor_elem)
+        if tgt is not None and tgt is not elem:
             stats["dropped_wrapper"] += 1
             continue
-        deduped.append(k)
-    kept = deduped
+        kept_dedup.append(k)
+    kept = kept_dedup
 
     # 第三遍：层级（depth cap = 拍平）+ 短 ID + locator
     node_kept_idx = {id(elem): i for i, (elem, p, text, flags, ac, ae, asrc)
@@ -468,61 +481,39 @@ def assess(root_elem):
                 and not is_editable(a):
             continue
         interactive.append((i, elem))
+    interactive_ids = {id(n) for n, _pp in nodes if node_flags(n.attrib)}
 
-    # 预解析每个交互节点的文字信号（text 属性宇宙）与 cd 信号（cd 属性宇宙）
-    # 锚点合并只影响展示文字；定位冲突只看属性宇宙：
-    #   findByText 只看 text 属性；findByContentDescription 只看 content-desc 属性
-    signals = {}
-    for i, elem in interactive:
-        a = elem.attrib
-        own_t = text_attr(a)
-        own_cd = cd_attr(a)
-        anchor_t = anchor_cd = None
-        r = find_anchor_local(elem) if (own_t is None and own_cd is None) else None
-        if r:
-            at, _ac, ael = r
-            if text_attr(ael.attrib):
-                anchor_t = at
-            else:
-                anchor_cd = at
-        signals[id(elem)] = (set([own_t, anchor_t]) - {None},
-                             set([own_cd, anchor_cd]) - {None})
+    def climb_target_of(anchor_elem):
+        idx = next(j for j, (n, _pp) in enumerate(nodes) if n is anchor_elem)
+        while idx >= 0:
+            idx = nodes[idx][1]
+            if idx < 0:
+                return None
+            if id(nodes[idx][0]) in interactive_ids:
+                return nodes[idx][0]
+        return None
 
-    # shadowed：A 的信号与某个交互后代 B 的信号相同（A 的锚点向上爬会解析到 B，
-    # 或 A/B 文字相同导致查找命中不唯一）—— A 不可唯一定位
-    shadowed_ids = set()
-    for i, elem in interactive:
-        sig_t, sig_cd = signals[id(elem)]
-        if not sig_t and not sig_cd:
-            continue
-        stack = [(elem, 0)]
-        while stack:
-            cur, depth = stack.pop()
-            if depth > ANCHOR_LOOKAHEAD:
-                continue
-            for c in cur:
-                if id(c) in signals:
-                    dt, dcd = signals[id(c)]
-                    if (sig_t & dt) or (sig_cd & dcd):
-                        shadowed_ids.add(id(elem))
-                stack.append((c, depth + 1))
-
+    # 每个交互节点的 locator（与压缩器同一套 build_locator；L4/L5 唯一性按
+    # findByText 宇宙 = text ∪ cd 合并计数，重复即给 ordinal）。
+    # shadowed（不可定位）：锚点向上爬命中别的节点 —— locator 解析不到自己。
     strat = {"L1": 0, "L2": 0, "L3": 0, "L4": 0, "L5": 0, "L6": 0,
              "no-anchor": 0, "shadowed": 0}
     details = []
     for i, elem in interactive:
         a = elem.attrib
-        if id(elem) in shadowed_ids:
-            strat["shadowed"] += 1
-            details.append((elem, {"strategy": "shadowed",
-                                   "resolve": "信号与交互后代相同，查找命中不唯一，本节点不可唯一定位"}))
-            continue
         text = own_text(a)
         anchor_elem = None
         if text is None:
             r = find_anchor_local(elem)
             if r:
                 text, _ac, anchor_elem = r
+        if anchor_elem is not None:
+            tgt = climb_target_of(anchor_elem)
+            if tgt is not None and tgt is not elem:
+                strat["shadowed"] += 1
+                details.append((elem, {"strategy": "shadowed",
+                                       "resolve": "锚点向上爬命中其他节点，本节点不可定位"}))
+                continue
         loc = build_locator(elem, text, anchor_elem, counts, text_ord)
         if loc is None:
             loc = build_l6(elem, nodes, i, text_ord)

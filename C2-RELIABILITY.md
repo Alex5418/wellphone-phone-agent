@@ -10,7 +10,7 @@
 
 | 样本 | 技术栈 | 可交互节点 | 可唯一指认 | **可指认率** | L1 | L2 | L3 | L4 | L5 | L6 | no-anchor | shadowed |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Settings Display 页 | 传统 View | 11 | 11 | **100%** | 3 | 0 | 1 | 7 | 0 | 0 | 0 | 0 |
+| Settings Display 页 | 传统 View | 11 | 11 | **100%** | 3 | 0 | 1 | 6 | 1 | 0 | 0 | 0 |
 | **Composetest（替代样本）** | Jetpack Compose | 4 | 4 | **100%** | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 |
 | Chrome 新标签页 | WebView | 20 | 18 | **90%** | 8 | 0 | 10 | 0 | 0 | 0 | **2** | 0 |
 
@@ -84,10 +84,12 @@ label 是输入框的子 TextView（`EditText → TextView('To')`），与 E3 �
 - ScrollView `content_parent`：rid 唯一 → L1 ✓
 - ImageButton：无 rid、cd `Navigate up` 唯一 → L3 ✓
 - RecyclerView `recycler_view`：rid 唯一 → L1 ✓
-- 7 个行（Brightness level / Lock screen / Screen timeout / Dark theme / Screen saver /
+- 6 个行（Brightness level / Lock screen / Screen timeout / Screen saver /
   Display size and text / Navigation mode）：无 rid 无 cd，锚点文字唯一 → L4 ✓
-- Switch `switchWidget`：rid 唯一 → L1 ✓（人工确认：该 Switch 的 text 属性为空、
-  cd='Dark theme'，不参与 findByText 查找宇宙）
+- Dark theme 行：锚点 title 与 Switch 的 cd 在 findByText 宇宙（text∪cd）里共出现 2 次
+  → **L5 ordinal 0**（C3 实测 findByText 命中 2，见下方修正记录）✓
+- Switch `switchWidget`：rid 唯一 → L1 ✓（人工确认：Switch 的 text 属性为空、
+  cd='Dark theme'；cd 参与 findByText 匹配，但 id 策略优先）
 
 **compose.xml（4 个，全部一致）**：To/Subject/Body/Send 四个锚点文字在树内各出现
 一次 → L4 ✓
@@ -99,20 +101,26 @@ label 是输入框的子 TextView（`EditText → TextView('To')`），与 E3 �
 - 2 个 `(no text)` clickable ViewGroup：人工验证**整条祖先链（至窗口根）无任何
   text/content-desc** → no-anchor 判定正确 ✓
 
-### 核对发现并修复的一个指标偏差（最重要的一条）
+### 核对发现并修复的指标偏差（两轮，最终版以 C3 实测为准）
 
-初版 shadowed 判定把「cd 来源的文字」与「text 属性」混在一个查找宇宙里，
-导致 Settings Display 页的 Dark theme **行**被误判为 shadowed（可指认率 90.9%）：
+**第一轮（v2，部分错误）**：初版 shadowed 判定把「cd 来源的文字」与「text 属性」混在
+一个查找宇宙里，导致 Dark theme **行**被误判为 shadowed（可指认率 90.9%）。当时的
+修复假设是「findByText 只匹配 text 属性」—— **这个假设是错的**（见第二轮）。
+
+**第二轮（v3，C3 实测钉死）**：在 C3 执行侧验证时，`LOCATE L5 text='Dark theme'` 的
+`findAccessibilityNodeInfosByText` 返回 **raw=2** —— 实测证明 **findByText 同时匹配
+text 与 contentDescription**（Switch 的 text 为空、cd='Dark theme'，仍被命中）。
 
 ```
-错误：行锚点 'Dark theme'（title TextView）== Switch 的 cd 'Dark theme' → 行 shadowed
-事实：findAccessibilityNodeInfosByText 只匹配 text 属性；Switch 的 text=''，
-      findByText('Dark theme') 唯一命中 title → 行可以正常定位（L4）
+L5 失败日志（v2 执行器）：LOCATE strategy=L5 text='Dark theme' ordinal=1 FILTERED EMPTY (raw=2)
+→ 唯一性判定与执行器查找宇宙不一致：压缩器按 text 计数=1（L4），执行器按 text∪cd 命中=2
 ```
 
-修复：shadowed / 去重仅在 **text 属性宇宙**内比较（cd 单独一个宇宙，互不冲突）。
-修复后该样本可指认率 **90.9% → 100%**，且行与 Switch 各自保留为独立条目。
-**这个偏差若不手工核对会直接进报告** —— 正是任务 §5 强调的「正确答案 + 错误来源」。
+最终模型（v3）：**L4/L5 的唯一性与 ordinal 一律按 text ∪ contentDescription 合并计数**；
+Dark theme 行 → L5 ordinal 0（title 是第 0 个精确命中），Switch → L1（id）。
+修复后三样本可指认率不变（100% / 100% / 90%），策略分布如实反映运行时的重复语义。
+**这条偏差如果不做执行侧验证（C3）永远不会被发现** —— 压缩器的"唯一"必须定义在
+执行器真正使用的查找宇宙上，而不是 XML 属性直觉上。
 
 ### 顺带修正（压缩器）
 
@@ -160,7 +168,7 @@ label 是输入框的子 TextView（`EditText → TextView('To')`），与 E3 �
     [5] Screen timeout | clickable | android.widget.LinearLayout
         locator: {strategy: "L4", text: "Screen timeout", class: "android.widget.LinearLayout"}
     [6] Dark theme | clickable | android.widget.LinearLayout
-        locator: {strategy: "L4", text: "Dark theme", class: "android.widget.LinearLayout"}
+        locator: {strategy: "L5", text: "Dark theme", ordinal: 0, class: "android.widget.LinearLayout"}
       [7] Dark theme | clickable | android.widget.Switch id=com.android.settings:id/switchWidget
           locator: {strategy: "L1", resource_id: "com.android.settings:id/switchWidget"}
     [8] Screen saver | clickable | android.widget.LinearLayout
