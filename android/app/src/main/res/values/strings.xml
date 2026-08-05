@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">PhoneAgentService</string>
+    <string name="accessibility_description">Phone Agent 实验服务</string>
 </resources>
