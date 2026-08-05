@@ -781,7 +781,202 @@ dump 节点树 → 状态自检 → LLM 选择目标 → 执行动作 → 重新
 
 ---
 
+## E6 — 焦点归还：把"抢焦点"从故障变成手段 ✅ 转折点
+
+**状态**：✅ **A 档通过** [非root可复现 · API 34 · scrcpy VirtualDisplay]
+**日期**：2026-08-05
+**性质**：转折点实验。E4 判定 GUI 路线在"不打扰"上不成立，E6 推翻该判定的适用范围。
+
+### 假设
+
+E4 已证：抢焦点发生在**动作分发路径**，与动作是否生效无关。
+既然任何 a11y 动作都会把 window 焦点拽到目标所在的 display，
+那么**对主屏节点再发一个 a11y 动作，就能把焦点拽回来**。
+
+> 之前所有实验里焦点被夺走后一直没人还 —— 因为没人想过要还。
+
+### 环境
+
+| 项 | 值 |
+|---|---|
+| 设备 | `wellphone_a14` AVD，Android 14 / API 34 |
+| 权限 | `adb unroot`，`uid=2000(shell)` 全程 |
+| 副屏 | scrcpy `--new-display`，**display 2** |
+| 副屏 app | `com.android.settings` / `DisplaySettingsActivity` |
+| 主屏 app | `com.google.android.dialer` 搜索框 `open_search_view_edit_text` |
+| 副屏动作 | `ACTION_SCROLL_FORWARD` on `com.android.settings:id/recycler_view` |
+| 归还动作 | `ACTION_FOCUS` on 主屏输入焦点节点 |
+| 打字方式 | **真实键盘手打** `1234567890` 循环（非 `input text` 注入） |
+
+主屏刻意避开 Chrome（E2 已证其节点树不可用），也避开 Settings
+（与副屏同包会让 `dumpsys window` 的两个 display 显示同一包名，无法判读）。
+
+### 实现
+
+新增 `ACTION_DO_RESTORE` 指令：**动作前**缓存主屏输入焦点节点 → 执行副屏动作 →
+**立即**对缓存节点发 `ACTION_FOCUS`。节点必须在动作前抓，
+因为 `AccessibilityNodeInfo` 是快照，动作后窗口已变会 stale。
+
+### 四轮对照数据
+
+| Run | 归还 | 副屏动作 | display 0 `mCurrentFocus` | 触发后字段 Δ | 往返耗时 |
+|---|---|---|---|---|---|
+| 1 基线 | ✗ | `ok=true` 真滚 | **null** | **0** | — |
+| 2 核心 | ✓ | `ok=true` 真滚 | Dialer（+1s/+3s/末尾） | **42** | **10 ms** |
+| 2b 对照 | ✗ | `ok=false` 未滚 | **null** | **0** | — |
+| 3 复现 | ✓ | `ok=true` 真滚 | Dialer（+1s/+3s/末尾） | **62** | **15 ms** |
+
+**Run 1 与 Run 2 是严格对照**：副屏动作完全相同且都真实生效，唯一变量是归还。
+
+原始日志：
+
+```
+# Run 1 [restore=false] —— 基线，复现已知失败
+I PHONEAGENT: RESTORE primary=android.widget.EditText
+              id=com.google.android.dialer:id/open_search_view_edit_text len=40 sel=40..40
+I PHONEAGENT: RESTORE act=SCROLL_FORWARD ok=true restored=SKIPPED(restore=false) action=8ms
+  FIELD T0=7  触发瞬间=40  T2(+15s)=40        ← 冻结
+  mCurrentFocus(display 0) = null
+  mInputShown = false，mServedView 由 EditText 变为 LinearLayout
+
+# Run 2 [restore=true] —— 核心
+I PHONEAGENT: RESTORE primary=android.widget.EditText
+              id=com.google.android.dialer:id/open_search_view_edit_text len=86 sel=86..86
+I PHONEAGENT: RESTORE act=SCROLL_FORWARD ok=true via=FOCUS delay=0
+              refresh=true focusOk=false clickOk=null isFocused=true sel=86..86
+              action=3ms restore=7ms total=10ms
+  FIELD T0=47  触发瞬间=86  T2(+16.5s)=128
+  mCurrentFocus(display 0): FIRE+1s=Dialer  FIRE+3s=Dialer  末尾=Dialer
+  mInputShown 全程 true，mServedView 始终为该 EditText
+
+# Run 2b [restore=false] —— 同状态对照，本文档新增，md 协议中没有
+I PHONEAGENT: RESTORE act=SCROLL_FORWARD ok=false restored=SKIPPED action=6ms
+  FIELD T0=38  触发瞬间=80  T2(+16s)=80       ← 冻结
+  mCurrentFocus(display 0) = null
+  mInputShown = true（键盘没收起，字仍然打不进去）
+
+# Run 3 [restore=true] —— 复现验证
+I PHONEAGENT: RESTORE act=SCROLL_FORWARD ok=true via=FOCUS delay=0
+              refresh=true focusOk=false clickOk=null isFocused=true sel=8..8
+              action=5ms restore=10ms total=15ms
+  FIELD 触发瞬间=8  T2(+16.5s)=70
+  mCurrentFocus(display 0): FIRE+1s=Dialer  FIRE+3s=Dialer  末尾=Dialer
+```
+
+**肉眼确认**（§4.4 规定主判据）：
+
+- Run 1 / 2b：字在触发瞬间断掉，**不手动点输入框完全打不进去**
+- Run 2 / 3：**字全程连续，无需触碰输入框**，副屏动作同时真实生效
+
+### 三个指标
+
+| # | 指标 | 及格线 | 实测 |
+|---|---|---|---|
+| ① | 往返耗时 | < 100 ms | **10 / 15 ms** ✅ |
+| ② | IME 是否自动重新绑定 | 必须成立 | **未发生断开，无需重绑** ✅ 见下 |
+| ③ | 窗口期内丢字数 | ≤ 2 字符 | **0** ✅ |
+
+### 结论
+
+```
+[E6 · 焦点归还] ✅ 通过 · A 档 [非root可复现 · API 34 · scrcpy VirtualDisplay]
+
+副屏动作执行后立即对主屏输入焦点节点发 ACTION_FOCUS，
+可在 10–15 ms 内把 window 焦点拉回 display 0。
+用户打字全程无中断、无丢字、无需触碰输入框。
+
+对照四轮，归还与否 = 焦点存活与否，无例外。
+```
+
+### 机制：焦点不是被"还"回来的，是被"再抢"回来的
+
+最关键的一条观测：**`ACTION_FOCUS` 返回 `focusOk=false`，归还却成功了。**
+
+原因链：
+
+1. 主屏 EditText 的 **view 焦点从未丢失** —— 焦点被夺走后 `isFocused` 仍为 `true`
+   （Run 1 触发后的 FIELD 日志可证）。丢的只有 **window 焦点**。
+2. 因此对一个已聚焦节点再发 `ACTION_FOCUS` 是空操作，返回 `false`。
+3. 但按 E4 结论，**抢焦点发生在动作分发路径，与动作是否生效无关**。
+   这次分发的目标是一个 display 0 的节点 → window 焦点被拽回 display 0。
+
+于是 E4 那条致命结论在 E6 里被反向使用：
+
+> **E4：任何 a11y 动作都会把焦点带到目标窗口 —— 这是故障。**
+> **E6：任何 a11y 动作都会把焦点带到目标窗口 —— 这是手段。**
+
+Run 2b 独立复现了这条机制的另一面：该轮 `ok=false`（列表在底部，滚动未生效），
+**焦点照样被夺走**，与 E4「连 `result=false` 也照夺」完全一致。
+
+**推论：`ACTION_FOCUS` 是此处的最优归还手段，恰恰因为它什么都不做。**
+它返回 `false`、不改变任何 UI 状态、不移动光标（`sel` 前后一致 `86..86` / `8..8`），
+却能把 window 焦点拉回来 —— 一个零副作用的纯焦点拉取原语。
+原计划的 `ACTION_CLICK` 备选（有移动光标风险）不需要了。
+
+### 关于指标 ②：比预期更强，但也留下未验证的空白
+
+md 原假设是「焦点断过一次后 IME 需要重新绑定，能否自动重连是最大不确定性」。
+**实测中 IME 根本没断开**：`mServedView` 全程指向该 EditText，
+`mServedInputConnection` 未失效，`mInputShown` 全程 `true`。
+
+这比预设的成功形态更强 —— 但也意味着**「IME 断开后能否自动重连」这个问题本实验没有回答**。
+若将来出现真正导致 IME 断开的场景（例如副屏动作引发 Activity 跳转），
+该问题仍是未知，不能用 E6 的结论覆盖。
+
+另一条独立佐证：Run 2b 中 `mInputShown` **全程为 true**，键盘没收起、
+`InputConnection` 还连着，但字就是打不进去 ——
+再次复现「IME 收起与输入中断解耦，根因是 window 焦点为 null」。
+
+### 适用边界（**未验证的部分，勿外推**）
+
+本结论目前只覆盖：
+
+- 1 台模拟器（API 34），未在真机验证
+- 1 个动作类型：`SCROLL_FORWARD`。**`CLICK` / `SET_TEXT` / `LONG_CLICK` 未测**
+- 副屏动作**未引发 Activity 跳转**的场景。E4 测试 1 那种跳转型点击是否仍能归还，未知
+- 单次动作。连续动作、高频动作下的表现未测
+- 归还目标是**主屏当前已有输入焦点的节点**。若用户此刻没在输入，行为未定义
+
+**最大的遗留风险**：E4 证明所有动作都抢焦点，但 E6 只证明了归还对其中一个动作有效。
+把归还做进原子封装之前，必须先补齐动作维度的覆盖。
+
+### 附带发现（均为静默失效，实验中差点导致结论反向）
+
+1. **`findFocus(FOCUS_INPUT)` 会命中 IME 窗口内的节点。**
+   软键盘弹起后 Gboard 自身也是 display 0 上的一个窗口，遍历时先到先得
+   会拿到 `com.google.android.inputmethod.latin:id/key_pos_header_...` 这样的**键盘按键**，
+   而不是用户的输入框。
+   → 必须跳过 `AccessibilityWindowInfo.TYPE_INPUT_METHOD`，并优先取 `isEditable` 节点。
+   → 不修的话，归还会打在键盘按键上，得出「跨 display 焦点不联动」的**假 C 档结论**。
+
+2. **"取文本最长的 EditText"是错误的字段选择策略。**
+   Dialer 搜索栏容器 `open_search_bar` 的文本是提示语 `Search contacts & places`（24 字符），
+   比用户实际输入的内容还长，纯比长度会稳定选中它 ——
+   而提示语是常量 → **Δ 恒为 0 → 得出「一个字没丢」的假结论**。
+   → 必须优先取 `isFocused` 的节点，长度仅作兜底。
+
+3. **空 `EditText` 的 `getText()` 返回 hint 而非空串。**
+   清空输入框后计数器读出 `len=24 text='Search contacts & places' sel=-1..-1`。
+   → 自动化判空不能用 `text.isEmpty()`，需结合 `textSelectionStart == -1` 或 `hintText` 比对。
+
+4. **`actionList` 不登记某动作 ≠ 该动作不可用。**
+   `recycler_view` 的 `actionList` 中没有滚动动作，
+   已有 `DO` 指令"向上爬到支持该动作的父节点"的逻辑会一路爬到 `null` 并静默不发
+   （日志 `result=null node=null`）。
+   但直接对该节点 `performAction(SCROLL_FORWARD)` 返回 `true` 且真实生效。
+   → 定位逻辑需保留"爬不到就用原节点"的兜底。
+
+5. **`scroll=true` 只表示该节点声明可滚动，不代表此刻有滚动余量。**
+   Display Settings 是"折叠工具栏 + 列表"双层结构，真正滚动的是外层
+   `ScrollView(content_parent)`，内层 `recycler_view` 内容装得下、自身无滚动余量。
+   两个容器两个方向全部返回 `false`，与列表是否在底部无关。
+   → 副屏状态重置应直接 `am force-stop` + 重启 Activity，比猜滚动容器可靠。
+
+---
+
 ## S1 阶段总结
+
+> ⚠️ **本节写于 E6 之前。核心结论已被 E6 部分推翻，见下方修订说明。**
 
 ### 已完成的验证
 
@@ -807,12 +1002,18 @@ root 仅用于探索能力上界，**未进入任何架构决策**。
 因此主线方案「虚拟屏隔离 + a11y node action」**在"不打扰"这一硬指标上不成立**。
 这不是工程量问题，是机制问题。
 
+> **[2026-08-05 修订 · 见 E6]** 上述机制描述**仍然成立**，但由它推出的方案判定**不再成立**。
+> E6 证明：正因为"任何 a11y 动作都会把焦点带到目标窗口"，
+> 对主屏节点补发一个动作就能把焦点拽回来，往返 10–15 ms，用户无感。
+> **冲突没有被消除，而是被压缩到了用户感知阈值以下。**
+> 主线方案在"不打扰"上**条件性成立** —— 条件是动作维度的覆盖需补齐，见 E6 适用边界。
+
 ### S2 候选方向（待选型）
 
 | # | 方向 | 评估 |
 |---|---|---|
 | ① | **调度规避**：检测 IME 窗口存在性，用户输入时暂停 Agent | 最现实。已有信号（E3 附带发现 1）。诚实可讲、能演示。代价：牺牲部分"同时性" |
-| ② | **焦点归还**：动作后立即把焦点还给主屏 | 待实测：归还手段本身是否构成二次打扰？焦点丢失到 IME 收起之间有无时间窗口？ |
+| ② | **焦点归还**：动作后立即把焦点还给主屏 | ✅ **已实测通过，见 E6**。往返 10–15 ms，丢字 0，IME 未断开。归还手段本身不构成二次打扰（`ACTION_FOCUS` 零副作用、不移动光标）。**升为主线方向** |
 | ③ | **方案 E：完全绕开 GUI**（deep link / Intent / ContentProvider / shell） | 不碰 a11y 就不碰焦点，"不打扰"是结构性保证。代价：任务范围受限 |
 | ④ | **换隔离层**：多用户 / Work Profile | 唯一可能真正解决问题的方向（绕开同一 WindowManager 实例的前提）。复杂度高，非 root 可行性存疑 |
 
@@ -821,10 +1022,15 @@ root 仅用于探索能力上界，**未进入任何架构决策**。
 
 ### 下一步（S2 入口）
 
-- [ ] 实测方向②的时间窗口：动作后立即 dump，观察 IME 窗口消失是瞬时还是有延迟
+- [x] ~~实测方向②的时间窗口~~ → **E6 完成**，往返 10–15 ms
+- [ ] **补齐 E6 的动作维度覆盖**：`CLICK` / `SET_TEXT` / `LONG_CLICK` 归还是否同样有效
+      ← **最高优先级**，E6 只测了 `SCROLL_FORWARD`，这是当前最大的未验证风险
+- [ ] 测试副屏动作**引发 Activity 跳转**时归还是否仍有效（E4 测试 1 那种场景）
+- [ ] 测试连续 / 高频动作下的归还表现
+- [ ] 把归还做进每个动作的原子封装，让"动作 + 归还"成为不可分割的一步
+- [ ] 真机复现 E6（目前仅模拟器 API 34）
 - [ ] 验证 IME 窗口存在性能否作为可靠的"用户正在输入"布尔信号
 - [ ] 盘点方案 E 的可用手段范围（哪些任务能纯靠 Intent / deep link 完成）
-- [ ] 补测 `ACTION_SET_TEXT` 与 `ACTION_SCROLL` 是否与 `ACTION_CLICK` 表现一致
 
 ---
 
@@ -832,8 +1038,8 @@ root 仅用于探索能力上界，**未进入任何架构决策**。
 
 | 资源 | 风险 | 对策 | 实测状态 |
 |---|---|---|---|
-| **焦点** | Agent 一操作就抢走用户焦点 | 原设想 `performAction` 不需焦点 | ❌ **假设被证伪，见 E4** |
-| **IME** | 同一时刻只有一个 IME 实例 | 原设想 `SET_TEXT` 不走 IME | ❌ 焦点丢失即导致 IME 收起 |
+| **焦点** | Agent 一操作就抢走用户焦点 | ~~原设想 `performAction` 不需焦点~~ → **动作后立即对主屏节点补发 `ACTION_FOCUS` 抢回来** | ❌ 原假设被证伪（E4）→ ✅ **对策成立，见 E6**（10–15 ms，丢字 0） |
+| **IME** | 同一时刻只有一个 IME 实例 | 原设想 `SET_TEXT` 不走 IME | ❌ 焦点丢失即导致 IME 收起 → ⚠️ 但 E6 证明**焦点及时归还时 IME 根本不会断开**；且 E4/E6 均实测「键盘未收起时输入照样中断」，根因始终是 window 焦点 |
 | 画面 | `am start` 把已有实例"搬"到副屏 | 部署期一次性拉起，运行期不再激活 | ⚠️ 见 E1b |
 | **剪贴板** | `SET_TEXT` 被拒时的 fallback 是剪贴板 + `ACTION_PASTE`，但剪贴板**全局共享** | 备份 → 写入 → 粘贴 → 恢复 四步走 | ⬜ 未实测 |
 | 系统弹窗 / Toast | 运行时权限弹窗、崩溃对话框**永远弹在 display 0** | 流程中绝不触发运行时权限请求；副屏 Toast 是否漏到主屏需实测 | ⬜ |
@@ -874,11 +1080,26 @@ root 仅用于探索能力上界，**未进入任何架构决策**。
 - scrcpy 创建的虚拟屏**随 scrcpy 进程消亡**，Agent 生命周期需与之绑定或做重连
 - 模拟器重启后 `overlay_display_devices` 失效、副屏上的 app 回到主屏 ——
   **每次测试前先跑一次状态确认，不要相信上一次的状态**
+- **`findFocus(FOCUS_INPUT)` 会命中 IME 窗口里的按键节点** —— 软键盘也是 display 0 上的一个窗口，
+  遍历先到先得会拿到 Gboard 的键。必须跳过 `AccessibilityWindowInfo.TYPE_INPUT_METHOD`（见 E6）
+- **空 `EditText` 的 `getText()` 返回 hint 而不是空串** —— 判空需看 `textSelectionStart == -1`
+- **`actionList` 里没有某动作 ≠ 该动作不可用** —— `recycler_view` 未登记滚动动作，
+  但 `performAction(SCROLL_FORWARD)` 返回 `true` 且真实生效。"向上爬找支持该动作的父节点"
+  必须带"爬不到就用原节点"的兜底，否则静默不发（日志 `result=null node=null`）
+- **`scroll=true` 不代表此刻有滚动余量** —— 折叠工具栏页面真正滚动的是外层 `ScrollView`，
+  内层 `RecyclerView` 可能完全没有滚动范围。重置副屏状态用 `am force-stop` + 重启，别猜容器
+- **一个 EditText 的 `isFocused` 为 true，不代表它所在窗口持有 window 焦点** ——
+  焦点被别的 display 夺走后 `isFocused` 照样是 `true`（见 E6）。这是 E3 附带发现 2 的延伸
 
 **方法论**
 
 - 命令返回成功 ≠ 结果正确。`uiautomator --display` 静默失败、本地 XML 文件未刷新
   都属此类 → **每个"成功"都要做结果验证**
 - 单点测试给虚假安全感 → 验证要跑完整序列（建屏 → 启动 → 多次动作 → 提交）
+- **基线与实验轮之间的环境漂移会伪造因果** —— E6 中基线 Run 1 跑完后副屏列表已被滚到底，
+  Run 2 的成功一度无法排除"这次动作本来就没夺焦点"。补一轮**同状态、只翻转唯一变量**的
+  对照（Run 2b）才把因果钉死。**对照要和实验轮同状态，不是同协议**
+- **测量工具本身要先验证** —— E6 的字段计数器一开始锁在提示语常量上，
+  若不先验证，会稳定输出"丢字 0"这个正确答案，而它测的根本不是那个框
 - 单人操作两件事：**观察自动化 + 动作定时触发（`sleep N &&`）+ 手只负责打字**
 - 打字内容用 `1234567890` 循环，丢字 / 乱序一眼可见；随机字符看不出问题
