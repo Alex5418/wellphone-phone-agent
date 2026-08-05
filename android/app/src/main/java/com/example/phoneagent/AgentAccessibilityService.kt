@@ -15,6 +15,8 @@ class AgentAccessibilityService : AccessibilityService() {
         const val TAG = "PHONEAGENT"
         const val ACTION_DUMP = "com.example.phoneagent.DUMP"
         const val ACTION_CLICK = "com.example.phoneagent.CLICK"
+
+        const val ACTION_CLICK_ID = "com.example.phoneagent.CLICKID"
     }
 
     private val receiver = object : BroadcastReceiver() {
@@ -24,6 +26,10 @@ class AgentAccessibilityService : AccessibilityService() {
                 ACTION_CLICK -> clickByText(
                     intent.getIntExtra("display", 0),
                     intent.getStringExtra("text") ?: return
+                )
+                ACTION_CLICK_ID -> clickById(
+                    intent.getIntExtra("display", 0),
+                    intent.getStringExtra("vid") ?: return
                 )
             }
         }
@@ -35,6 +41,7 @@ class AgentAccessibilityService : AccessibilityService() {
         val filter = IntentFilter().apply {
             addAction(ACTION_DUMP)
             addAction(ACTION_CLICK)
+            addAction(ACTION_CLICK_ID)
         }
         registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
         dumpAllWindows()
@@ -95,6 +102,24 @@ class AgentAccessibilityService : AccessibilityService() {
             }
         }
         Log.i(TAG, "CLICK display=$displayId text='$text' NOT FOUND")
+    }
+
+    private fun clickById(displayId: Int, viewId: String) {
+        val all = windowsOnAllDisplays
+        for (i in 0 until all.size()) {
+            if (all.keyAt(i) != displayId) continue
+            for (w in all.valueAt(i)) {
+                val root = w.root ?: continue
+                val hits = root.findAccessibilityNodeInfosByViewId(viewId)
+                if (hits.isNullOrEmpty()) continue
+                var target: AccessibilityNodeInfo? = hits[0]
+                while (target != null && !target.isClickable) target = target.parent
+                val ok = target?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                Log.i(TAG, "CLICK_ID display=$displayId id='$viewId' result=$ok node=${target?.className}")
+                return
+            }
+        }
+        Log.i(TAG, "CLICK_ID display=$displayId id='$viewId' NOT FOUND")
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
