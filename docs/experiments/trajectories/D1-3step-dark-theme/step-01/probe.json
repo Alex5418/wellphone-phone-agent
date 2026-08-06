@@ -1,0 +1,15 @@
+{
+  "found": true,
+  "candidates": 1,
+  "note": "ok",
+  "class": "androidx.recyclerview.widget.RecyclerView",
+  "resource_id": "com.android.settings:id/recycler_view",
+  "text": null,
+  "raw_text": null,
+  "content_desc": null,
+  "checkable": false,
+  "checked": false,
+  "enabled": true,
+  "focused": true,
+  "selected": false
+}

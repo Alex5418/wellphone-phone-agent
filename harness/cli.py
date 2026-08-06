@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 
 from . import config
 from .compress import compress
@@ -88,6 +89,7 @@ def cmd_act(args) -> int:
     resp = tp.act(sec, item.locator, args.action, args.value, restore=True)
     print(json.dumps(resp, ensure_ascii=False, indent=2))
 
+    time.sleep(config.SETTLE_MS / 1000.0)   # 和 loop 一样：等界面稳定再读
     probe = tp.probe(sec, item.locator)
     post_tree = build_tree(tp.observe(sec))
     post = Snapshot.from_probe(probe, post_tree.activity, post_tree.tree_hash,

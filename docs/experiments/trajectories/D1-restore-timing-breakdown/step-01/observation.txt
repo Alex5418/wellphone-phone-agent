@@ -1,0 +1,19 @@
+## 任务
+在设置里打开深色主题
+
+## 环境状态
+- 副屏: display 2 · com.android.settings ✓
+- 主屏焦点: com.android.chrome
+- 用户输入中: 否
+
+## 当前界面
+[0] （可滚动区域：Display…） | list
+[1] Navigate up | button
+[2] （可滚动区域：Appearance…） | list
+[3] Lock screen | button | Show all notification content
+[4] Screen timeout | button | Not set
+[5] Dark theme | button | Will never turn on automatically
+[6] Dark theme | switch | Off
+[7] Screen saver | button | On / Clock
+[8] Display size and text | button
+[9] Navigation mode | button | Gesture navigation

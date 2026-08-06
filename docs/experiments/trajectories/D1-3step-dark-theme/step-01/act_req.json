@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "038aebddb228",
+  "args": {
+    "display": 2,
+    "locator": {
+      "strategy": "L1",
+      "target": "self",
+      "resource_id": "com.android.settings:id/recycler_view",
+      "cls": "androidx.recyclerview.widget.RecyclerView"
+    },
+    "action": "SCROLL_FORWARD",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

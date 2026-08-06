@@ -92,6 +92,30 @@ object Snapshot {
         return FlatTree(out, truncated, roots)
     }
 
+    /**
+     * 带节点预算的扁平化：超预算立刻放弃并返回 null。
+     *
+     * 给「必须快进快出」的场合用 —— 典型是焦点归还里的重解析：那段代码跑在
+     * 打扰窗口**之内**（还没发出 ACTION_FOCUS），主屏若是 Chrome 这类几百上千节点的
+     * 重型 app，一次完整扁平化就够把用户的打字断得能感觉到。宁可退回更便宜的兜底。
+     */
+    fun flattenCapped(root: AccessibilityNodeInfo, maxNodes: Int): FlatTree? {
+        val out = ArrayList<Flat>()
+        val stack = ArrayDeque<Triple<AccessibilityNodeInfo, Int, Int>>()
+        stack.addLast(Triple(root, -1, 0))
+        while (stack.isNotEmpty()) {
+            if (out.size >= maxNodes) return null
+            val (node, parent, depth) = stack.removeLast()
+            val idx = out.size
+            out.add(Flat(idx, parent, depth, node, 0, 0))
+            if (depth >= DEPTH_LIMIT) continue
+            for (c in node.childCount - 1 downTo 0) {
+                node.getChild(c)?.let { stack.addLast(Triple(it, idx, depth + 1)) }
+            }
+        }
+        return FlatTree(out, false, listOf(root))
+    }
+
     fun flattenDisplay(svc: AccessibilityService, displayId: Int): FlatTree {
         val roots = windowsOf(svc, displayId).mapNotNull { it.root }
         return flatten(roots)

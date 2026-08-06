@@ -250,8 +250,14 @@ def compress(tree: Tree, max_items: int = config.MAX_ITEMS_SHOWN) -> list[Item]:
         loc = build_locator(tree, n, hook, rule, label or None, universes)
         if not label and kind == "input" and n.text:
             label = n.text          # 空输入框的 hint 就是它的名字（"搜索设置"）
-        if not label and kind == "list":
-            label = "（可滚动区域）"
+        if kind == "list" and (not label or a_idx != n.idx):
+            # 滚动容器不能直接借后代的文字当名字。真机上 RecyclerView 会认领第一个
+            # 分组标题，于是显示成「[2] Brightness | list」—— 读起来像个亮度控件，
+            # 而它其实是"这一整块可滚动区域"。
+            # 但也不能一律叫「（可滚动区域）」：一页上常有两个（外层 ScrollView +
+            # 内层 RecyclerView），同名两条 LLM 没法选，首次真机跑就选错了外层那个。
+            # 折中：前缀点明它是区域，再带上区域里第一条文字用于区分。
+            label = f"（可滚动区域：{label}…）" if label else "（可滚动区域）"
         items.append(Item(
             sid=len(items),
             label=label,

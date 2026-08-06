@@ -35,6 +35,12 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
         const val OP_TIMEOUT_MS = 5000L
         const val MAX_RESPONSE_BYTES = 512 * 1024
         const val PRIMARY_DISPLAY = 0
+
+        /**
+         * 归还时重扫主屏树的节点预算。超过就退回 findFocus 兜底。
+         * 这段代码在打扰窗口之内，宁可少查一点也不能把用户的打字断出感知。
+         */
+        const val PRIMARY_SCAN_NODE_LIMIT = 200
     }
 
     private val main = Handler(Looper.getMainLooper())
@@ -324,6 +330,11 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
         val t1 = SystemClock.elapsedRealtime()
 
         // ⑥⑦⑧ 归还 + 校验 + 至多重试一次
+        //
+        // ⚠ 计时必须把「打扰窗口」和「校验开销」分开。
+        // 焦点真正不在主屏的时间只到 doRestore 返回为止；之后的 focusedPkgOnPrimary()
+        // 是遍历窗口做校验，用户早已能继续打字。把校验算进 restore_ms 会让头条数字
+        // 被自己的仪表拖大，还没法和 E6 的纯 ACTION_FOCUS 耗时对比。
         val restoreJson = JSONObject()
         var t2 = t1
         if (!restore) {
@@ -332,26 +343,48 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
             // 主屏本来就没有输入焦点持有者 —— 没有东西可还，不是失败
             restoreJson.put("attempted", false).put("reason", "no_primary_focus")
         } else {
+            var focusMs = 0L                       // 累加纯归还耗时，不含中间的校验读取
+            val fs0 = SystemClock.elapsedRealtime()
             var focusResult = doRestore(desc)
+            focusMs += SystemClock.elapsedRealtime() - fs0
+
             var holderAfter = focusedPkgOnPrimary()
             var retried = false
-            if (holderAfter != desc.pkg) {
+            // 只在**确实读到了持有者、且确实不对**时才重试。
+            // 读不到就重试等于凭空把打扰窗口翻倍 —— 首次真机跑就是这样：display 0 上
+            // 没有窗口自报 focused/active，holder 恒为 null，于是每一步都白retry 一次。
+            if (holderAfter != null && holderAfter != desc.pkg) {
                 retried = true
+                val fs1 = SystemClock.elapsedRealtime()
                 focusResult = doRestore(desc)
+                focusMs += SystemClock.elapsedRealtime() - fs1
                 holderAfter = focusedPkgOnPrimary()
             }
             t2 = SystemClock.elapsedRealtime()
             restoreJson.put("attempted", true)
                 // ⚠ 归还成功与否以 holder_after 为准，不以 performAction 的返回值为准：
-                // 对已聚焦节点发 ACTION_FOCUS 返回 false 是正常的（E6）
-                .put("ok", holderAfter != null && holderAfter == desc.pkg)
+                // 对已聚焦节点发 ACTION_FOCUS 返回 false 是正常的（E6）。
+                // 读不到持有者时报 null（UNKNOWN）而不是 false —— 没有证据说明失败，
+                // 报 false 是在制造假警报。真正的判定交给 PC 侧的 dumpsys 交叉校验。
+                .put("ok", if (holderAfter == null) JSONObject.NULL
+                           else (holderAfter == desc.pkg))
+                .put("ok_unknown_reason",
+                    if (holderAfter != null) JSONObject.NULL
+                    else "display 0 上没有窗口自报 focused/active，a11y 侧无法判定持有者")
                 .put("retried", retried)
-                .put("ms", (t2 - t1).toInt())
+                // focus_ms: 真正的打扰窗口（重解析 + ACTION_FOCUS），与 E6 的 10–15ms 可比
+                // verify_ms: 校验窗口持有者的开销，发生在打扰窗口之外
+                .put("focus_ms", focusMs.toInt())
+                .put("verify_ms", (t2 - t1 - focusMs).toInt())
+                .put("total_ms", (t2 - t1).toInt())
                 .put("holder_before", holderBefore ?: JSONObject.NULL)
                 .put("holder_after", holderAfter ?: JSONObject.NULL)
                 .put("expect_pkg", desc.pkg ?: JSONObject.NULL)
                 .put("focus_action_result", focusResult.first)
                 .put("node_refound", focusResult.second)
+                // 最后一次归还的耗时拆分（重试时是第二次那一趟）
+                .put("last_resolve_ms", lastResolveMs.toInt())
+                .put("last_focus_call_ms", lastFocusCallMs.toInt())
                 .put("descriptor", desc.toJson())
         }
 
@@ -372,7 +405,10 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
             .put("window_after", windowInfo(displayId))
             .put("timing", JSONObject()
                 .put("action_ms", (t1 - t0).toInt())
-                .put("restore_ms", (t2 - t1).toInt())
+                // 打扰窗口 = 动作 + 归还，不含任何校验读取。这才是要上报的那个数字。
+                .put("disturb_ms", (t1 - t0).toInt() + restoreJson.optInt("focus_ms", 0))
+                .put("restore_focus_ms", restoreJson.optInt("focus_ms", 0))
+                .put("restore_total_ms", (t2 - t1).toInt())
                 .put("total_ms", (t3 - t0).toInt()))
     }
 
@@ -411,11 +447,26 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
      * 归还：用描述符**重新解析**主屏节点，再发 ACTION_FOCUS。
      * @return (performAction 的返回值, 是否重新找到了节点)
      */
+    /** 上一次 doRestore 的耗时拆分：重解析 vs ACTION_FOCUS 分发 */
+    private var lastResolveMs = 0L
+    private var lastFocusCallMs = 0L
+
     private fun doRestore(desc: FocusDescriptor): Pair<Boolean, Boolean> {
-        val node = reResolvePrimary(desc) ?: return Pair(false, false)
+        // 拆开量：实测主题切换那一步打扰窗口是 2526ms（滚动只有 12ms），
+        // 得知道这 2.5 秒是耗在"重新找到主屏节点"还是"把焦点发过去"上 ——
+        // 前者也许还能优化，后者是 Activity 重建期间的平台行为，只能如实上报。
+        val r0 = SystemClock.elapsedRealtime()
+        val node = reResolvePrimary(desc)
+        lastResolveMs = SystemClock.elapsedRealtime() - r0
+        if (node == null) {
+            lastFocusCallMs = 0
+            return Pair(false, false)
+        }
         // ACTION_FOCUS 零 UI 副作用、不移动光标；抢焦点发生在动作分发路径上，
         // 与该动作是否"生效"无关 —— 这正是它适合做归还原语的原因（E6）
+        val f0 = SystemClock.elapsedRealtime()
         val ok = node.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+        lastFocusCallMs = SystemClock.elapsedRealtime() - f0
         return Pair(ok, true)
     }
 
@@ -432,13 +483,18 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
                     return hits.firstOrNull { it.isFocused } ?: hits[0]
                 }
             }
-            // ② 无 id：按 class + editable 在树里找，同样优先 focused
-            val flat = Snapshot.flatten(listOf(root))
-            val byClass = flat.nodes.filter {
-                Snapshot.cls(it.node) == desc.cls && it.node.isEditable == desc.editable
-            }
-            if (byClass.isNotEmpty()) {
-                return (byClass.firstOrNull { it.node.isFocused } ?: byClass[0]).node
+            // ② 无 id：按 class + editable 在树里找，同样优先 focused。
+            //    ⚠ 这段跑在打扰窗口之内，必须限量：超过 PRIMARY_SCAN_NODE_LIMIT
+            //    直接放弃扫描，走 ③ 的 findFocus 兜底 —— 便宜且几乎总能命中，
+            //    因为 view 焦点从未丢失，丢的只是 window 焦点（E6）。
+            val flat = Snapshot.flattenCapped(root, PRIMARY_SCAN_NODE_LIMIT)
+            if (flat != null) {
+                val byClass = flat.nodes.filter {
+                    Snapshot.cls(it.node) == desc.cls && it.node.isEditable == desc.editable
+                }
+                if (byClass.isNotEmpty()) {
+                    return (byClass.firstOrNull { it.node.isFocused } ?: byClass[0]).node
+                }
             }
             // ③ 兜底：该窗口当前的输入焦点节点
             root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)?.let { return it }

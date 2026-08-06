@@ -1,0 +1,6 @@
+{
+  "result": "PASS",
+  "predicate": "tree_hash_changes",
+  "detail": "界面内容已变化",
+  "notes": []
+}

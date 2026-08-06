@@ -1,0 +1,1 @@
+{"action": "click", "target": 6, "thought": "规则脚本第 1 步"}

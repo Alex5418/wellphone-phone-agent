@@ -11,7 +11,8 @@ from tests.fake_device import FakeTransport
 
 def result(found=True, ok=True, **kw):
     return ActionResult(found=found, action_ok=ok, restore_attempted=True,
-                        restore_ok=True, restore_ms=12, restore_retried=False,
+                        restore_ok=True, restore_focus_ms=12, restore_total_ms=30,
+                        restore_retried=False,
                         holder_after="com.android.chrome",
                         post_state=kw.get("post_state", {}), window_after={},
                         timing={})

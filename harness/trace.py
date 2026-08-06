@@ -53,7 +53,11 @@ class Trace:
             json.dump(obj, f, ensure_ascii=False, indent=2)
 
     def metric(self, n: int, **kw) -> None:
-        """关键指标每步记录：restore_ms / total_ms / LLM 延迟 / verdict。"""
+        """关键指标每步记录：打扰窗口 / 归还耗时 / LLM 延迟 / verdict。
+
+        disturb_ms 是对外要报的那个数（动作 + 归还，不含任何校验读取）；
+        restore_total_ms 含校验开销，只用来看仪表本身有多贵。
+        """
         row = {"step": n, **kw}
         self.metrics.append(row)
         if self.enabled:

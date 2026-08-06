@@ -85,7 +85,11 @@ def parse_plan(raw: str, items: list[Item]) -> Plan:
         if not isinstance(target, int):
             raise PlannerError("target 必须是整数短 ID")
         if not any(i.sid == target for i in items):
-            raise PlannerError(f"target {target} 不在本轮 observation 的短 ID 中")
+            # 带上有效范围：这条错误会被回灌给 LLM 让它重来一次，
+            # 只说"不存在"它下一轮还是在猜
+            rng = f"0–{items[-1].sid}" if items else "本轮没有可用条目"
+            raise PlannerError(
+                f"target {target} 不在本轮 observation 的短 ID 中（有效范围 {rng}）")
     value = d.get("value")
     if action == "set_text" and not isinstance(value, str):
         raise PlannerError("set_text 必须带字符串 value")
@@ -181,6 +185,48 @@ class ScriptedBackend(Backend):
         return json.dumps(d, ensure_ascii=False)
 
 
+class RuleBackend(Backend):
+    """按标签走的固定规则策略层（ARCHITECTURE §2 表里"小参数量本地模型"那一档）。
+
+    与 scripted 的区别：脚本里写的是**语义**（"点那个叫 Dark theme 的 switch"），
+    短 ID 由它每轮从 observation 里现查 —— 因为 sid 每轮重新分配，写死会指错。
+    没有 API key 时用它把 loop 与落盘完整跑通。
+
+    步骤形如：{"action": "click", "label": "Dark theme", "kind": "switch"}
+    """
+
+    name = "rule"
+    ITEM_RE = re.compile(r"^\[(\d+)\]\s+(.*?)\s+\|\s+(\w+)", re.M)
+
+    def __init__(self, steps: list[dict]):
+        self.steps = list(steps)
+        self.i = 0
+
+    def complete(self, system: str, user: str) -> str:
+        if self.i >= len(self.steps):
+            return json.dumps({"thought": "规则脚本已跑完", "action": "finish", "done": True},
+                              ensure_ascii=False)
+        step = dict(self.steps[self.i])
+        self.i += 1
+        label = step.pop("label", None)
+        kind = step.pop("kind", None)
+        if label is not None:
+            hit = None
+            for sid, lbl, k in self.ITEM_RE.findall(user):
+                if lbl.strip() == label and (kind is None or k == kind):
+                    hit = int(sid)
+                    break
+            if hit is None:
+                # 找不到就如实返回一个不合法的目标，让解析层报错、loop 记录 ——
+                # 不猜一个"看起来差不多"的 ID，那会把定位错误伪装成规划错误
+                return json.dumps({"thought": f"当前界面找不到 {label!r}({kind})",
+                                   "action": step.get("action", "click"),
+                                   "target": -1}, ensure_ascii=False)
+            step["target"] = hit
+        step.setdefault("thought", f"规则脚本第 {self.i} 步")
+        return json.dumps(step, ensure_ascii=False)
+
+
 class Planner:
     def __init__(self, backend: Backend, politeness: str = config.POLITENESS):
         self.backend = backend
@@ -219,6 +265,8 @@ def make_planner(provider: str = config.LLM_PROVIDER, model: str = config.MODEL,
                  politeness: str = config.POLITENESS) -> Planner:
     if provider == "scripted":
         return Planner(ScriptedBackend(script or []), politeness)
+    if provider == "rule":
+        return Planner(RuleBackend(script or []), politeness)
     if provider == "anthropic":
         return Planner(AnthropicBackend(model, base_url=config.LLM_BASE_URL), politeness)
     if provider == "openai":

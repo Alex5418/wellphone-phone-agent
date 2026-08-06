@@ -1,0 +1,8 @@
+{
+  "result": "PASS",
+  "predicate": "checked_flips",
+  "detail": "checked False → True",
+  "notes": [
+    "post_state 与独立 probe 不一致: found: act=False probe=True"
+  ]
+}

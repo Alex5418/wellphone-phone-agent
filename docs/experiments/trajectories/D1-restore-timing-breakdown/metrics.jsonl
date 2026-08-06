@@ -1,0 +1,1 @@
+{"step": 1, "action": "click", "target": 6, "verdict": "PASS", "restore_ok": true, "restore_focus_ms": 3191, "restore_total_ms": 3307, "disturb_ms": 3335, "action_ms": 144, "total_ms": 3454, "llm_ms": 0}

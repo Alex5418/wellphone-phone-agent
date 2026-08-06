@@ -91,7 +91,7 @@ def build_observation(task: str, env: EnvState, items: list[Item],
     focus_line = f"- 主屏焦点: {env.primary_focus_pkg or '无'}"
     if last and last.result and last.result.restore_attempted:
         if last.result.restore_ok:
-            focus_line += f" · 已归还 ({last.result.restore_ms} ms)"
+            focus_line += f" · 已归还 ({last.result.restore_focus_ms} ms)"
         else:
             focus_line += " · ⚠ 归还失败"
     out.append(focus_line)

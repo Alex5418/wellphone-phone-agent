@@ -1,0 +1,1 @@
+{"action": "finish", "done": true, "thought": "规则脚本第 3 步"}

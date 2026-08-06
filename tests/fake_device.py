@@ -302,14 +302,18 @@ class FakeTransport:
             "resolved": {"found": loc is None or idx is not None, "candidates": cands,
                          "class": self.nodes[idx]["class"] if idx is not None else None},
             "action_ok": ok,
+            # focus_ms 是打扰窗口，verify_ms 是校验开销 —— 设备侧刻意分开上报，
+            # 免得头条数字被自己的仪表拖大
             "restore": ({"attempted": True, "ok": self.restore_ok, "retried": False,
-                         "ms": 12, "holder_after": self.primary_pkg if self.restore_ok else self.pkg,
+                         "focus_ms": 12, "verify_ms": 18, "total_ms": 30,
+                         "holder_after": self.primary_pkg if self.restore_ok else self.pkg,
                          "expect_pkg": self.primary_pkg}
                         if restore else {"attempted": False, "reason": "restore=false"}),
             "post_state": self._node_state(idx, cands) if verify_read else {"found": False},
             "window_after": {"display": display, "pkg": self.pkg,
                              "activity": self.activity, "window_count": 1},
-            "timing": {"action_ms": 56, "restore_ms": 12, "total_ms": 68},
+            "timing": {"action_ms": 56, "disturb_ms": 68, "restore_focus_ms": 12,
+                       "restore_total_ms": 30, "total_ms": 95},
         }
         self.last_response = {"ok": True, "data": resp}
         return resp

@@ -189,13 +189,19 @@ class ActionResult:
     action_ok: bool
     restore_attempted: bool
     restore_ok: bool | None
-    restore_ms: int | None
+    # 打扰窗口（重解析 + ACTION_FOCUS），与 E6 的纯 ACTION_FOCUS 耗时可比。
+    # **不含**校验窗口持有者的开销 —— 那部分发生在焦点已经还回去之后。
+    restore_focus_ms: int | None
+    restore_total_ms: int | None
     restore_retried: bool
     holder_after: str | None
     post_state: dict
     window_after: dict
     timing: dict
     candidates: int = 0
+    restore_expect_pkg: str | None = None
+    # 归还结论由谁给出：device（a11y 自报）/ dumpsys（PC 侧交叉校验）/ None（无法确认）
+    restore_confirmed_by: str | None = None
     error: str | None = None
     raw: dict = field(default_factory=dict)
 
@@ -208,9 +214,12 @@ class ActionResult:
             action_ok=bool(d.get("action_ok")),
             restore_attempted=bool(r.get("attempted")),
             restore_ok=r.get("ok") if r.get("attempted") else None,
-            restore_ms=r.get("ms"),
+            restore_focus_ms=r.get("focus_ms"),
+            restore_total_ms=r.get("total_ms"),
             restore_retried=bool(r.get("retried")),
             holder_after=r.get("holder_after"),
+            restore_expect_pkg=r.get("expect_pkg"),
+            restore_confirmed_by="device" if r.get("ok") is not None else None,
             post_state=d.get("post_state") or {},
             window_after=d.get("window_after") or {},
             timing=d.get("timing") or {},

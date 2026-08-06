@@ -16,8 +16,17 @@ CONNECT_RETRY = 2  # 连接失败时重建 adb forward 并重试的次数
 MAX_STEPS = 25
 WAIT_INTERVAL_S = 1.5
 MAX_ITEMS_SHOWN = 40
+# 动作到界面稳定之间隔着一段动画。首次真机跑就踩到：scroll 之后立刻读 tree_hash，
+# 读到的还是滚动前那一帧 → 判成"没生效"，而下一轮观测里明明已经滚过去了。
+# 读太早会把成功读成失败，所以验证前先等一小会儿。
+# 这不是在放水：它只是把读取放在正确的时刻，判据本身一个字没松。
+SETTLE_MS = 400
 TREE_DEPTH_LIMIT = 25
 MAX_CONSECUTIVE_FAIL = 3      # 连续 FAIL 达此数则中止（疑似卡死）
+# 连续「环境毫无变化」达此数则中止。与上面那条是两个不同的判据：
+# FAIL 依赖判据推断准不准，这一条只看 tree_hash 与 activity 有没有动 ——
+# LLM 反复点一个什么都不做的东西时，每步都是 UNKNOWN，FAIL 计数永远是 0。
+MAX_CONSECUTIVE_STALL = 4
 MAX_PARSE_FAIL = 2            # LLM 输出连续解析失败达此数则中止
 
 # ---- 目标 ----

@@ -10,6 +10,7 @@ import os
 import tempfile
 import unittest
 
+from harness import config
 from harness.compress import compress
 from harness.loop import Loop
 from harness.observe import build_observation, self_check
@@ -22,8 +23,10 @@ from tests.fake_device import FakeTransport
 class Script:
     def __init__(self, plans):
         self.plans = list(plans)
+        self.prompts: list[str] = []      # 记下每次喂给"模型"的正文，供回灌断言用
 
     def complete(self, system, user):
+        self.prompts.append(user)
         if not self.plans:
             return json.dumps({"action": "finish", "done": True})
         return json.dumps(self.plans.pop(0), ensure_ascii=False)
@@ -44,7 +47,7 @@ class TestLoop(unittest.TestCase):
         ]))
         with tempfile.TemporaryDirectory() as d:
             trace = Trace("关闭深色主题", root=d)
-            res = Loop(tp, planner, trace=trace, cross_check=False).run("关闭深色主题")
+            res = Loop(tp, planner, trace=trace, cross_check=False, settle_ms=0).run("关闭深色主题")
 
             self.assertEqual(res.status, "done", res.reason)
             # 开关真的翻转了，且判据是 PASS
@@ -71,7 +74,7 @@ class TestLoop(unittest.TestCase):
         tp.restore_ok = False
         sid = sid_of(tp, "深色主题", "switch")
         planner = Planner(Script([{"action": "click", "target": sid}]))
-        res = Loop(tp, planner, trace=None, cross_check=False).run("关闭深色主题")
+        res = Loop(tp, planner, trace=None, cross_check=False, settle_ms=0).run("关闭深色主题")
         step = res.steps[0]
         self.assertFalse(step.result.restore_ok)
         self.assertIn("归还失败", step.summarize())
@@ -91,11 +94,68 @@ class TestLoop(unittest.TestCase):
         tp.dumb = {10}
         sid = sid_of(tp, "深色主题", "switch")
         planner = Planner(Script([{"action": "click", "target": sid}] * 6))
-        res = Loop(tp, planner, trace=None, cross_check=False).run("点一个哑开关")
+        res = Loop(tp, planner, trace=None, cross_check=False, settle_ms=0).run("点一个哑开关")
         self.assertEqual(res.status, "aborted")
         self.assertIn("卡死", res.reason)
         self.assertEqual(len(res.steps), 3)
         self.assertTrue(all(s.verdict.result == "FAIL" for s in res.steps))
+
+    def test_stall_aborts_even_when_every_verdict_is_unknown(self):
+        """最可能的卡死形态：LLM 反复点一个什么都不做的东西。
+
+        这种情况下判据返回的是 UNKNOWN（正确 —— 分不出哑动作与本来就无副作用），
+        所以 FAIL 计数永远是 0。必须有一条只看环境的独立判据兜住，
+        否则就是安安静静跑满 max_steps。
+        """
+        tp = FakeTransport()
+        sid = sid_of(tp, "网络和互联网", "button")
+        tp.dumb = {4}                       # 点了没反应，且 activity 不变
+        tp.activity = "com.android.settings.Settings"
+        planner = Planner(Script([{"action": "click", "target": sid}] * 10))
+        res = Loop(tp, planner, trace=None, cross_check=False, settle_ms=0).run("点一个不动的东西")
+
+        self.assertEqual(res.status, "aborted")
+        self.assertIn("界面毫无变化", res.reason)
+        self.assertEqual(len(res.steps), config.MAX_CONSECUTIVE_STALL)
+        # 关键：没有任何一步是 FAIL —— 老的计数器根本不会触发
+        self.assertTrue(all(s.verdict.result == "UNKNOWN" for s in res.steps),
+                        [s.verdict.result for s in res.steps])
+
+    def test_wait_does_not_count_as_stall(self):
+        """用户正在输入时界面不变是预期的，让路不该被算成卡死。"""
+        tp = FakeTransport()
+        tp.ime_present = True
+        planner = Planner(Script([{"action": "wait"}] * 10))
+        import harness.loop as loopmod
+        orig, loopmod.time.sleep = loopmod.time.sleep, lambda s: None
+        try:
+            res = Loop(tp, planner, trace=None, max_steps=8, cross_check=False, settle_ms=0).run("等")
+        finally:
+            loopmod.time.sleep = orig
+        self.assertEqual(res.status, "exhausted")     # 跑满，而不是被判卡死
+        self.assertNotIn("卡死", res.reason)
+
+    def test_unknown_sid_tells_llm_the_valid_range(self):
+        """短 ID 不存在时，回灌给 LLM 的错误必须带上有效范围。
+
+        只说"不存在"，它下一轮还是在猜。这条错在解析层就被挡下了
+        （loop 里的同名兜底因此基本走不到），所以范围要写在解析器的报错里。
+        """
+        tp = FakeTransport()
+        items = compress(build_tree(tp.observe(tp.secondary)))
+        script = Script([{"action": "click", "target": 99},
+                         {"action": "click", "target": 0},
+                         {"action": "finish", "done": True}])
+        planner = Planner(script)
+        res = Loop(tp, planner, trace=None, cross_check=False, settle_ms=0).run("点不存在的 ID")
+
+        self.assertEqual(res.status, "done")
+        # 第二次尝试用的提示里带了范围
+        retry_prompt = script.prompts[1]
+        self.assertIn("99 不在本轮", retry_prompt)
+        self.assertIn(f"有效范围 0–{items[-1].sid}", retry_prompt)
+        # 纠正后正常下发，没有把错误的 ID 发到设备上
+        self.assertEqual(len(tp.acts), 1)
 
     def test_back_needs_no_target(self):
         """BACK 走 performGlobalAction，没有目标节点 —— locator 必须允许缺席。
@@ -106,7 +166,7 @@ class TestLoop(unittest.TestCase):
         tp = FakeTransport()
         planner = Planner(Script([{"action": "back"},
                                   {"action": "finish", "done": True}]))
-        res = Loop(tp, planner, trace=None, cross_check=False).run("退回上一页")
+        res = Loop(tp, planner, trace=None, cross_check=False, settle_ms=0).run("退回上一页")
         self.assertEqual(res.status, "done")
         self.assertEqual(len(tp.acts), 1)
         self.assertIsNone(tp.acts[0]["locator"])
@@ -117,7 +177,7 @@ class TestLoop(unittest.TestCase):
         tp = FakeTransport(secondary=6)
         tp.pkg = "com.android.chrome"      # 副屏上不是目标 app
         planner = Planner(Script([{"action": "click", "target": 0}]))
-        res = Loop(tp, planner, trace=None, cross_check=False).run("t")
+        res = Loop(tp, planner, trace=None, cross_check=False, settle_ms=0).run("t")
         self.assertEqual(res.status, "aborted")
         self.assertIn("target_app_not_on_secondary", res.reason)
         self.assertEqual(tp.acts, [])      # 一个动作都不许发
@@ -129,7 +189,7 @@ class TestLoop(unittest.TestCase):
         planner = Planner(Script([{"action": "wait"}, {"action": "finish", "done": True}]))
         orig, loopmod.time.sleep = loopmod.time.sleep, lambda s: None
         try:
-            res = Loop(tp, planner, trace=None, cross_check=False).run("等一下")
+            res = Loop(tp, planner, trace=None, cross_check=False, settle_ms=0).run("等一下")
         finally:
             loopmod.time.sleep = orig
         self.assertEqual(res.status, "done")

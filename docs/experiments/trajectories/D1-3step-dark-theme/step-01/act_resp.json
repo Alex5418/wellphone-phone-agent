@@ -1,0 +1,61 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L1",
+    "class": "androidx.recyclerview.widget.RecyclerView",
+    "resource_id": "com.android.settings:id/recycler_view",
+    "anchor_class": "androidx.recyclerview.widget.RecyclerView"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 12,
+    "verify_ms": 1,
+    "total_ms": 13,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": false,
+    "node_refound": true,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": "com.android.chrome:id/feed_stream_recycler_view",
+      "class": "androidx.recyclerview.widget.RecyclerView",
+      "editable": false,
+      "window_id": 174
+    }
+  },
+  "post_state": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "class": "androidx.recyclerview.widget.RecyclerView",
+    "resource_id": "com.android.settings:id/recycler_view",
+    "text": null,
+    "raw_text": null,
+    "content_desc": null,
+    "checkable": false,
+    "checked": false,
+    "enabled": true,
+    "focused": false,
+    "selected": false
+  },
+  "window_after": {
+    "display": 2,
+    "pkg": "com.android.settings",
+    "activity": "com.android.settings.SubSettings",
+    "window_count": 1
+  },
+  "timing": {
+    "action_ms": 4,
+    "disturb_ms": 16,
+    "restore_focus_ms": 12,
+    "restore_total_ms": 13,
+    "total_ms": 21
+  }
+}
