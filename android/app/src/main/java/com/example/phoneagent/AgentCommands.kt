@@ -213,6 +213,9 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
             .put("visible", n.isVisibleToUser)
             // 空 EditText 的 text 是 hint（已知坑），显式带出来供 Python 侧判"是否真的填了字"
             .put("hint_text", n.isShowingHintText)
+            // 光标/选区。中文输入法的 composing 态全靠它判断"光标有没有跳"
+            .put("sel_start", n.textSelectionStart)
+            .put("sel_end", n.textSelectionEnd)
             .put("actions", JSONArray(Snapshot.actionNames(n)))
         if (withBounds) {
             val r = Snapshot.boundsOf(n)
@@ -247,6 +250,8 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
             .put("enabled", n.isEnabled)
             .put("focused", n.isFocused)
             .put("selected", n.isSelected)
+            .put("sel_start", n.textSelectionStart)
+            .put("sel_end", n.textSelectionEnd)
     }
 
     // ---------------------------------------------------------------- act

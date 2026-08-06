@@ -37,6 +37,7 @@ docs/
 | [D2-LLM-REAL-RUN.md](experiments/D2-LLM-REAL-RUN.md) | 换成真实模型护栏还成立吗 | 成立，护栏一行没改。deepseek-v4-flash 3 步完成任务并独立验证；模型自己选择 wait 让路；撞上 ⛔ 时一步收尾报 impossible |
 | [E7-KEYSTROKE-LANDING.md](experiments/E7-KEYSTROKE-LANDING.md) | 打扰窗口里用户敲的字去了哪 | **bug 是真的**：不归还时 120 字里 56 个进 agent 工作区且无上界；归还后压到 6 个（≈ 窗口÷打字速率），**有界但不为零**；最坏情况丢 129/200 |
 | [E8-SOFT-KEYBOARD.md](experiments/E8-SOFT-KEYBOARD.md) | 软键盘下还会污染吗 | **不会，一次都没有**。点屏幕这一下自己把焦点带回来，`restore=false` 也无损。E7 的污染结论**限外接键盘**；软键盘的现实风险是全局配置变更下丢 40% 击键 |
+| [E9-PINYIN-COMPOSING.md](experiments/E9-PINYIN-COMPOSING.md) | 中文拼音连打时后台跑 agent | **归还与否是质变**：不归还时未上屏的拼音被强制提交、候选上下文清零、丢 7 个字母；归还时整串 composing 完好、候选长到「中中华人民共和国」。且破坏程度**与窗口长短无关** |
 
 完整 trajectory 在 [`experiments/trajectories/`](experiments/trajectories/) —— 一次完整的
 observation / LLM 输出 / act 请求响应 / 独立 probe / verdict，逐步落盘。

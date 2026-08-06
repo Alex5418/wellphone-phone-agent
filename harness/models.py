@@ -27,6 +27,8 @@ class Node:
     bounds: tuple[int, int, int, int] | None
     actions: list[str]
     hint_text: bool = False   # text 其实是 hint（空 EditText 的已知坑）
+    sel_start: int = -1       # 光标/选区，用于判断光标有没有跳
+    sel_end: int = -1
 
     @property
     def interactive(self) -> bool:
@@ -60,6 +62,8 @@ class Node:
             bounds=tuple(b) if b else None,   # type: ignore[arg-type]
             actions=list(d.get("actions") or []),
             hint_text=bool(d.get("hint_text")),
+            sel_start=int(d.get("sel_start", -1) or -1),
+            sel_end=int(d.get("sel_end", -1) or -1),
         )
 
 
