@@ -1,0 +1,16 @@
+## 任务
+把屏幕超时时间设置为 30 秒
+
+## 环境状态
+- 副屏: display 2 · com.android.settings ✓
+- 主屏焦点: 无
+- 用户输入中: 否
+- ⚠ 环境异常: 主屏当前没有输入焦点持有者
+
+## 当前界面
+[0] （可滚动区域：Display…） | list
+[1] Navigate up | button
+[2] （可滚动区域：Brightness…） | list
+[3] Brightness level | button | 0%
+[4] Lock screen | button | Show all notification content
+[5] Screen timeout | button | Not set

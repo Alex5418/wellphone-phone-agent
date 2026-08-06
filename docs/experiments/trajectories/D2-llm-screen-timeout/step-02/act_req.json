@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "543fe1609c91",
+  "args": {
+    "display": 2,
+    "locator": {
+      "strategy": "L4",
+      "target": "ancestor_clickable",
+      "text": "30 seconds",
+      "cls": "android.widget.TextView"
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

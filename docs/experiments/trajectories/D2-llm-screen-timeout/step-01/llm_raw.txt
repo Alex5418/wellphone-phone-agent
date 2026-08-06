@@ -1,0 +1,1 @@
+{"thought": "点击 Screen timeout 进入超时选项设置", "action": "click", "target": 5, "value": null, "done": false}

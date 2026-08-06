@@ -1,0 +1,1 @@
+{"thought": "当前界面已打开屏幕超时选项，直接点击30秒即可完成设置。", "action": "click", "target": 3, "value": null, "done": false}

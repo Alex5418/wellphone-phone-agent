@@ -89,7 +89,7 @@ def cmd_act(args) -> int:
     resp = tp.act(sec, item.locator, args.action, args.value, restore=True)
     print(json.dumps(resp, ensure_ascii=False, indent=2))
 
-    time.sleep(config.SETTLE_MS / 1000.0)   # 和 loop 一样：等界面稳定再读
+    time.sleep(config.RECHECK_DELAY_MS / 1000.0)   # 单步调试直接等一次，够用
     probe = tp.probe(sec, item.locator)
     post_tree = build_tree(tp.observe(sec))
     post = Snapshot.from_probe(probe, post_tree.activity, post_tree.tree_hash,
@@ -104,6 +104,8 @@ def cmd_run(args) -> int:
     from .loop import Loop
     tp = _tp(args)
     script = json.loads(args.script) if args.script else None
+    if args.base_url:
+        config.LLM_BASE_URL = args.base_url
     planner = make_planner(args.provider, args.model, script=script,
                            politeness=args.politeness)
     trace = Trace(args.task, enabled=not args.no_trace)
@@ -158,6 +160,9 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--max-steps", type=int, default=config.MAX_STEPS)
     r.add_argument("--provider", default=config.LLM_PROVIDER)
     r.add_argument("--model", default=config.MODEL)
+    r.add_argument("--base-url", default=config.LLM_BASE_URL,
+                   help="OpenAI 兼容端点，如 https://api.deepseek.com。"
+                        "不设会把 key 发给 api.openai.com 然后 401")
     r.add_argument("--politeness", default=config.POLITENESS,
                    choices=["off", "normal", "patient"])
     r.add_argument("--script", default=None,

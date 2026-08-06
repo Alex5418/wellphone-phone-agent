@@ -269,6 +269,7 @@ def compress(tree: Tree, max_items: int = config.MAX_ITEMS_SHOWN) -> list[Item]:
             onscreen=onscreen(n.bounds, screen),
             checked=n.checked if n.checkable else None,
             text_value=n.effective_text if kind == "input" else None,
+            res_id=n.resource_id,
         ))
     return items
 

@@ -51,9 +51,11 @@ def build_tree(data: dict) -> Tree:
         truncated=bool(data.get("truncated")),
         reduced=bool(data.get("reduced")),
     )
-    if not tree.reduced:
-        # reduced 响应丢了节点，hash 是按完整树算的，跳过比对
-        tree.hash_mismatch = bool(device_hash) and local_tree_hash(nodes) != device_hash
+    if not device_hash or tree.reduced:
+        # 没给 hash / reduced 响应丢了节点 —— 都是"无从比对"，记 None 不记 False
+        tree.hash_mismatch = None
+    else:
+        tree.hash_mismatch = local_tree_hash(nodes) != device_hash
     return tree
 
 

@@ -1,0 +1,8 @@
+{
+  "result": "PASS",
+  "predicate": "activity_or_tree_changes",
+  "detail": "界面内容已变化",
+  "notes": [
+    "首读 UNKNOWN（activity 与界面内容均无变化，无法判定），300ms 后复读 PASS"
+  ]
+}

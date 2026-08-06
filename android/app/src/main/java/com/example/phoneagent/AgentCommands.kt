@@ -84,12 +84,20 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
 
     private fun cmdState(): JSONObject {
         val displays = JSONArray()
-        var imePresent = false
+        // 三值：true 有 IME / false 没有 / null 连 display 0 的窗口都读不到，无从判断。
+        // 读不到就报 false 等于告诉 PC 侧"用户没在打字"—— 那是把仪表的失败
+        // 说成了被测对象的状态，是这套 harness 里反复出现的同一类错。
+        var imePresent: Boolean? = null
         var imePkg: String? = null
 
         for (id in Snapshot.displayIds(svc)) {
             val wins = JSONArray()
-            for (w in Snapshot.windowsOf(svc, id, includeIme = true)) {
+            val windows = Snapshot.windowsOf(svc, id, includeIme = true)
+            // 能枚举到窗口 = 有资格判断有没有 IME；枚举不到才是 null
+            if (id == PRIMARY_DISPLAY && windows.isNotEmpty() && imePresent == null) {
+                imePresent = false
+            }
+            for (w in windows) {
                 val pkg = w.root?.packageName?.toString()
                 if (w.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
                     if (id == PRIMARY_DISPLAY) {
@@ -125,7 +133,7 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
         return JSONObject()
             .put("displays", displays)
             .put("primary_focus", primary)
-            .put("ime_present", imePresent)
+            .put("ime_present", imePresent ?: JSONObject.NULL)
             .put("ime_pkg", imePkg ?: JSONObject.NULL)
     }
 

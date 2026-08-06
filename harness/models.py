@@ -121,11 +121,16 @@ class Item:
     onscreen: bool = True
     checked: bool | None = None
     text_value: str | None = None
+    res_id: str | None = None
+    # 非 None = 被排除出动作空间，值是原因。护栏判定，LLM 不能推翻
+    blocked: str | None = None
 
     def render(self) -> str:
         line = f"[{self.sid}] {self.label or '(无文字)'} | {self.kind}"
         if self.state:
             line += f" | {self.state}"
+        if self.blocked:
+            line += f" | ⛔ 不可操作：{self.blocked}"
         return line
 
 
@@ -139,7 +144,9 @@ class Tree:
     window_count: int = 1
     truncated: bool = False
     reduced: bool = False
-    hash_mismatch: bool = False   # Python 侧复算与设备侧不一致
+    # 三值：True=对不上，False=对得上，None=设备没给 hash，无从比对。
+    # 不许折叠成布尔 —— 「读不到」不是「没问题」。
+    hash_mismatch: bool | None = None
 
     def __post_init__(self) -> None:
         self._children: dict[int, list[int]] = {}
@@ -176,7 +183,7 @@ class EnvState:
     secondary_display: int | None
     secondary_pkg: str | None
     primary_focus_pkg: str | None
-    ime_present: bool
+    ime_present: bool | None   # None = 读不到 display 0 的窗口，无从判断
     tree_hash: str
     anomalies: list[str] = field(default_factory=list)
     fatal: bool = False
@@ -235,6 +242,9 @@ class Plan:
     target: int | None
     value: str | None
     done: bool
+    # "achieved" | "impossible"。收尾不等于成功 —— 任务做不成也要收尾，
+    # 把两者都记成 done 是在把结果报得比实际好
+    outcome: str = "achieved"
     raw: str = ""
 
 

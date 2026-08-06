@@ -32,7 +32,7 @@ cd android && ./gradlew :app:installDebug
 adb forward tcp:8760 localabstract:phoneagent
 
 # 4. 分阶段自验（HARNESS-SPEC §10）
-python -m harness.cli selftest                          # 离线，46 条，不需要设备
+python -m harness.cli selftest                          # 离线，61 条，不需要设备
 python -m harness.cli state                             # 阶段 1
 python -m harness.cli observe --locators                # 阶段 2/3
 python -m harness.cli act --sid 5 --action click        # 阶段 4/5，不经过 LLM
@@ -49,7 +49,8 @@ python -m harness.cli run "在设置中关闭深色主题" --verbose  # 阶段 8
 | provider | 环境变量 | 说明 |
 |---|---|---|
 | `anthropic` | `ANTHROPIC_API_KEY` | 默认 |
-| `openai` | `OPENAI_API_KEY` / `DEEPSEEK_API_KEY` + `PHONEAGENT_BASE_URL` | OpenAI 兼容端点（DeepSeek / Qwen / 本地 vLLM） |
+| `openai` | `OPENAI_API_KEY` / `DEEPSEEK_API_KEY` + `--base-url` | OpenAI 兼容端点（DeepSeek / Qwen / 本地 vLLM）。**不传 base-url 会把 key 发去 api.openai.com 然后 401** |
+| `rule` | 无 | 按标签走的固定规则，sid 每轮现查（ARCHITECTURE §2「小参数量模型」那一档） |
 | `scripted` | 无 | `--script '[{"action":"click","target":2}]'`，没有 key 也能跑通 loop 与落盘 |
 
 ```bash

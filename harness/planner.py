@@ -36,10 +36,16 @@ SYSTEM_PROMPT = """你在通过一个受控 harness 操作一台 Android 设备�
 - 一次只做一个动作。做完会重新观测，你会看到结果。
 - 同一句文字可能出现两条（如 `button` 与 `switch`）：点 button 通常是进入子页面，
   点 switch 是原地翻转开关。按你的意图选 kind。
+- 标了 ⛔ 的条目**不可操作**，harness 会拒绝执行。别反复尝试，也别绕远路去找替代入口 ——
+  能达成目标的唯一控件被排除，就是任务无法完成。
 - 目标已经达成时输出 {"action": "finish", "done": true}。
+- **任务无法完成时同样输出 finish**，但要带 "outcome": "impossible"，
+  并在 thought 里写清原因。不要长时间纠结：说不通就收尾，这比耗光预算强。
 
 输出格式：
 {"thought": "为什么这么做", "action": "click", "target": 2, "value": null, "done": false}
+结束时：{"thought": "原因", "action": "finish", "done": true, "outcome": "achieved"}
+        outcome 取 "achieved"（目标达成）或 "impossible"（做不成）
 
 action 取值：click / long_click / set_text / scroll_forward / scroll_backward / back / wait / finish
 set_text 必须带 value。其余 value 为 null。
@@ -50,7 +56,15 @@ WAIT_CLAUSE = """- 用户正在输入时，如果本步不紧急，可以输出 
 
 
 class PlannerError(RuntimeError):
-    pass
+    """解析失败时必须把原始输出一起带出来。
+
+    最需要证据的时刻恰恰是失败的时刻 —— 早先这里只抛错误信息，
+    trace 里那一步连 llm_raw.txt 都没有，事后完全无从判断模型到底输出了什么。
+    """
+
+    def __init__(self, msg: str, raws: list[str] | None = None):
+        super().__init__(msg)
+        self.raws = raws or []
 
 
 # ---------------------------------------------------------------- 解析
@@ -93,14 +107,19 @@ def parse_plan(raw: str, items: list[Item]) -> Plan:
     value = d.get("value")
     if action == "set_text" and not isinstance(value, str):
         raise PlannerError("set_text 必须带字符串 value")
+    outcome = str(d.get("outcome") or "achieved").strip().lower()
+    if outcome not in ("achieved", "impossible"):
+        outcome = "achieved"
     return Plan(thought=str(d.get("thought") or ""), action=action, target=target,
-                value=value if isinstance(value, str) else None, done=done, raw=raw)
+                value=value if isinstance(value, str) else None, done=done,
+                outcome=outcome, raw=raw)
 
 
 # ---------------------------------------------------------------- 后端
 
 class Backend:
     name = "base"
+    last_meta: dict | None = None   # 最后一次调用的 finish_reason / token 用量等
 
     def complete(self, system: str, user: str) -> str:
         raise NotImplementedError
@@ -165,7 +184,30 @@ class OpenAIBackend(Backend):
         })
         with urllib.request.urlopen(req, timeout=config.LLM_TIMEOUT_S) as r:
             d = json.loads(r.read().decode("utf-8"))
-        return d["choices"][0]["message"]["content"]
+        choice = d["choices"][0]
+        msg = choice.get("message") or {}
+        content = (msg.get("content") or "").strip()
+        finish = choice.get("finish_reason")
+        usage = d.get("usage") or {}
+        # 推理模型（deepseek-v4-flash 等）把思考过程放在 reasoning_content，
+        # 它同样吃 max_tokens。预算不够时 content 会是**空字符串**而不是报错。
+        self.last_meta = {
+            "finish_reason": finish,
+            "reasoning_tokens": (usage.get("completion_tokens_details") or {})
+                .get("reasoning_tokens"),
+            "completion_tokens": usage.get("completion_tokens"),
+            "reasoning_head": (msg.get("reasoning_content") or "")[:400],
+        }
+        if not content:
+            # 说清楚真正的原因。报成"输出里找不到 JSON 对象"是把仪表的失败
+            # 说成了模型的失败 —— 会让人去改提示词，而问题其实在 max_tokens
+            if finish == "length":
+                raise PlannerError(
+                    f"输出被 max_tokens={config.LLM_MAX_TOKENS} 截断：这是推理模型，"
+                    f"思考过程（{self.last_meta['reasoning_tokens']} tokens）占满了预算，"
+                    f"content 为空。调大 PHONEAGENT_MAX_TOKENS。")
+            raise PlannerError(f"模型返回空 content（finish_reason={finish}）")
+        return content
 
 
 class ScriptedBackend(Backend):
@@ -233,6 +275,7 @@ class Planner:
         self.politeness = politeness
         self.calls = 0
         self.last_latency_ms = 0
+        self.last_meta: dict | None = None
 
     @property
     def system_prompt(self) -> str:
@@ -249,6 +292,7 @@ class Planner:
             raw = self.backend.complete(self.system_prompt, user)
             self.last_latency_ms = int((time.time() - t0) * 1000)
             self.calls += 1
+            self.last_meta = getattr(self.backend, "last_meta", None)
             raws.append(raw)
             try:
                 return parse_plan(raw, items), raws
@@ -257,7 +301,7 @@ class Planner:
                 user = (observation + "\n\n## 上一次输出无法解析\n"
                         f"错误：{e}\n你的输出是：\n{raw}\n\n"
                         "请只输出一个合法的 JSON 对象，不要任何其他内容。")
-        raise PlannerError(f"连续两次解析失败: {last_err}")
+        raise PlannerError(f"连续两次解析失败: {last_err}", raws=raws)
 
 
 def make_planner(provider: str = config.LLM_PROVIDER, model: str = config.MODEL,

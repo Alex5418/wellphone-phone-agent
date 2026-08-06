@@ -15,11 +15,15 @@ from . import adbutil, config
 from .compress import compress
 from .models import ActionResult, Plan, RunResult, Step, Tree
 from .observe import build_observation, self_check
+from .policy import ActionPolicy
 from .planner import Planner, PlannerError
 from .trace import Trace
 from .transport import Transport, TransportError
 from .tree import build_tree
 from .verify import Snapshot, cross_check_post_state, verify
+
+
+SEP_RAW = chr(10) + "---" + chr(10)   # 多次尝试之间的分隔
 
 
 class Loop:
@@ -28,7 +32,8 @@ class Loop:
                  max_steps: int = config.MAX_STEPS,
                  trace: Trace | None = None,
                  cross_check: bool = True,
-                 settle_ms: int = config.SETTLE_MS,
+                 recheck_ms: int = config.RECHECK_DELAY_MS,
+                 disturb_budget_ms: int = config.DISTURB_BUDGET_MS,
                  on_event=None):
         self.tp = transport
         self.planner = planner
@@ -36,11 +41,59 @@ class Loop:
         self.max_steps = max_steps
         self.trace = trace
         self.cross_check = cross_check
-        self.settle_ms = settle_ms      # 离线测试传 0，省得每步空等
+        self.recheck_ms = recheck_ms    # 离线测试传 0，省得复读时空等
+        self.policy = ActionPolicy(disturb_budget_ms)
         self.on_event = on_event or (lambda *a, **k: None)
 
     def _emit(self, kind: str, msg: str) -> None:
         self.on_event(kind, msg)
+
+    def _observe(self, display):
+        """带重试的 observe。
+
+        窗口切换的瞬间 display 上可能一个窗口都没有 —— 设备侧如实报 NO_DISPLAY，
+        但那是**过渡态**，不是"副屏没了"。D1 之后的 DeepSeek 实跑就栽在这里：
+        点进子页面的那一瞬观测撞上空窗口期，整个 run 被判定为副屏消失而中止，
+        而那一步其实是成功的。
+        重试若干次仍为空，才是真的没了（比如 scrcpy 被关掉）。
+        """
+        last: Exception | None = None
+        for attempt in range(config.OBSERVE_RETRY + 1):
+            try:
+                return build_tree(self.tp.observe(display))
+            except TransportError as e:
+                last = e
+                if e.code != "NO_DISPLAY":
+                    raise
+                time.sleep(config.OBSERVE_RETRY_DELAY_MS / 1000.0)
+        raise last  # type: ignore[misc]
+
+    def _read_post(self, display, locator):
+        """独立重读一次：目标节点 + 整棵树。返回 (probe, tree|None, err|None)。"""
+        if locator is None:
+            probe = {"found": False, "skipped": "no locator (global action)"}
+        else:
+            try:
+                probe = self.tp.probe(display, locator)
+            except TransportError as e:
+                probe = {"found": False, "error": str(e)}
+        try:
+            return probe, self._observe(display), None
+        except (TransportError, ValueError) as e:
+            return probe, None, f"复观测失败: {e}"
+
+    def _judge(self, item, plan, pre, probe, post_tree, result):
+        post = Snapshot.from_probe(
+            probe,
+            activity=(post_tree.activity if post_tree
+                      else result.window_after.get("activity")),
+            tree_hash=(post_tree.tree_hash if post_tree else None),
+            window_count=(post_tree.window_count if post_tree
+                          else result.window_after.get("window_count")),
+        )
+        if item is None:
+            return verify_back(pre, post, result)
+        return verify(item, plan.action, pre, post, result, plan.value)
 
     def run(self, task: str) -> RunResult:
         history: list[Step] = []
@@ -61,7 +114,7 @@ class Loop:
                     return self._abort(task, history, "环境自检失败: "
                                        + "；".join(env.anomalies))
                 secondary = env.secondary_display
-                tree: Tree = build_tree(self.tp.observe(secondary))
+                tree: Tree = self._observe(secondary)
                 env = self_check(state, self.target_pkg, last_hash, tree, last_claimed_ok,
                                  secondary)
                 if env.fatal:
@@ -70,7 +123,7 @@ class Loop:
             except (TransportError, ValueError) as e:
                 return self._abort(task, history, f"观测失败: {e}")
 
-            items = compress(tree)
+            items = self.policy.annotate(compress(tree))
             obs = build_observation(task, env, items, history,
                                     politeness=self.planner.politeness)
             if self.trace:
@@ -80,7 +133,8 @@ class Loop:
                     "pkg": env.secondary_pkg, "ime_present": env.ime_present,
                     "tree_hash": tree.tree_hash, "hash_mismatch": tree.hash_mismatch,
                     "items": [{"sid": i.sid, "label": i.label, "kind": i.kind,
-                               "state": i.state, "locator": i.locator.to_json()}
+                               "state": i.state, "blocked": i.blocked,
+                               "locator": i.locator.to_json()}
                               for i in items],
                 })
             self._emit("observation", obs)
@@ -92,18 +146,33 @@ class Loop:
             except PlannerError as e:
                 parse_fail += 1
                 self._emit("error", f"LLM 输出解析失败: {e}")
+                if self.trace:
+                    # 失败这一步的原始输出照样落盘，否则事后没法判断模型输出了什么
+                    self.trace.text(step_n, "llm_raw.txt",
+                                    SEP_RAW.join(e.raws) or "(无输出)")
+                    self.trace.json(step_n, "parse_error.json",
+                                    {"error": str(e), "attempts": len(e.raws)})
+                # 记进历史，让下一轮的 LLM 知道自己上一步输出没被接受
+                history.append(Step(step_n, Plan("", "(解析失败)", None, None, False),
+                                    None, None, None, note=f"输出无法解析：{e}"))
                 if parse_fail >= config.MAX_PARSE_FAIL:
                     return self._abort(task, history, f"LLM 输出连续解析失败: {e}")
                 continue
             except Exception as e:  # 网络等
                 return self._abort(task, history, f"LLM 调用失败: {e}")
             if self.trace:
-                self.trace.text(step_n, "llm_raw.txt", "\n---\n".join(raws))
+                self.trace.text(step_n, "llm_raw.txt", SEP_RAW.join(raws))
+                if self.planner.last_meta:
+                    self.trace.json(step_n, "llm_meta.json", self.planner.last_meta)
             self._emit("plan", f"{plan.action} target={plan.target} :: {plan.thought}")
 
             if plan.action == "finish" or plan.done:
-                history.append(Step(step_n, plan, None, None, None, note="判定任务完成"))
-                return self._finish(task, history, "done", plan.thought or "LLM 判定任务完成")
+                impossible = plan.outcome == "impossible"
+                history.append(Step(step_n, plan, None, None, None,
+                                    note="判定任务无法完成" if impossible else "判定任务完成"))
+                return self._finish(task, history,
+                                    "impossible" if impossible else "done",
+                                    plan.thought or "LLM 判定收尾")
 
             if plan.action == "wait":
                 # 这里直接 continue，**不碰 stall 计数**：用户正在输入时界面不变是预期的，
@@ -120,6 +189,16 @@ class Loop:
                 rng = f"0–{items[-1].sid}" if items else "本轮无可用条目"
                 history.append(Step(step_n, plan, None, None, None,
                                     note=f"短 ID {plan.target} 不存在（本轮有效范围 {rng}）"))
+                continue
+
+            # 护栏：被排除的目标一个动作都不许发。LLM 看得见排除理由，但推翻不了
+            if item is not None and item.blocked:
+                consecutive_stall += 1
+                history.append(Step(step_n, plan, item, None, None,
+                                    note=f"⛔ 拒绝执行：{item.blocked}"))
+                self._emit("blocked", f"{item.label}: {item.blocked}")
+                if consecutive_stall >= config.MAX_CONSECUTIVE_STALL:
+                    return self._abort(task, history, "反复选择已排除的目标")
                 continue
 
             # ---------- 执行（护栏：动作与归还原子绑定） ----------
@@ -139,32 +218,34 @@ class Loop:
                 self.trace.json(step_n, "act_req.json", self.tp.last_request)
                 self.trace.json(step_n, "act_resp.json", resp)
 
-            # ---------- 验证（护栏：独立重读，不复用 act 的判断） ----------
-            # 先让界面稳定下来再读，否则读到的是动画中间帧（见 config.SETTLE_MS）
-            time.sleep(self.settle_ms / 1000.0)
-            if locator is None:
-                probe = {"found": False, "skipped": "no locator (global action)"}
-            else:
-                try:
-                    probe = self.tp.probe(secondary, locator)
-                except TransportError as e:
-                    probe = {"found": False, "error": str(e)}
-            post_tree = None
             notes: list[str] = []
-            try:
-                post_tree = build_tree(self.tp.observe(secondary))
-            except (TransportError, ValueError) as e:
-                notes.append(f"复观测失败: {e}")
 
-            post = Snapshot.from_probe(
-                probe,
-                activity=(post_tree.activity if post_tree else result.window_after.get("activity")),
-                tree_hash=(post_tree.tree_hash if post_tree else None),
-                window_count=(post_tree.window_count if post_tree
-                              else result.window_after.get("window_count")),
-            )
-            verdict = verify(item, plan.action, pre, post, result, plan.value) if item else \
-                verify_back(pre, post, result)
+            # 打扰窗口预算：与语言、与 app 都无关的实测判据。
+            # 超预算的目标本轮拉黑 —— 静态名单必然漏，这一条兜住漏掉的。
+            over = self.policy.record_disturbance(item, result.timing.get("disturb_ms")) \
+                if item else None
+            if over:
+                notes.append(over)
+                self._emit("blocked", over)
+
+            # ---------- 验证（护栏：独立重读，不复用 act 的判断） ----------
+            # 先无延时读一次；没看到预期变化才等一下复读。
+            # 快动作不付延时税，慢动作也不会被读成失败 ——
+            # 而且「复读一次仍未变」比「等固定时长后读一次」是更强的证据。
+            probe, post_tree, read_err = self._read_post(secondary, locator)
+            if read_err:
+                notes.append(read_err)
+            verdict = self._judge(item, plan, pre, probe, post_tree, result)
+            if verdict.result != "PASS":
+                time.sleep(self.recheck_ms / 1000.0)
+                probe2, post_tree2, err2 = self._read_post(secondary, locator)
+                verdict2 = self._judge(item, plan, pre, probe2, post_tree2, result)
+                if verdict2.result != verdict.result:
+                    notes.append(f"首读 {verdict.result}（{verdict.detail}），"
+                                 f"{self.recheck_ms}ms 后复读 {verdict2.result}")
+                probe, verdict = probe2, verdict2
+                if post_tree2 is not None:
+                    post_tree = post_tree2
 
             mism = cross_check_post_state(result, probe)
             if mism:

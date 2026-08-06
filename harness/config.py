@@ -16,11 +16,19 @@ CONNECT_RETRY = 2  # 连接失败时重建 adb forward 并重试的次数
 MAX_STEPS = 25
 WAIT_INTERVAL_S = 1.5
 MAX_ITEMS_SHOWN = 40
-# 动作到界面稳定之间隔着一段动画。首次真机跑就踩到：scroll 之后立刻读 tree_hash，
-# 读到的还是滚动前那一帧 → 判成"没生效"，而下一轮观测里明明已经滚过去了。
-# 读太早会把成功读成失败，所以验证前先等一小会儿。
-# 这不是在放水：它只是把读取放在正确的时刻，判据本身一个字没松。
-SETTLE_MS = 400
+# 验证读取的复读延时。**不是**每步都等 ——
+# 先无延时读一次，PASS 就走快路径（零成本）；只有没看到预期变化时才等这么久再读一次。
+# 「复读一次仍未变」比「等固定时长后读一次」是更强的证据，而且快动作不用付延时税。
+RECHECK_DELAY_MS = 300
+
+# 窗口切换的瞬间副屏可能一个窗口都没有。那是过渡态，不是"副屏消失"——
+# 重试这么多次仍为空才当真（scrcpy 被关掉那种）。
+OBSERVE_RETRY = 3
+OBSERVE_RETRY_DELAY_MS = 250
+
+# 打扰窗口预算（ms）。超过即认为"用户交互被中断"，该目标本轮拉黑并上报。
+# 依据：D1 实测滚动 12ms、全局配置变更 2526ms —— 中间没有灰色地带。
+DISTURB_BUDGET_MS = 500
 TREE_DEPTH_LIMIT = 25
 MAX_CONSECUTIVE_FAIL = 3      # 连续 FAIL 达此数则中止（疑似卡死）
 # 连续「环境毫无变化」达此数则中止。与上面那条是两个不同的判据：
@@ -42,7 +50,8 @@ POLITENESS = os.environ.get("PHONEAGENT_POLITENESS", "normal")
 LLM_PROVIDER = os.environ.get("PHONEAGENT_LLM_PROVIDER", "anthropic")
 MODEL = os.environ.get("PHONEAGENT_MODEL", "claude-sonnet-4-5")
 LLM_BASE_URL = os.environ.get("PHONEAGENT_BASE_URL", "")  # OpenAI 兼容端点（DeepSeek 等）
-LLM_MAX_TOKENS = 1024
+# 推理模型的思考过程也吃这个预算：1024 时 deepseek-v4-flash 的 content 直接是空的
+LLM_MAX_TOKENS = int(os.environ.get("PHONEAGENT_MAX_TOKENS", "4096"))
 LLM_TIMEOUT_S = 60.0
 
 # ---- 落盘 ----

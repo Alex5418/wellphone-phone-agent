@@ -1,0 +1,29 @@
+{
+  "task": "把屏幕超时时间改成 1 分钟",
+  "status": "done",
+  "reason": "任务目标是将屏幕超时时间改为1分钟，上一步点击1 minute已生效，设置已完成。",
+  "elapsed_s": 16.03,
+  "config": {
+    "model": "claude-sonnet-4-5",
+    "provider": "anthropic",
+    "target_pkg": "com.android.settings",
+    "max_steps": 25,
+    "politeness": "normal",
+    "restore": "always (硬编码，无开关)"
+  },
+  "metrics": [
+    {
+      "step": 2,
+      "action": "click",
+      "target": 4,
+      "verdict": "PASS",
+      "restore_ok": true,
+      "restore_focus_ms": 313,
+      "restore_total_ms": 319,
+      "disturb_ms": 330,
+      "action_ms": 17,
+      "total_ms": 340,
+      "llm_ms": 3326
+    }
+  ]
+}

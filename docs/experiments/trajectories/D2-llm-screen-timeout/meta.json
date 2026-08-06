@@ -1,0 +1,42 @@
+{
+  "task": "把屏幕超时时间设置为 30 秒",
+  "status": "done",
+  "reason": "已点击30秒选项并生效，目标达成",
+  "elapsed_s": 9.53,
+  "config": {
+    "model": "claude-sonnet-4-5",
+    "provider": "anthropic",
+    "target_pkg": "com.android.settings",
+    "max_steps": 25,
+    "politeness": "normal",
+    "restore": "always (硬编码，无开关)"
+  },
+  "metrics": [
+    {
+      "step": 1,
+      "action": "click",
+      "target": 5,
+      "verdict": "PASS",
+      "restore_ok": null,
+      "restore_focus_ms": null,
+      "restore_total_ms": null,
+      "disturb_ms": 24,
+      "action_ms": 24,
+      "total_ms": 50,
+      "llm_ms": 2085
+    },
+    {
+      "step": 2,
+      "action": "click",
+      "target": 3,
+      "verdict": "PASS",
+      "restore_ok": null,
+      "restore_focus_ms": null,
+      "restore_total_ms": null,
+      "disturb_ms": 9,
+      "action_ms": 9,
+      "total_ms": 42,
+      "llm_ms": 1738
+    }
+  ]
+}

@@ -20,6 +20,7 @@ _ANOMALY_TEXT = {
     "tree_unchanged_after_action": "上一步动作声称成功，但界面没有任何变化",
     "primary_focus_lost": "主屏当前没有输入焦点持有者",
     "tree_hash_mismatch": "设备返回的 tree_hash 与本地复算不一致（节点数组可能被截断）",
+    "tree_hash_uncomparable": "设备没给 tree_hash，本地复算无从比对（记为未知，不当作正常）",
     "tree_truncated": "节点树超过深度上限被截断",
     "focus_holder_mismatch": "dumpsys 层面的焦点持有者与设备自报的不一致",
     "restore_unverified": "无法从 dumpsys 交叉校验焦点归还（记为未知，不当作成功）",
@@ -60,8 +61,11 @@ def self_check(state: dict, expected_pkg: str, last_hash: str | None,
 
     tree_hash = tree.tree_hash if tree else ""
     if tree is not None:
-        if tree.hash_mismatch:
+        # hash_mismatch 是三值的：True 对不上 / False 对得上 / None 无从比对
+        if tree.hash_mismatch is True:
             anomalies.append("tree_hash_mismatch")
+        elif tree.hash_mismatch is None and tree.tree_hash:
+            anomalies.append("tree_hash_uncomparable")
         if tree.truncated:
             anomalies.append("tree_truncated")
         if last_hash and tree_hash == last_hash and last_action_claimed_ok:
@@ -71,7 +75,8 @@ def self_check(state: dict, expected_pkg: str, last_hash: str | None,
         secondary_display=sec,
         secondary_pkg=sec_pkg,
         primary_focus_pkg=primary_pkg,
-        ime_present=bool(state.get("ime_present")),
+        # 三值透传：设备报 null 表示它自己也不知道
+        ime_present=state.get("ime_present"),
         tree_hash=tree_hash,
         anomalies=anomalies,
         fatal=any(a in FATAL_ANOMALIES for a in anomalies),
@@ -95,7 +100,9 @@ def build_observation(task: str, env: EnvState, items: list[Item],
         else:
             focus_line += " · ⚠ 归还失败"
     out.append(focus_line)
-    out.append(f"- 用户输入中: {'是' if env.ime_present else '否'}")
+    out.append("- 用户输入中: "
+               + ("未知（读不到主屏窗口）" if env.ime_present is None
+                  else ("是" if env.ime_present else "否")))
 
     if last:
         summary = last.summarize()
