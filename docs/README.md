@@ -35,6 +35,7 @@ docs/
 | [C3-EXECUTION.md](experiments/C3-EXECUTION.md) | locator 在执行侧管不管用 | L3/L4/L5 在 Settings 上验证通过；发现 `findByText` 同时匹配 `contentDescription` |
 | [D1-FIRST-REAL-RUN.md](experiments/D1-FIRST-REAL-RUN.md) | harness 端到端跑得起来吗 | 跑通。**打扰窗口不是一个数**：滚动 12 ms，全局配置变更 2526 ms（其中 2962 ms 是重解析阻塞） |
 | [D2-LLM-REAL-RUN.md](experiments/D2-LLM-REAL-RUN.md) | 换成真实模型护栏还成立吗 | 成立，护栏一行没改。deepseek-v4-flash 3 步完成任务并独立验证；模型自己选择 wait 让路；撞上 ⛔ 时一步收尾报 impossible |
+| [E7-KEYSTROKE-LANDING.md](experiments/E7-KEYSTROKE-LANDING.md) | 打扰窗口里用户敲的字去了哪 | **bug 是真的**：不归还时 120 字里 56 个进 agent 工作区且无上界；归还后压到 6 个（≈ 窗口÷打字速率），**有界但不为零**；最坏情况丢 129/200 |
 
 完整 trajectory 在 [`experiments/trajectories/`](experiments/trajectories/) —— 一次完整的
 observation / LLM 输出 / act 请求响应 / 独立 probe / verdict，逐步落盘。

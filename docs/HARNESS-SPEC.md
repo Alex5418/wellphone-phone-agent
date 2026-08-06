@@ -463,7 +463,7 @@ def self_check(state: dict, expected_pkg: str, last_hash: str) -> EnvState
 | 副屏是否存在 | `"secondary_display_missing"` |
 | 副屏 pkg 是否为预期 app | `"target_app_not_on_secondary"` |
 | tree_hash 与上轮相同 且 上一步动作声称成功 | `"tree_unchanged_after_action"` |
-| 主屏无输入焦点持有者 | `"primary_focus_lost"` |
+| 主屏无输入焦点持有者 | `"primary_focus_lost"` —— **E7 实测此状态下击键 100% 落入 agent 工作区**，建议升级为动作前的阻断条件（未实施） |
 
 前两项为致命，应中止 loop 并报告；后两项写进 observation 交由 LLM 判断。
 
