@@ -342,6 +342,16 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
         val actionOk = perform(target, actionId, actionName, value)
         val t1 = SystemClock.elapsedRealtime()
 
+        // 【失败的尝试，留档】曾想在这里就地读一次主屏持有者，用来给"这次动作
+        // 到底有没有夺走焦点"留证据。**做不到**：focusedPkgOnPrimary() 走的是
+        // AccessibilityWindowInfo.isFocused()，那是 per-display 语义 ——
+        // display 0 自己那块屏的焦点窗口始终是原来那个，跨 display group 的抢焦点
+        // 它完全看不见（实测 stole 恒为 false，而同一时刻 dumpsys 显示 display 0
+        // 的 mCurrentFocus 已经变成 null）。
+        // 唯一能看见跨屏抢焦点的是 `dumpsys window displays`，但那要 200-400ms，
+        // 用户下一次点屏幕就把焦点带回来了，读到的永远是"没动"。
+        // 结论：夺焦点这件事只能离线单独验证（E4/B1/E10），不能在动作流中逐次取证。
+
         // ⑥⑦⑧ 归还 + 校验 + 至多重试一次
         //
         // ⚠ 计时必须把「打扰窗口」和「校验开销」分开。
