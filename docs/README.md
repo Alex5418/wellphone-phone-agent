@@ -39,6 +39,7 @@ docs/
 | [E8-SOFT-KEYBOARD.md](experiments/E8-SOFT-KEYBOARD.md) | 软键盘下还会污染吗 | **不会，一次都没有**。点屏幕这一下自己把焦点带回来，`restore=false` 也无损。E7 的污染结论**限外接键盘**；软键盘的现实风险是全局配置变更下丢 40% 击键 |
 | [E9-PINYIN-COMPOSING.md](experiments/E9-PINYIN-COMPOSING.md) | 中文拼音连打时后台跑 agent | **归还与否是质变**：不归还时未上屏的拼音被强制提交、候选上下文清零、丢 7 个字母；归还时整串 composing 完好、候选长到「中中华人民共和国」。且破坏程度**与窗口长短无关** |
 | [E10-COMPOSING-BREAK-CAUSE.md](experiments/E10-COMPOSING-BREAK-CAUSE.md) | 打断中文输入的到底是什么 | **更正 E9**：决定因素是**动作类型**（副屏有无窗口/Activity 变更），不是归还开关。滚动类从不打断；导航点击会打断，归还只降概率不消除。打扰窗口预算管不住这一类 |
+| [E12-GMAIL-DEMO.md](experiments/E12-GMAIL-DEMO.md) | 真实任务端到端（用户打中文 + agent 发邮件） | 任务成功、邮件正文正确、焦点 8/8 归还；**但用户仍需手动点回软键盘 —— 验收标准没干净通过**。核心发现：**归还的是 window 焦点，用户需要的是能继续打字，两者不等价** |
 
 完整 trajectory 在 [`experiments/trajectories/`](experiments/trajectories/) —— 一次完整的
 observation / LLM 输出 / act 请求响应 / 独立 probe / verdict，逐步落盘。

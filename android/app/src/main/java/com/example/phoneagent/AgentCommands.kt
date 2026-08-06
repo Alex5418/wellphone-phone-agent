@@ -236,7 +236,14 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
         val n = r.target
             ?: return JSONObject().put("found", false).put("candidates", r.candidates)
                 .put("note", r.note)
+        // 强制从 app 重新拉一次属性再读。
+        // 依据：Gmail 撰写页的正文 EditText 实测**滞后一次写入** —— SET_TEXT 成功了，
+        // 但重新解析出来的节点仍是写入前的值（隔 3 秒也一样），直到有交互才刷新。
+        // 结果是连续两次写入都被判 FAIL，而邮件收到的是最后一次的内容 —— 两次都是假阴性。
+        // refresh() 是 framework 提供的"从应用侧重新取"的入口，正是为这种情况准备的。
+        val refreshed = n.refresh()
         return JSONObject()
+            .put("refreshed", refreshed)
             .put("found", true)
             .put("candidates", r.candidates)
             .put("note", r.note)
@@ -325,6 +332,7 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
         }
 
         // ② 记录主屏焦点的定位信息（不是节点对象）
+        val imeBefore = imeShownOnPrimary()
         val pre = findPrimaryInputFocus()
         val desc = pre?.let {
             FocusDescriptor(
@@ -426,6 +434,11 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
             .put("restore", restoreJson)
             .put("post_state", postState)
             .put("window_after", windowInfo(displayId))
+            // 用户的打字会话有没有被打断：焦点还回去了不等于键盘还在
+            .put("ime", JSONObject()
+                .put("before", imeBefore)
+                .put("after", imeShownOnPrimary())
+                .put("dismissed", imeBefore && !imeShownOnPrimary()))
             .put("timing", JSONObject()
                 .put("action_ms", (t1 - t0).toInt())
                 // 打扰窗口 = 动作 + 归还，不含任何校验读取。这才是要上报的那个数字。
@@ -537,6 +550,19 @@ class AgentCommands(private val svc: AgentAccessibilityService) : CommandHandler
         val w = wins.firstOrNull { it.isFocused } ?: wins.firstOrNull { it.isActive } ?: return null
         return w.root?.packageName?.toString()
     }
+
+    /**
+     * 主屏上软键盘是否还在。
+     *
+     * 为什么要在 act 里逐次记：正式 demo 里用户报告"键盘被收起、需要手动点一次恢复"，
+     * 而 loop 每步只在开头采一次 ime_present，那次收起 + 用户自己恢复正好落在两次采样之间，
+     * **整个 trajectory 里看不到任何异常**。
+     * 归还的是 window 焦点，而用户需要的是"能继续打字"——两者不等价：
+     * 焦点还回去了，键盘却没回来，用户仍然被打断。
+     */
+    private fun imeShownOnPrimary(): Boolean =
+        Snapshot.windowsOf(svc, PRIMARY_DISPLAY, includeIme = true)
+            .any { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
 
     private fun windowInfo(displayId: Int): JSONObject {
         val wins = Snapshot.windowsOf(svc, displayId)

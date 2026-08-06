@@ -62,10 +62,14 @@ def preflight(tp: Transport, display: int) -> bool:
 
     st = tp.state()
     pf = st.get("primary_focus") or {}
-    has = bool(pf) and bool(pf.get("editable"))
+    # ⚠ 不能只看 primary_focus.editable：Compose 应用里 findFocus 返回的是
+    # android.view.View 包装节点、editable=false，而真正聚焦的 EditText 在树里。
+    # 只看它会把"环境明明是好的"误判成没准备好（实测 composetest 就是这样）。
+    focused_edit, _, _ = field(tp)
+    has = focused_edit or bool(pf.get("editable"))
     print(f"  {'✓' if has else '✗'} 主屏有聚焦的输入框   ({pf.get('pkg')})"
           + ("" if has else "   ← 点一下主屏输入框"))
-    ok &= has
+    ok &= bool(has)
 
     ime = st.get("ime_present")
     print(f"  {'✓' if ime else '✗'} 输入法弹着" + ("" if ime else "   ← 把键盘调出来"))
