@@ -42,6 +42,10 @@ logs/
 *.log
 window_dump.xml
 
+# loop 的 trajectory 落盘目录。默认不入库（每跑一次就多一批）；
+# 要留作答辩材料的那几次，单独拷进 docs/ 再提交。
+runs/
+
 # 演示素材（体积大，走外链）
 *.mp4
 *.mov

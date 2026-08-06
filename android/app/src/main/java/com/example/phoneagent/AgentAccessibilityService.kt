@@ -84,9 +84,26 @@ class AgentAccessibilityService : AccessibilityService() {
         }
     }
 
+    /** socket 通道（HARNESS-SPEC §1）。广播指令保留不删，方便手工调试。 */
+    private var server: AgentServer? = null
+
+    /**
+     * 每个 display 上最近一次 TYPE_WINDOW_STATE_CHANGED 的 className。
+     *
+     * AccessibilityWindowInfo 里没有 Activity 名，而 verify 的「其他 CLICK → activity 变化」
+     * 判据需要它。这是拿到 Activity 名的唯一免 shell 途径。
+     */
+    private val activityByDisplay = HashMap<Int, String>()
+
+    fun activityOf(displayId: Int): String? = synchronized(activityByDisplay) {
+        activityByDisplay[displayId]
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         Log.i(TAG, "=== service connected ===")
+        server?.stop()
+        server = AgentServer(AgentCommands(this)).also { it.start() }
         val filter = IntentFilter().apply {
             addAction(ACTION_DUMP)
             addAction(ACTION_CLICK)
@@ -539,6 +556,20 @@ class AgentAccessibilityService : AccessibilityService() {
             "pickedBy=${if (focused != null) "FOCUSED" else "LONGEST"} cands=$count")
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        val cls = event.className?.toString() ?: return
+        // 过滤掉 Dialog / PopupWindow 之类：只留看着像 Activity 的（含包名前缀的全限定名）
+        if (!cls.contains('.')) return
+        synchronized(activityByDisplay) { activityByDisplay[event.displayId] = cls }
+    }
+
     override fun onInterrupt() {}
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        server?.stop()
+        server = null
+        try { unregisterReceiver(receiver) } catch (_: Throwable) {}
+        return super.onUnbind(intent)
+    }
 }
