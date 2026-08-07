@@ -514,8 +514,19 @@ mCurTokenDisplayId = 0
 
 ## 9 · 待补
 
-- [x] 单步规划的实测延迟与 token 成本
-- [ ] `back` 动作的归还有效性
-- [ ] locator 各层策略在执行侧的成功率
-- [ ] 端到端任务的完整 trajectory 示例
-- [ ] 真机复现（无设备，README 中需明确标注）
+- [x] **单步规划的实测延迟与 token 成本** —— `metrics.jsonl` 每步记 `llm_ms` 与三项 token，
+      `meta.json` 的 `totals` 给 run 级汇总。拿不到时是 `null` 不是 0，
+      另有 `token_steps` 说明合计的分母。
+- [x] **locator 各层策略在执行侧的成功率** —— `experiments/C3-EXECUTION.md`
+      在 Settings 上验证了 L3/L4/L5；L6 由 Gmail 的 To 字段实证（`runs/2026-08-06T16-51-30`）。
+      **限度**：只覆盖 2 个 app，不是成功率统计。
+- [x] **端到端任务的完整 trajectory 示例** —— `runs/2026-08-07T05-52-07/`（7 步发出一封 Gmail，
+      演示视频拍的就是它）；另有 `experiments/trajectories/` 下的若干专项。
+- [ ] **`back` 动作的归还有效性** —— 更要紧的是它在副屏上**根本不生效**：
+      已有三次实证（`runs/2026-08-07T05-42-53/step-02` 等），`loop.py` 里标了跨屏语义未验证。
+      agent 在副屏上没有可靠的「返回」，这是功能缺口不只是文档缺口。
+- [ ] **真机复现** —— 无设备，README 已标注
+- [ ] **设备侧覆盖率仍然偏低** —— JVM 单测 15 条只覆盖 `treeHash` 与 `LocatorResolver`；
+      `AgentCommands` / `AgentServer` 仍无测试（依赖真实 Service 生命周期，需 Robolectric 或仪器测试）
+- [ ] **外部效度** —— 全部结论只来自 3 个 app（Settings / Gmail / composetest）。
+      E15 那条最重要的发现只有 Gmail 一个样本点
