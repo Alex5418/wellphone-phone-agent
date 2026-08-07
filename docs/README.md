@@ -25,7 +25,7 @@ docs/
 
 | 文件 | 问题 | 结论 |
 |---|---|---|
-| [EXPERIMENTS.md](experiments/EXPERIMENTS.md) | R1–R5 假设验证的**原始记录** | 命令、原始输出、结论按时间堆积。答辩时开着这份讲 |
+| [EXPERIMENTS.md](experiments/EXPERIMENTS.md) | R1–R5 假设验证的**原始记录** | 命令、原始输出、结论按时间堆积。 |
 | [SUBTASK-A-RESULTS.md](experiments/SUBTASK-A-RESULTS.md) | 哪些动作会夺焦点 | 动作类型 × 焦点影响矩阵；`result=false` 时同样夺焦点 |
 | [REPORT-E6-FOCUS-RESTORE.md](experiments/REPORT-E6-FOCUS-RESTORE.md) | 焦点能不能还回去 | 能。`ACTION_FOCUS` 是最优归还原语 —— 正因为它什么都不做 |
 | [B1-RESULTS.md](experiments/B1-RESULTS.md) | 归还对所有动作都有效吗 | 覆盖 CLICK/SET_TEXT/LONG_CLICK/SCROLL/FOCUS；例外是触发全局配置变更的动作（Activity 重建，快照失效） |
@@ -40,7 +40,8 @@ docs/
 | [E9-PINYIN-COMPOSING.md](experiments/E9-PINYIN-COMPOSING.md) | 中文拼音连打时后台跑 agent | **归还与否是质变**：不归还时未上屏的拼音被强制提交、候选上下文清零、丢 7 个字母；归还时整串 composing 完好、候选长到「中中华人民共和国」。且破坏程度**与窗口长短无关** |
 | [E10-COMPOSING-BREAK-CAUSE.md](experiments/E10-COMPOSING-BREAK-CAUSE.md) | 打断中文输入的到底是什么 | **更正 E9**：决定因素是**动作类型**（副屏有无窗口/Activity 变更），不是归还开关。滚动类从不打断；导航点击会打断，归还只降概率不消除。打扰窗口预算管不住这一类 |
 | [E12-GMAIL-DEMO.md](experiments/E12-GMAIL-DEMO.md) | 真实任务端到端（用户打中文 + agent 发邮件） | 任务成功、邮件正文正确、焦点 8/8 归还；**但用户仍需手动点回软键盘 —— 验收标准没干净通过**。核心发现：**归还的是 window 焦点，用户需要的是能继续打字，两者不等价** |
-| [E13-OBSERVATION-NOT-MODEL.md](experiments/E13-OBSERVATION-NOT-MODEL.md) | 弱模型失败是观测缺陷还是能力不足 | **观测缺陷**。同预算重跑 flash 仍在同一处卡死；补上「相比上一步的增删」后 flash **8 步完成**（比 pro 还少），LLM 延迟从 65.6s 降到 10.9s。**harness 的质量应由弱模型检验** |
+
+| [E13-OBSERVATION-NOT-MODEL.md](experiments/E13-OBSERVATION-NOT-MODEL.md) | 弱模型失败是观测缺陷还是能力不足 | **观测缺陷**。同预算重跑 flash 仍在同一处卡死；补上「相比上一步的增删」后 flash **8 步完成**（比 pro 还少），LLM 延迟从 65.6s 降到 10.9s。**harness 的质量应由弱模型检验** |
 
 完整 trajectory 在 [`experiments/trajectories/`](experiments/trajectories/) —— 一次完整的
 observation / LLM 输出 / act 请求响应 / 独立 probe / verdict，逐步落盘。
