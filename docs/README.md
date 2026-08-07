@@ -42,7 +42,7 @@ docs/
 | [E12-GMAIL-DEMO.md](experiments/E12-GMAIL-DEMO.md) | 真实任务端到端（用户打中文 + agent 发邮件） | 任务成功、邮件正文正确、焦点 8/8 归还；**但用户仍需手动点回软键盘 —— 验收标准没干净通过**。核心发现：**归还的是 window 焦点，用户需要的是能继续打字，两者不等价** |
 | [E13-OBSERVATION-NOT-MODEL.md](experiments/E13-OBSERVATION-NOT-MODEL.md) | 弱模型失败是观测缺陷还是能力不足 | **观测缺陷**。同预算重跑 flash 仍在同一处卡死；补上「相比上一步的增删」后 flash **8 步完成**（比 pro 还少），LLM 延迟从 65.6s 降到 10.9s。**harness 的质量应由弱模型检验** |
 | [E14-VIDEO-DISTURBANCE.md](experiments/E14-VIDEO-DISTURBANCE.md) | 主屏看视频时夺焦点会不会打断播放 | **不会**。主屏 `mCurrentFocus=null` 持续存在时视频仍 PLAYING、画面持续更新；三组 0 次 PAUSED、0 冻结。四个候选仪表**证伪了三个**（`gfxinfo` 视频播放时恒读 0 帧、`SurfaceFlinger --latency` 读不到、`media_session` 的 `position` 懒更新） |
-| [E15-SECONDARY-FIELD-CONTAMINATION.md](experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) | 软键盘击键会不会落进副屏输入框（E8 漏测的那一格） | **未能复现，判定为未知**。6 组条件共 50 次全 0，并排除了 Gmail 补全与 SET_TEXT 本身；但一次真实 run 的 2 字符异常无法解释。中途修掉两个自己的仪表缺陷：有效性判据分不清「一直在打字」与「开头敲一串就停手」、动作类型让窗口小了一个数量级 |
+| [E15-SECONDARY-FIELD-CONTAMINATION.md](experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) | 软键盘击键会不会落进副屏输入框（E8 漏测的那一格） | **会，且护栏挡不住** —— 条件是 agent 的动作**重建了副屏 Activity**：新编辑器获得焦点后 IME 输入连接改绑过去。不重建 70 次 0 命中，重建 30 次 5 命中；动作数/写入值/restore 全部对齐时 0/10 vs 3/20。**证伪 E8 §4.1**。打字侧已用 `input tap` 自动化（与鼠标点 scrcpy 同源）。附五个仪表缺陷的更正史 |
 
 完整 trajectory 在 [`experiments/trajectories/`](experiments/trajectories/) —— 一次完整的
 observation / LLM 输出 / act 请求响应 / 独立 probe / verdict，逐步落盘。

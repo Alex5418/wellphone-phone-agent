@@ -73,10 +73,17 @@ from harness.transport import Transport, ensure_forward    # noqa: E402
 from harness.tree import build_tree                        # noqa: E402
 
 PRIMARY = 0
+# 标记字符必须**不出现在写入值里**，否则分不清是污染还是自己写进去的。
+# 默认 'x'；写真实邮箱 alexw769829@… 时要换（它含 x），用 --mark q。
 MARK = "x"
-# 软键盘上 'x' 键的坐标（1080×2400、Gboard 拼音布局）。布局一变就得重取，
+# 软键盘键位（1080×2400、Gboard 拼音布局）。布局一变就得重取，
 # 所以先验里**必须**验证敲键器真的敲得进去 —— 敲不进去时读到的 0 毫无意义。
-TAP_XY = (324, 2026)
+KEY_XY = {"q": (58, 1716), "w": (164, 1716), "e": (271, 1716), "r": (379, 1716),
+          "t": (486, 1716), "y": (593, 1716), "u": (700, 1716), "i": (806, 1716),
+          "o": (913, 1716), "p": (1020, 1716),
+          "z": (218, 2026), "x": (324, 2026), "c": (431, 2026), "v": (539, 2026),
+          "b": (644, 2026), "n": (752, 2026), "m": (859, 2026)}
+TAP_XY = KEY_XY["x"]
 DEL_XY = (994, 2026)   # 退格键，用来给 composing 缓冲封顶
 
 
@@ -242,7 +249,10 @@ def preflight(tp: Transport, display: int, auto: bool = False) -> bool:
             time.sleep(0.4)
         time.sleep(0.6)
         after = primary_len(tp) or 0
-        landed = after > before
+        # 看**有没有变动**，不是"有没有变长"：拼音上屏提交时 `x x x` 变成汉字，
+        # 字数会减少。主循环的判据修过这一条，这里一开始漏了，
+        # 于是把一次敲键器完全正常的先验判成了失败。
+        landed = after != before
         print(f"  {'✓' if landed else '✗'} 敲键器有效   敲 5 下，主屏 {before} → {after} 字"
               + ("" if landed else f"   ← 坐标 {TAP_XY} 没敲中，重新截图取 '{MARK}' 键位置"))
         ok &= landed
@@ -252,6 +262,7 @@ def preflight(tp: Transport, display: int, auto: bool = False) -> bool:
 
 
 def main() -> int:
+    global MARK, TAP_XY
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--arm", choices=["A", "B", "C", "D", "E"])
@@ -265,9 +276,17 @@ def main() -> int:
     # 用来拆开 E 组里被我搅在一起的两个变量：Activity 重建 与 写入值。
     # E 组同时改了这两样，因此不能把结果归因给其中任何一个。
     ap.add_argument("--write", default=None, help="覆盖写入值（不含 x，否则与标记混淆）")
+    ap.add_argument("--mark", default=MARK,
+                    help="标记字符，必须不出现在写入值里（写真实邮箱时用 q）")
     ap.add_argument("--auto", action="store_true",
                     help="用 input tap 自动敲软键盘，代替人手（可无人值守跑大 n）")
     args = ap.parse_args()
+
+    if args.mark != MARK:
+        if args.mark not in KEY_XY:
+            print(f"没有 '{args.mark}' 的键位坐标，可选：{sorted(KEY_XY)}")
+            return 1
+        MARK, TAP_XY = args.mark, KEY_XY[args.mark]
 
     ensure_forward()
     tp = Transport()

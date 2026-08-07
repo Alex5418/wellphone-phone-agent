@@ -83,7 +83,8 @@ python -m harness.cli run "在设置中关闭深色主题"     # 5. 端到端
 
 | 用户在主屏干什么 | 关掉归还 | **开启归还（护栏）** | 证据 |
 |---|---|---|---|
-| 软键盘打字 · 击键落点 | 污染 0 | 污染 0 | [E8](docs/experiments/E8-SOFT-KEYBOARD.md) 8 组 + [E15](docs/experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) 50 次 |
+| 软键盘打字 · agent 不重建副屏 Activity | 污染 0 | 污染 0 | [E8](docs/experiments/E8-SOFT-KEYBOARD.md) 8 组 + [E15](docs/experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) 70 次 |
+| 软键盘打字 · **agent 重建了副屏 Activity** | — | ❌ **污染 5/30，护栏挡不住** | [E15](docs/experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) |
 | 外接键盘打字 · 击键落点 | **120 键中 56 键灌进副屏，且无上界** | 降到 6 键 —— **有界但非零** | [E7](docs/experiments/E7-KEYSTROKE-LANDING.md) |
 | 中文输入法连打 · 导航类动作 | **10/20 打断 composing** | **0/20** | [E11](docs/experiments/E11-RESULTS.md) |
 | 中文输入法连打 · 滚动类动作 | 0/20 | 0/20 | 同上 |
@@ -97,6 +98,13 @@ python -m harness.cli run "在设置中关闭深色主题"     # 5. 端到端
 **唯一确认的用户可见代价：软键盘打字时键盘会被收起一次，需手动点一次恢复。**
 （[E12](docs/experiments/E12-GMAIL-DEMO.md)：焦点 8/8 归还成功，用户仍需点一次 ——
 **我们归还的是 window 焦点，用户需要的是"能继续打字"，两者不等价**。）
+
+[E15](docs/experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) 把这条推到了更锋利的形态：
+当 agent 的动作**重建了副屏的 Activity**，一个全新的编辑器获得焦点，
+**IME 的输入连接会改绑过去**，用户随后的软键盘击键就写进了副屏的输入框。
+`restore=true` 全程开着、dumpsys 确认焦点已回主屏，**照样发生** ——
+归还 window 焦点撤销不了输入连接的改绑。稳态下（不重建）70 次 0 污染，
+重建后 30 次 5 次污染；动作数、写入值、restore 全部对齐时仍是 0/10 vs 3/20。
 
 焦点归还耗时实测 12ms（滚动）到约 1.5s（副屏节点多时主屏重解析更慢）；
 超出 `DISTURB_BUDGET_MS=500` 的目标会被本轮拉黑并上报 —— 全局配置类动作实测 2.5s，
