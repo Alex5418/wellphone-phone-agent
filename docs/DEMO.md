@@ -135,6 +135,25 @@ python -m harness.cli run "在设置中把屏幕超时改成 30 秒" --verbose
 | `UNREACHABLE: cannot reach device` | 通道断了。重跑 `adb forward` |
 | `cannot bind to 127.0.0.1:8760 … (10013)` | Windows 端口保留段。换 `adb forward tcp:18760 …` + `PHONEAGENT_PORT=18760` |
 | `TransportError NO_DISPLAY` | scrcpy 窗口被关了。虚拟屏没了，重开 |
+| `unrecognized arguments: --pkg` | `--pkg`/`--port`/`--display` 属主解析器，**必须放在 `run` 前面** |
+| `输出被 max_tokens=4096 截断…content 为空` | 漏了 `PHONEAGENT_MAX_TOKENS=16384`。推理模型的思考过程也吃这个预算 |
+| `HTTP Error 401` | key 不对。**别手贴**，用 `$(tr -d ' \r\n' < key.txt \| cut -c1-35)`；模型名也要对（该账号只有 `deepseek-v4-flash` / `deepseek-v4-pro`，没有 `deepseek-chat`） |
+| 模型反复重写同一个值直到卡死 | **已修**（`b0fcae7`+`f0edf0a`）。若再出现说明回归了，见下 |
+| `System UI isn't responding`，两个屏都弹 | 主屏 composing 缓冲堆太大（800+ 字）拖垮遍历。冷重启模拟器 |
+
+**已修的三个坑**（写在这里是为了将来回归时能认出来）：
+
+1. **正文写入被判 UNKNOWN，模型以为没写进去** —— Gmail 正文的无障碍读数**慢一个动作**：
+   写入成功但 `refresh()` 与等待都无效，必须再发生一次 a11y 动作才刷新。
+   loop 现在会补一次 `FOCUS` 再读（`b0fcae7`）。
+2. **写对了却判 FAIL** —— 正文框没有 resource-id，locator 降级到文字锚点，
+   `set_text` 一成功锚点就失效、重解析 0 候选、拿 `None` 去比对。
+   现在解析不到一律 UNKNOWN，并去独立重读的树里找写入值（`f0edf0a`）。
+3. **软键盘击键落进副屏输入框** —— 见 [E15](experiments/E15-SECONDARY-FIELD-CONTAMINATION.md)。
+   条件是 agent 重建了副屏 Activity，**护栏挡不住**，尚未修复；录制时如实展示即可。
+
+**Gmail 上的打扰窗口比 Settings 大一个量级**（实测 Compose 871ms、Send 2322ms），
+会触发拉黑。任务通常仍能完成（拉黑的多是用过一次的目标），但别对此感到意外。
 | 改过 Android 代码后行为不对 | 无障碍服务要**关掉再打开**，否则跑的是旧实例 |
 | LLM 读超时 | 已放宽到 150s；再不行 `PHONEAGENT_LLM_TIMEOUT=300` |
 

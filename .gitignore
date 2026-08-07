@@ -48,6 +48,9 @@ runs/
 
 # 演示素材（体积大，走外链）
 *.mp4
+# 例外：交付用的演示视频（8.3MB，远低于 GitHub 的 50MB 告警线，
+# 刻意不用 LFS —— 评审方 clone 时不该被要求额外装东西）
+!docs/media/demo.mp4
 *.mov
 
 # 截图例外：EXPERIMENTS.md / README 引用的图放 docs/ 下，需要入库
