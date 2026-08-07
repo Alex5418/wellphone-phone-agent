@@ -253,6 +253,32 @@ class Loop:
                 if post_tree2 is not None:
                     post_tree = post_tree2
 
+                # 第三次读：**用一次动作去撬开缓存**。
+                # 有一类字段（实测 Gmail 撰写页正文）的无障碍读数**永远慢一个动作**：
+                # 写入其实成功了，但 refresh() 无效、等多久都无效，
+                # 必须在该节点上再发生一次 a11y 动作才会刷新出新值。
+                # 上面那次复读等的是**时间**，对这类字段结构性地无效 ——
+                # 于是每次都判 UNKNOWN，LLM 看到"没写进去"就反复重写，直到卡死中止。
+                # 实测：set_text 后立刻读 = 旧值；做一次 FOCUS 再读 = 新值。
+                # 选 FOCUS 是因为它作用在**副屏自己的**编辑器上，
+                # 而 E15 已量化过这一动作类别（B/C 两组各 8 次，0 污染）。
+                if verdict.result == "UNKNOWN" and locator is not None \
+                        and plan.action == "set_text":
+                    try:
+                        self.tp.act(secondary, locator, "FOCUS",
+                                    restore=True, verify_read=False)
+                    except TransportError:
+                        pass
+                    else:
+                        probe3, post_tree3, _ = self._read_post(secondary, locator)
+                        verdict3 = self._judge(item, plan, pre, probe3, post_tree3, result)
+                        if verdict3.result != "UNKNOWN":
+                            notes.append(f"复读仍 UNKNOWN，聚焦刷新后读到 {verdict3.result}"
+                                         "（该字段的无障碍读数慢一个动作）")
+                            probe, verdict = probe3, verdict3
+                            if post_tree3 is not None:
+                                post_tree = post_tree3
+
             mism = cross_check_post_state(result, probe)
             if mism:
                 notes.append(mism)
