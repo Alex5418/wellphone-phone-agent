@@ -20,7 +20,7 @@ from .planner import Planner, PlannerError
 from .trace import Trace
 from .transport import Transport, TransportError
 from .tree import build_tree
-from .verify import Snapshot, cross_check_post_state, verify
+from .verify import Snapshot, Verdict, cross_check_post_state, verify
 
 
 SEP_RAW = chr(10) + "---" + chr(10)   # 多次尝试之间的分隔
@@ -40,6 +40,9 @@ class Loop:
         self.target_pkg = target_pkg
         self.max_steps = max_steps
         self.trace = trace
+        if trace is not None:
+            # 让 trajectory 记下**实际**跑的后端，而不是 config 里的默认值
+            trace.planner_info = planner.describe()
         self.cross_check = cross_check
         self.recheck_ms = recheck_ms    # 离线测试传 0，省得复读时空等
         self.policy = ActionPolicy(disturb_budget_ms)
@@ -93,7 +96,19 @@ class Loop:
         )
         if item is None:
             return verify_back(pre, post, result)
-        return verify(item, plan.action, pre, post, result, plan.value)
+        v = verify(item, plan.action, pre, post, result, plan.value)
+
+        # 文字锚点被成功的写入本身作废时（见 verify.py），probe 解析不到节点，
+        # 只能判 UNKNOWN。但**观测层其实看得到那段文字** —— 重读的整棵树里
+        # 就有一个节点的文字正好等于写入值。用它把 UNKNOWN 收敛成 PASS。
+        # 这不是复用产生该结果的链路：树是独立重读的，与 act 的返回值无关。
+        if (v.result == "UNKNOWN" and plan.action == "set_text" and plan.value
+                and not post.found and post_tree is not None):
+            if any((n.effective_text or "") == plan.value for n in post_tree.nodes):
+                return Verdict("PASS", v.predicate,
+                               f"定位器已被写入作废，但重读的树中存在文字为 "
+                               f"{plan.value!r} 的节点")
+        return v
 
     def run(self, task: str) -> RunResult:
         history: list[Step] = []
@@ -249,6 +264,32 @@ class Loop:
                 probe, verdict = probe2, verdict2
                 if post_tree2 is not None:
                     post_tree = post_tree2
+
+                # 第三次读：**用一次动作去撬开缓存**。
+                # 有一类字段（实测 Gmail 撰写页正文）的无障碍读数**永远慢一个动作**：
+                # 写入其实成功了，但 refresh() 无效、等多久都无效，
+                # 必须在该节点上再发生一次 a11y 动作才会刷新出新值。
+                # 上面那次复读等的是**时间**，对这类字段结构性地无效 ——
+                # 于是每次都判 UNKNOWN，LLM 看到"没写进去"就反复重写，直到卡死中止。
+                # 实测：set_text 后立刻读 = 旧值；做一次 FOCUS 再读 = 新值。
+                # 选 FOCUS 是因为它作用在**副屏自己的**编辑器上，
+                # 而 E15 已量化过这一动作类别（B/C 两组各 8 次，0 污染）。
+                if verdict.result == "UNKNOWN" and locator is not None \
+                        and plan.action == "set_text":
+                    try:
+                        self.tp.act(secondary, locator, "FOCUS",
+                                    restore=True, verify_read=False)
+                    except TransportError:
+                        pass
+                    else:
+                        probe3, post_tree3, _ = self._read_post(secondary, locator)
+                        verdict3 = self._judge(item, plan, pre, probe3, post_tree3, result)
+                        if verdict3.result != "UNKNOWN":
+                            notes.append(f"复读仍 UNKNOWN，聚焦刷新后读到 {verdict3.result}"
+                                         "（该字段的无障碍读数慢一个动作）")
+                            probe, verdict = probe3, verdict3
+                            if post_tree3 is not None:
+                                post_tree = post_tree3
 
             mism = cross_check_post_state(result, probe)
             if mism:

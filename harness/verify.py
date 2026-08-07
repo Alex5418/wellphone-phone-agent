@@ -90,6 +90,18 @@ def verify(item: Item, action: str, pre: Snapshot, post: Snapshot,
     if pred == "text_equals_value":
         if post.text == value:
             return Verdict("PASS", pred, f"text = {value!r}")
+        if not post.found:
+            # **定位器被自己的成功摧毁了。**
+            # 文字锚点（L4/L5）锚的就是这个框当时的文字；set_text 一旦写成功，
+            # 那段文字不复存在，重解析必然 0 候选。此时 post.text 是 None，
+            # 拿它去比对会得到「期望 X，实际 None」→ FAIL —— **写对了却判失败**。
+            # 实测：runs/2026-08-07T05-52-07/step-05，正文写入完全正确，
+            # locator 是 L4(text="Compose email")，probe found=False，判了 FAIL。
+            # 上一轮（05-42-53）模型正是因为连续收到这种假失败而反复重写，直到卡死中止。
+            # 读不到 ≠ 不成立：这里只能是 UNKNOWN。
+            return Verdict("UNKNOWN", pred,
+                           "动作后定位器解析不到节点 —— 文字锚点会被成功的写入本身作废，"
+                           "无法判定")
         if post.text == pre.text:
             # 读到的仍是写入前的值 —— 分不出"没写进去"和"读取通道滞后"。
             # 实测：Gmail 撰写页正文 4/4 属后者（判 FAIL，但收到的邮件正文完全正确），

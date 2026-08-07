@@ -40,8 +40,9 @@ docs/
 | [E9-PINYIN-COMPOSING.md](experiments/E9-PINYIN-COMPOSING.md) | 中文拼音连打时后台跑 agent | **归还与否是质变**：不归还时未上屏的拼音被强制提交、候选上下文清零、丢 7 个字母；归还时整串 composing 完好、候选长到「中中华人民共和国」。且破坏程度**与窗口长短无关** |
 | [E10-COMPOSING-BREAK-CAUSE.md](experiments/E10-COMPOSING-BREAK-CAUSE.md) | 打断中文输入的到底是什么 | **更正 E9**：决定因素是**动作类型**（副屏有无窗口/Activity 变更），不是归还开关。滚动类从不打断；导航点击会打断，归还只降概率不消除。打扰窗口预算管不住这一类 |
 | [E12-GMAIL-DEMO.md](experiments/E12-GMAIL-DEMO.md) | 真实任务端到端（用户打中文 + agent 发邮件） | 任务成功、邮件正文正确、焦点 8/8 归还；**但用户仍需手动点回软键盘 —— 验收标准没干净通过**。核心发现：**归还的是 window 焦点，用户需要的是能继续打字，两者不等价** |
-
 | [E13-OBSERVATION-NOT-MODEL.md](experiments/E13-OBSERVATION-NOT-MODEL.md) | 弱模型失败是观测缺陷还是能力不足 | **观测缺陷**。同预算重跑 flash 仍在同一处卡死；补上「相比上一步的增删」后 flash **8 步完成**（比 pro 还少），LLM 延迟从 65.6s 降到 10.9s。**harness 的质量应由弱模型检验** |
+| [E14-VIDEO-DISTURBANCE.md](experiments/E14-VIDEO-DISTURBANCE.md) | 主屏看视频时夺焦点会不会打断播放 | **不会**。主屏 `mCurrentFocus=null` 持续存在时视频仍 PLAYING、画面持续更新；三组 0 次 PAUSED、0 冻结。四个候选仪表**证伪了三个**（`gfxinfo` 视频播放时恒读 0 帧、`SurfaceFlinger --latency` 读不到、`media_session` 的 `position` 懒更新） |
+| [E15-SECONDARY-FIELD-CONTAMINATION.md](experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) | 软键盘击键会不会落进副屏输入框（E8 漏测的那一格） | **会，且护栏挡不住** —— 条件是 agent 的动作**重建了副屏 Activity**：新编辑器获得焦点后 IME 输入连接改绑过去。不重建 70 次 0 命中，重建 30 次 5 命中；动作数/写入值/restore 全部对齐时 0/10 vs 3/20。**证伪 E8 §4.1**。打字侧已用 `input tap` 自动化（与鼠标点 scrcpy 同源）。附五个仪表缺陷的更正史 |
 
 完整 trajectory 在 [`experiments/trajectories/`](experiments/trajectories/) —— 一次完整的
 observation / LLM 输出 / act 请求响应 / 独立 probe / verdict，逐步落盘。
