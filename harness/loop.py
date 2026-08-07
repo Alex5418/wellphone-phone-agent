@@ -343,6 +343,9 @@ class Loop:
                     action_ms=result.timing.get("action_ms"),
                     total_ms=result.timing.get("total_ms"),
                     llm_ms=self.planner.last_latency_ms,
+                    prompt_tokens=(self.planner.last_meta or {}).get("prompt_tokens"),
+                    completion_tokens=(self.planner.last_meta or {}).get("completion_tokens"),
+                    reasoning_tokens=(self.planner.last_meta or {}).get("reasoning_tokens"),
                 )
 
             step = Step(step_n, plan, item, result, verdict, note="；".join(notes))
@@ -380,14 +383,16 @@ class Loop:
 
     def _finish(self, task: str, history: list[Step], status: str, reason: str) -> RunResult:
         if self.trace:
-            self.trace.finish(status, reason)
+            self.trace.finish(status, reason,
+                              extra={"llm_calls": self.planner.calls, "steps": len(history)})
         return RunResult(task, status, reason, history,
                          self.trace.dir if self.trace else None)
 
     def _abort(self, task: str, history: list[Step], reason: str) -> RunResult:
         self._emit("error", reason)
         if self.trace:
-            self.trace.finish("aborted", reason)
+            self.trace.finish("aborted", reason,
+                              extra={"llm_calls": self.planner.calls, "steps": len(history)})
         return RunResult(task, "aborted", reason, history,
                          self.trace.dir if self.trace else None)
 

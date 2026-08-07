@@ -514,7 +514,7 @@ mCurTokenDisplayId = 0
 
 ## 9 · 待补
 
-- [ ] 单步规划的实测延迟与 token 成本
+- [x] 单步规划的实测延迟与 token 成本
 - [ ] `back` 动作的归还有效性
 - [ ] locator 各层策略在执行侧的成功率
 - [ ] 端到端任务的完整 trajectory 示例

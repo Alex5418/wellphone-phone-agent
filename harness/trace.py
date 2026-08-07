@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import statistics
 import time
 from datetime import datetime
 
@@ -26,6 +27,7 @@ class Trace:
         self.task = task
         self.t0 = time.time()
         self.metrics: list[dict] = []
+        self.max_step = 0   # 见过的最大步号（含不落 metrics 的 finish 步）
         # 由 Loop 填入 planner.describe()，即实际生效的 provider/model/endpoint
         self.planner_info: dict | None = None
         self.dir = ""
@@ -38,6 +40,7 @@ class Trace:
     # ---- 写入 ----
 
     def _step_dir(self, n: int) -> str:
+        self.max_step = max(self.max_step, n)
         d = os.path.join(self.dir, f"step-{n:02d}")
         os.makedirs(d, exist_ok=True)
         return d
@@ -60,11 +63,50 @@ class Trace:
         disturb_ms 是对外要报的那个数（动作 + 归还，不含任何校验读取）；
         restore_total_ms 含校验开销，只用来看仪表本身有多贵。
         """
+        self.max_step = max(self.max_step, n)
         row = {"step": n, **kw}
         self.metrics.append(row)
         if self.enabled:
             with open(os.path.join(self.dir, "metrics.jsonl"), "a", encoding="utf-8") as f:
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    def _totals(self) -> dict:
+        """run 级汇总。
+
+        ⚠ **拿不到的量一律 None，不许写 0。** `scripted` / `rule` 后端根本没有
+        token 概念，写 0 会被读成"这一步免费"，那是编造出来的数字。
+        同理另给 `token_steps`：读的人要能看出「合计 1234 tokens」是基于 8 步还是 3 步 ——
+        不写出缺失步数，合计本身就是误导。
+        """
+        # steps 是**规划步数**，不是 metrics 行数：最后那步 finish 会终止 loop，
+        # 不产生 metrics 行，但它确实是一步（也写了 observation）。
+        # 用 Trace 见过的最大步号，两者相差的就是不落 metrics 的那些步。
+        totals: dict = {"steps": max(self.max_step, len(self.metrics))}
+        totals["llm_calls"] = sum(1 for r in self.metrics if r.get("llm_ms") is not None)
+
+        llm_times = [r["llm_ms"] for r in self.metrics if r.get("llm_ms") is not None]
+        totals["llm_ms_total"] = sum(llm_times)
+        totals["llm_ms_median"] = statistics.median(llm_times) if llm_times else None
+
+        prompt = [r["prompt_tokens"] for r in self.metrics
+                  if r.get("prompt_tokens") is not None]
+        completion = [r["completion_tokens"] for r in self.metrics
+                      if r.get("completion_tokens") is not None]
+        reasoning = [r["reasoning_tokens"] for r in self.metrics
+                     if r.get("reasoning_tokens") is not None]
+        token_steps = sum(1 for r in self.metrics
+                          if r.get("prompt_tokens") is not None
+                          or r.get("completion_tokens") is not None
+                          or r.get("reasoning_tokens") is not None)
+        totals["prompt_tokens"] = sum(prompt) if prompt else None
+        totals["completion_tokens"] = sum(completion) if completion else None
+        totals["reasoning_tokens"] = sum(reasoning) if reasoning else None
+        totals["token_steps"] = token_steps
+
+        disturb = [r["disturb_ms"] for r in self.metrics if r.get("disturb_ms") is not None]
+        totals["disturb_ms_total"] = sum(disturb)
+        totals["disturb_ms_max"] = max(disturb) if disturb else 0
+        return totals
 
     def finish(self, status: str, reason: str, extra: dict | None = None) -> None:
         if not self.enabled:
@@ -86,6 +128,7 @@ class Trace:
                 "max_steps": config.MAX_STEPS,
                 "restore": "always (硬编码，无开关)",
             },
+            "totals": self._totals(),
             "metrics": self.metrics,
         }
         if extra:
