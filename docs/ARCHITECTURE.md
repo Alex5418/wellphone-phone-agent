@@ -11,7 +11,10 @@
 
 常规 GUI Agent 的隐含假设是：**动作只改变目标状态**。
 
-本项目的环境打破了这个假设。Android 的无障碍框架在**动作分发路径**上绑定了单焦点语义 ——
+本项目的环境打破了这个假设。Android 的无障碍框架（下文一律简写 **a11y** ——
+`a` + 中间 11 个字母 + `y`，即 `accessibility`；同 `i18n` / `l10n` 的构词法。
+本项目里它专指 `AccessibilityService` 那套 API：`AccessibilityNodeInfo`、
+`performAction`、`getWindowsOnAllDisplays` 等）在**动作分发路径**上绑定了单焦点语义 ——
 任何通过 a11y 发出的动作，都会把全系统唯一的 window 焦点夺到目标窗口。
 （实测覆盖 6 个动作类型，`result=false` 时同样夺焦点，见 `experiments/EXPERIMENTS.md` E4 / B1。）
 
