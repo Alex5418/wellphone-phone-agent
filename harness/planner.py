@@ -124,6 +124,17 @@ class Backend:
     def complete(self, system: str, user: str) -> str:
         raise NotImplementedError
 
+    def describe(self) -> dict:
+        """**实际**生效的后端配置，落进 trajectory 的 meta。
+
+        不要用 config.MODEL / config.LLM_PROVIDER 代替这个 —— 那是模块默认值，
+        命令行 `--provider/--model` 覆盖后它们不会变。曾经因此让一次 flash 的
+        run 在 meta.json 里被记成 claude-sonnet-4-5：**结论对，出处是假的**。
+        trajectory 是我们唯一的证据，出处记错等于这份证据作废。
+        """
+        return {"provider": self.name, "model": getattr(self, "model", None),
+                "endpoint": getattr(self, "url", None)}
+
 
 class AnthropicBackend(Backend):
     name = "anthropic"
@@ -276,6 +287,16 @@ class Planner:
         self.calls = 0
         self.last_latency_ms = 0
         self.last_meta: dict | None = None
+
+    def describe(self) -> dict:
+        # 后端可能是鸭子类型的（测试里注入的假后端就不继承 Backend），
+        # 所以不假设它有 describe，退化时直接读属性 —— 出处宁可残缺，不可编造。
+        d = self.backend.describe() if hasattr(self.backend, "describe") else {
+            "provider": getattr(self.backend, "name", type(self.backend).__name__),
+            "model": getattr(self.backend, "model", None),
+            "endpoint": getattr(self.backend, "url", None),
+        }
+        return {**d, "politeness": self.politeness}
 
     @property
     def system_prompt(self) -> str:

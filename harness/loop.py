@@ -40,6 +40,9 @@ class Loop:
         self.target_pkg = target_pkg
         self.max_steps = max_steps
         self.trace = trace
+        if trace is not None:
+            # 让 trajectory 记下**实际**跑的后端，而不是 config 里的默认值
+            trace.planner_info = planner.describe()
         self.cross_check = cross_check
         self.recheck_ms = recheck_ms    # 离线测试传 0，省得复读时空等
         self.policy = ActionPolicy(disturb_budget_ms)

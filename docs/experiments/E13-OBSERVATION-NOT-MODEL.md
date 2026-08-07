@@ -105,5 +105,10 @@ window_count = 1 | 根节点数 = 1
 - 只在 Gmail 一个 app、一个任务上验证；`mark_changes` 的 50% 阈值没有调参依据
 - flash 那轮正文 `set_text` 仍判 FAIL（读取通道滞后，E12 §5 已记录），
   模型没重写就发送 —— **正文是否正确需人工在收件箱确认**
+- ⚠ **本实验的 trajectory 记错了出处**：`runs/2026-08-06T23-32-27/meta.json` 里
+  `config.model` 写的是 `claude-sonnet-4-5`，但那一轮实际跑的是 flash。原因是
+  `trace.py` 当时记的是 `config.MODEL`（模块默认值），命令行 `--model` 覆盖后它不会变。
+  **结论没错，但落盘产物证明不了它** —— 本节结论目前只由当时的会话日志支撑。
+  已修（`Backend.describe()` 上报实际后端），此后的 run 出处可信；**这一轮的不可信**。
 - 中途一次 `LLM 调用失败: read timed out` 导致一轮作废，
   已把 `LLM_TIMEOUT_S` 从 60s 放宽到 150s（60s 对推理模型 + 长 observation 偏紧）

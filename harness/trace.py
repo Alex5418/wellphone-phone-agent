@@ -26,6 +26,8 @@ class Trace:
         self.task = task
         self.t0 = time.time()
         self.metrics: list[dict] = []
+        # 由 Loop 填入 planner.describe()，即实际生效的 provider/model/endpoint
+        self.planner_info: dict | None = None
         self.dir = ""
         if not enabled:
             return
@@ -72,12 +74,16 @@ class Trace:
             "status": status,
             "reason": reason,
             "elapsed_s": round(time.time() - self.t0, 2),
+            # planner_info 是**实际**生效的后端（见 Backend.describe）。
+            # 回退到 config.* 只在没人设置它时发生，并显式标注 source，
+            # 免得又出现「meta 记的是默认值、跑的是另一个模型」那种假出处。
             "config": {
-                "model": config.MODEL,
-                "provider": config.LLM_PROVIDER,
+                **(self.planner_info or {"model": config.MODEL,
+                                         "provider": config.LLM_PROVIDER,
+                                         "politeness": config.POLITENESS,
+                                         "source": "config 默认值（未由 planner 上报）"}),
                 "target_pkg": config.TARGET_PKG,
                 "max_steps": config.MAX_STEPS,
-                "politeness": config.POLITENESS,
                 "restore": "always (硬编码，无开关)",
             },
             "metrics": self.metrics,
