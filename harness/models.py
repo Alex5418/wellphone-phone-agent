@@ -126,6 +126,10 @@ class Item:
     checked: bool | None = None
     text_value: str | None = None
     res_id: str | None = None
+    # 相比上一轮观测是否新出现。浮层/下拉/自动补全建议在节点树里**不是新窗口**
+    # （实测 window_count 仍为 1），拍平成条目后与页面原有内容长得一模一样 ——
+    # flash 实测栽在这里：补全把 Subject 顶掉，它以为没滚到，反复滚动去找。
+    is_new: bool = False
     # 非 None = 被排除出动作空间，值是原因。护栏判定，LLM 不能推翻
     blocked: str | None = None
 
@@ -133,6 +137,8 @@ class Item:
         line = f"[{self.sid}] {self.label or '(无文字)'} | {self.kind}"
         if self.state:
             line += f" | {self.state}"
+        if self.is_new:
+            line += " | ✦上一步之后新出现"
         if self.blocked:
             line += f" | ⛔ 不可操作：{self.blocked}"
         return line

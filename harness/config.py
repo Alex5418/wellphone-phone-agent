@@ -52,7 +52,8 @@ MODEL = os.environ.get("PHONEAGENT_MODEL", "claude-sonnet-4-5")
 LLM_BASE_URL = os.environ.get("PHONEAGENT_BASE_URL", "")  # OpenAI 兼容端点（DeepSeek 等）
 # 推理模型的思考过程也吃这个预算：1024 时 deepseek-v4-flash 的 content 直接是空的
 LLM_MAX_TOKENS = int(os.environ.get("PHONEAGENT_MAX_TOKENS", "4096"))
-LLM_TIMEOUT_S = 60.0
+# 60s 对推理模型 + 长 observation 偏紧（实测在关键一步读超时，整个 run 被判死）
+LLM_TIMEOUT_S = float(os.environ.get("PHONEAGENT_LLM_TIMEOUT", "150"))
 
 # ---- 落盘 ----
 RUNS_DIR = os.environ.get("PHONEAGENT_RUNS_DIR", "runs")

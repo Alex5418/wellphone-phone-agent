@@ -84,9 +84,34 @@ def self_check(state: dict, expected_pkg: str, last_hash: str | None,
     )
 
 
+def mark_changes(items, prev):
+    """标记新出现的条目，并返回"上一步之后消失的"清单。
+
+    为什么需要：浮层 / 下拉 / 自动补全建议在节点树里**不是新窗口**
+    （实测 window_count 仍为 1），拍平成条目后与页面原有内容毫无区别。
+    真正发生的是"某些条目消失、某些条目出现"，而观测层原本一个字都没表达 ——
+    弱模型只能靠猜，而**需要靠猜本身就是观测层的缺陷**：
+    能随模型能力浮动的是策略层，观测与护栏不行（ARCHITECTURE §2）。
+
+    整页换掉时不报增删（那时"全是新的"没有信息量），只在页面大体未变时报。
+    """
+    if not prev:
+        return []
+    def key(i):
+        return (i.label, i.kind)
+    prev_keys = {key(i) for i in prev}
+    cur_keys = {key(i) for i in items}
+    if not prev_keys or len(prev_keys & cur_keys) / len(prev_keys) < 0.5:
+        return []
+    for i in items:
+        i.is_new = key(i) not in prev_keys
+    return [f"{lb} | {kd}" for (lb, kd) in sorted(prev_keys - cur_keys)]
+
+
 def build_observation(task: str, env: EnvState, items: list[Item],
                       history: list[Step], politeness: str = config.POLITENESS,
-                      max_items: int = config.MAX_ITEMS_SHOWN) -> str:
+                      max_items: int = config.MAX_ITEMS_SHOWN,
+                      prev_items=None) -> str:
     out: list[str] = ["## 任务", task, "", "## 环境状态"]
 
     out.append(f"- 副屏: display {env.secondary_display} · {env.secondary_pkg or '未知'}"
@@ -113,6 +138,7 @@ def build_observation(task: str, env: EnvState, items: list[Item],
     if extra:
         out.append("- ⚠ 环境异常: " + "；".join(_ANOMALY_TEXT.get(a, a) for a in extra))
 
+    gone = mark_changes(items, prev_items)
     shown, hidden = trim_for_display(items, max_items)
     out += ["", "## 当前界面"]
     if not shown:
@@ -121,6 +147,10 @@ def build_observation(task: str, env: EnvState, items: list[Item],
         out.append(it.render())
     if hidden:
         out.append(f"（另有 {hidden} 项未显示，可滚动查看）")
+    if gone:
+        out.append("")
+        out.append("上一步之后**消失**的条目：" + "；".join(gone))
+        out.append("（消失多半是被浮层顶掉或页面局部替换，不是需要滚动去找）")
 
     if history:
         out += ["", "## 已执行"]

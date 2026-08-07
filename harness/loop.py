@@ -103,6 +103,7 @@ class Loop:
         consecutive_stall = 0
         parse_fail = 0
         secondary: int | None = None
+        prev_items = None
 
         for step_n in range(1, self.max_steps + 1):
             # ---------- 观测（护栏） ----------
@@ -125,7 +126,9 @@ class Loop:
 
             items = self.policy.annotate(compress(tree))
             obs = build_observation(task, env, items, history,
-                                    politeness=self.planner.politeness)
+                                    politeness=self.planner.politeness,
+                                    prev_items=prev_items)
+            prev_items = items
             if self.trace:
                 self.trace.text(step_n, "observation.txt", obs)
                 self.trace.json(step_n, "env.json", {
