@@ -454,14 +454,58 @@ LLM 输出 `done: true` **且** 硬步数上限（防止卡死，演示不能无
 
 ## 8 · 适用边界
 
-_（待填 —— 建议覆盖以下内容）_
+### 8.1 一条换实现也绕不过去的边界：单一 IME 输入连接
 
-- 节点树质量是硬前提；不同 UI 技术栈的可指认率对照
-- 现代 Android UI 演进方向（Compose / Flutter / RN / WebView）对无障碍树语义的影响
-- 需登录、验证码、支付、生物识别的流程不在范围内 —— 属流程壁垒而非树的问题
+这是本方案已知的**唯一架构级缺陷**，且它**不是无障碍带来的**。
+
+先把两件常被混为一谈的事拆开：
+
+| | 谁造成的 | 现状 |
+|---|---|---|
+| **window 焦点被夺走** | a11y 的动作分发绑定单焦点语义 | **a11y 特有，且已解决** —— 归还与动作原子绑定，实测 12–300 ms，dumpsys 独立链路交叉校验 |
+| **IME 的 `InputConnection` 改绑到副屏编辑器** | **编辑器获得输入焦点**这件事本身 | **未解决，且换实现也绕不过去** |
+
+第二条的证据（`dumpsys input_method`，API 34 模拟器）：
+
+```
+mCurMethodId       = LatinIME                        ← 全系统一个 IME 实例
+mCurClient         = ClientState{...}                ← 单数：同一时刻只有一个客户端被绑定
+mCurTokenDisplayId = 0
+```
+
+`mCurClient` 是**单数**。副屏那个新编辑器一拿到输入焦点，IMMS 就把绑定移过去，
+用户在主屏软键盘上的下一次点击于是写进了副屏的输入框
+（[E15](experiments/E15-SECONDARY-FIELD-CONTAMINATION.md)：重建副屏 Activity 时 9/79 命中，
+`restore=true` 全程开着也挡不住 —— **归还的是 window 焦点，撤销不了输入连接的改绑**）。
+
+**关键推论**：让编辑器获得输入焦点是"往输入框写字"的前提。
+所以换 UIAutomator、换 root、换事件注入，**只要共用同一个输入域就一样会改绑**。
+这不是"a11y 方案绕不过去"，是**任何共用输入域的方案都绕不过去**。
+
+### 8.2 那什么样的载体能绕过
+
+判据只有一条：**副屏的工作区要有独立的输入域**（不只是独立的 display —— display
+焦点我们已经有了，`FLAG_OWN_FOCUS` 让 `mCurrentFocus` 每屏一个，问题不在那里）。
+
+| 路径 | 可行性 |
+|---|---|
+| work profile / private space | ❌ **解决的是错的那一层**。它隔离数据与应用，不给独立输入焦点域 |
+| 可见后台用户（多屏多用户，Android 14 为车机加的） | ❌ 本设备明确不支持：<br>`dumpsys user` → `Supports visible background users on displays: false`。手机 form factor 默认关闭 |
+| VirtualDeviceManager（Android 13+ Companion Device 串流线） | ❓ 概念上最对口 —— 虚拟设备有自己的输入路由。**未实测**，需要配套权限 |
+| 两台设备 / 云设备 | ✅ 物理隔离必然有效，但那已不是「副屏 agent」这个产品形态 |
+
+**结论**：在手机 form factor 上，目前没有既保持本产品形态、又能消除这条缺陷的路径。
+它应被当作**平台约束**上报，而不是当作待修的实现缺陷。
+
+### 8.3 其余边界
+
+- 节点树质量是硬前提；不同 UI 技术栈的可指认率对照见 [C2](experiments/C2-RELIABILITY.md)
+- Compose 应用里 `findFocus()` 返回 `android.view.View` 包装节点、`editable=false`，
+  真正的 EditText 在树里 —— 只信 `primary_focus.editable` 会时灵时不灵
+- 需登录、验证码、支付、生物识别的流程不在范围内 —— 属流程壁垒，不是树的问题
 - 部分应用会检测无障碍服务并拒绝服务
-- 触发窗口重建的动作类型
-- 仅在模拟器 API 34 验证，未在真机复现
+- 触发全局配置变更的动作已排除出动作空间（§5 ⛔）
+- **仅在模拟器 API 34 验证，未在真机复现**
 
 ---
 
