@@ -278,6 +278,8 @@ def main() -> int:
     ap.add_argument("--write", default=None, help="覆盖写入值（不含 x，否则与标记混淆）")
     ap.add_argument("--mark", default=MARK,
                     help="标记字符，必须不出现在写入值里（写真实邮箱时用 q）")
+    ap.add_argument("--csv", default=None,
+                    help="逐次追加 (arm,action,restore,iter,disturb_ms,hit,extra) 到该文件")
     ap.add_argument("--auto", action="store_true",
                     help="用 input tap 自动敲软键盘，代替人手（可无人值守跑大 n）")
     args = ap.parse_args()
@@ -333,6 +335,14 @@ def main() -> int:
     if MARK in WRITE:
         print(f"写入值里含标记字符 '{MARK}'，会与污染混淆。换一个。")
         return 1
+    csv_fp = None
+    if args.csv:
+        import os
+        new = not os.path.exists(args.csv)
+        csv_fp = open(args.csv, "a", encoding="utf-8")
+        if new:
+            csv_fp.write("arm,action,restore,iter,disturb_ms,hit,extra" + chr(10))
+
     base_sec = fields(tp, display)
     prim_len = [primary_len(tp) or 0]
     disturb: list[int] = []
@@ -398,11 +408,21 @@ def main() -> int:
             extra = got[len(WRITE):] if got else ""
             extras.append(extra)
             shown = f"读回 {got!r}" + (f"  ❗多出 {extra!r}" if extra else "")
+            # 逐次落盘 (打扰窗口, 是否命中)。**必须配对**：
+            # 汇总里只有「20 次中 3 次命中」和「中位 92ms」两个数，
+            # 拼不出「命中的那几次窗口是不是更长」—— 而那正是要回答的问题。
+            if csv_fp is not None:
+                csv_fp.write(f"{args.arm},{args.action},{restore},{k+1},"
+                             f"{d if isinstance(d, int) else ''},"
+                             f"{1 if extra else 0},{extra!r}\n")
+                csv_fp.flush()   # 半夜挂掉时，已跑的部分不能丢
         else:
             shown = f"副屏'{MARK}'累计 {marks(fs)}"
         print(f"  [{k+1}] {args.action} on {tgt.label[:18]:18} 打扰 {d}ms  {shown}  "
               f"主屏 {pt} 字")
 
+    if csv_fp is not None:
+        csv_fp.close()
     if tapper is not None:
         tapper.stop()
         print(f"\n敲键器共敲了 {tapper.count} 下")
