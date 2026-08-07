@@ -35,7 +35,7 @@ self-test PASS: merge / wrapper-dedup / zero-bounds / cd-fallback 全部符合�
 ## s.xml（Settings 首页）压缩后完整输出
 
 ```
-# tools\s.xml: total=65 kept=10 (dropped: bounds=2 noflags=52 wrapper=1) merged_anchors=8 flattened=0
+# tools\samples\s.xml: total=65 kept=10 (dropped: bounds=2 noflags=52 wrapper=1) merged_anchors=8 flattened=0
 [0] (no text) | scrollable | android.widget.ScrollView id=com.android.settings:id/settings_homepage_container
   [1] Profile picture, double tap to open Google Account | clickable | android.widget.ImageView id=com.android.settings:id/account_avatar
   [2] Search settings | clickable | android.view.ViewGroup id=com.android.settings:id/search_action_bar
@@ -67,7 +67,7 @@ self-test PASS: merge / wrapper-dedup / zero-bounds / cd-fallback 全部符合�
 ## d0.xml（Chrome WebView / Amazon 页）压缩后完整输出
 
 ```
-# tools\d0.xml: total=557 kept=37 (dropped: bounds=399 noflags=118 wrapper=3) merged_anchors=0 flattened=0
+# tools\samples\d0.xml: total=557 kept=37 (dropped: bounds=399 noflags=118 wrapper=3) merged_anchors=0 flattened=0
 [0] Amazon.com. Spend less. Smile more. | scrollable | android.webkit.WebView
   [1] Open All Categories Menu | clickable | android.widget.Button id=nav-hamburger-menu
   [2] Amazon | clickable | android.view.View id=nav-logo-sprites

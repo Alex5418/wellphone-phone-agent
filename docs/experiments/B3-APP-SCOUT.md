@@ -23,7 +23,7 @@ Settings 首页 65 节点 / View 占比 2%（B2 样本）。
 
 ## 各 app 明细
 
-### AOSP Clock — 新建闹钟页（`tools/clock-alarm.xml`）
+### AOSP Clock — 新建闹钟页（`tools/samples/clock-alarm.xml`）
 
 class 分布 top10：
 
@@ -44,9 +44,9 @@ com.google.android.deskclock:id/material_clock_display
 ```
 
 备注：时间为 Material 选择器（非文本输入），EditText=0；19 个 clickable 全部带规范 id。
-主屏（表盘，`tools/clock1.xml`）50 节点、View 占比 2%、规范 id 41。
+主屏（表盘，`tools/samples/clock1.xml`）50 节点、View 占比 2%、规范 id 41。
 
-### AOSP Contacts — 主列表页（`tools/contacts.xml`）
+### AOSP Contacts — 主列表页（`tools/samples/contacts.xml`）
 
 class 分布 top10：
 
@@ -70,7 +70,7 @@ com.google.android.contacts:id/contacts_list_container
 备注：首次启动弹通知权限窗，已用 `pm grant` 处理（环境设置，非 UI 动作）。
 DrawerLayout + SlidingPaneLayout 双布局（手机/平板自适应），1 个搜索 EditText。
 
-### AOSP Calendar — onboarding → 登录墙（`tools/calendar.xml` / `tools/cal5.xml`）
+### AOSP Calendar — onboarding → 登录墙（`tools/samples/calendar.xml` / `tools/samples/cal5.xml`）
 
 采集路径（如实记录）：
 
@@ -95,7 +95,7 @@ resource-id 样例 5 条（登录页）：`android:id/content`、`com.google.and
 备注：**月视图未达** —— 继续会进入账号登录，按纪律「不配置任何账号」停止。
 登录页是 gms 内嵌 WebView（2 个 WebView 节点、40% 无类型 View），与 E2 的 Chrome 结论同型。
 
-### Fossify Notes 1.7.0 — 主界面即编辑页（`tools/notes.xml`）
+### Fossify Notes 1.7.0 — 主界面即编辑页（`tools/samples/notes.xml`）
 
 class 分布 top10（18 节点）：
 
@@ -120,7 +120,7 @@ org.fossify.notes:id/main_toolbar
 极干净：0 个无类型 View、全部节点可归因。`D2.o` 为 R8 混淆后的自定义类名
 （出现在 class 分布中，不影响 id/text 定位）。
 
-### Thunderbird (K-9 Mail) 21.1 — 欢迎页（`tools/k9.xml`）
+### Thunderbird (K-9 Mail) 21.1 — 欢迎页（`tools/samples/k9.xml`）
 
 class 分布 top10（24 节点）：
 

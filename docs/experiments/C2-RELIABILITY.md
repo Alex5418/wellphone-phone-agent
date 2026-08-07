@@ -23,7 +23,7 @@
 
 > 注：任务表标注「Chrome 新标签页 | 已有 d0.xml」，但仓库 `d0.xml` 实为 Chrome 恢复会话后的
 > Amazon 页（557 节点，62%+ 无类型 View）。本次用 `pm clear` 重置 Chrome 后重新 dump 了
-> 真正的**新标签页**（`tools/chrome-ntp.xml`，91 节点，含 Discover 卡片），两者同属 WebView
+> 真正的**新标签页**（`tools/samples/chrome-ntp.xml`，91 节点，含 Discover 卡片），两者同属 WebView
 > 技术栈，结论互相印证，一并入表。
 
 ---
@@ -61,7 +61,7 @@
   额外语义注入** —— 语义树形态与真实 Compose app 一致。
 - **构建**：AGP 9.3.1 built-in Kotlin（2.2.10）+ `org.jetbrains.kotlin.plugin.compose:2.2.10`。
 
-### 四控件专项表（替代样本 `tools/compose.xml`）
+### 四控件专项表（替代样本 `tools/samples/compose.xml`）
 
 | 控件 | 能否唯一定位 | 策略 | 锚点内容 |
 |---|---|---|---|
@@ -151,10 +151,10 @@ Dark theme 行 → L5 ordinal 0（title 是第 0 个精确命中），Switch →
 
 ## 附录：压缩后完整输出
 
-### A. Settings Display 页（`tools/settings-display.xml`）
+### A. Settings Display 页（`tools/samples/settings-display.xml`）
 
 ```
-# tools\settings-display.xml: total=55 kept=11 (dropped: bounds=0 noflags=44 wrapper=0) merged_anchors=8 flattened=0
+# tools\samples\settings-display.xml: total=55 kept=11 (dropped: bounds=0 noflags=44 wrapper=0) merged_anchors=8 flattened=0
 [0] Display | scrollable | android.widget.ScrollView id=com.android.settings:id/content_parent
     locator: {strategy: "L1", resource_id: "com.android.settings:id/content_parent"}
   [1] Navigate up | clickable | android.widget.ImageButton
@@ -179,12 +179,12 @@ Dark theme 行 → L5 ordinal 0（title 是第 0 个精确命中），Switch →
         locator: {strategy: "L4", text: "Navigation mode", class: "android.widget.LinearLayout"}
 ```
 
-（反查表与正文 locator 相同，见 `--assess` 输出；完整 36 行输出可 `python tools/compress_tree.py tools/settings-display.xml` 复现。）
+（反查表与正文 locator 相同，见 `--assess` 输出；完整 36 行输出可 `python tools/compress_tree.py tools/samples/settings-display.xml` 复现。）
 
-### B. Composetest（`tools/compose.xml`）
+### B. Composetest（`tools/samples/compose.xml`）
 
 ```
-# tools\compose.xml: total=17 kept=4 (dropped: bounds=0 noflags=13 wrapper=0) merged_anchors=4 flattened=0
+# tools\samples\compose.xml: total=17 kept=4 (dropped: bounds=0 noflags=13 wrapper=0) merged_anchors=4 flattened=0
 [0] To | clickable|long-clickable|editable | android.widget.EditText
     locator: {strategy: "L4", text: "To", class: "android.widget.EditText"}
 [1] Subject | clickable|long-clickable|editable | android.widget.EditText
@@ -195,10 +195,10 @@ Dark theme 行 → L5 ordinal 0（title 是第 0 个精确命中），Switch →
     locator: {strategy: "L4", text: "Send", class: "android.view.View"}
 ```
 
-### C. Chrome 新标签页（`tools/chrome-ntp.xml`）
+### C. Chrome 新标签页（`tools/samples/chrome-ntp.xml`）
 
 ```
-# tools\chrome-ntp.xml: total=91 kept=20 (dropped: bounds=0 noflags=71 wrapper=0) merged_anchors=0 flattened=0
+# tools\samples\chrome-ntp.xml: total=91 kept=20 (dropped: bounds=0 noflags=71 wrapper=0) merged_anchors=0 flattened=0
 [0] (no text) | scrollable | androidx.recyclerview.widget.RecyclerView id=com.android.chrome:id/feed_stream_recycler_view
     locator: {strategy: "L1", resource_id: "com.android.chrome:id/feed_stream_recycler_view"}
   [1] Search or type web address | clickable|long-clickable|editable | android.widget.EditText id=com.android.chrome:id/search_box_text
@@ -241,10 +241,10 @@ Dark theme 行 → L5 ordinal 0（title 是第 0 个精确命中），Switch →
     locator: {strategy: "L1", resource_id: "com.android.chrome:id/menu_button"}
 ```
 
-### D. K-9 欢迎页（`tools/k9.xml`，附）
+### D. K-9 欢迎页（`tools/samples/k9.xml`，附）
 
 ```
-# tools\k9.xml: total=24 kept=2 (dropped: bounds=0 noflags=22 wrapper=0) merged_anchors=2 flattened=0
+# tools\samples\k9.xml: total=24 kept=2 (dropped: bounds=0 noflags=22 wrapper=0) merged_anchors=2 flattened=0
 [0] Get started | clickable | android.view.View id=onboarding_welcome_start_button
     locator: {strategy: "L1", resource_id: "onboarding_welcome_start_button"}
 [1] Import settings | clickable | android.view.View
