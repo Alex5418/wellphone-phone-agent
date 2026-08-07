@@ -1,0 +1,22 @@
+## 任务
+把屏幕超时时间设置为 30 秒
+
+## 环境状态
+- 副屏: display 2 · com.android.settings ✓
+- 主屏焦点: 无
+- 用户输入中: 否
+- 上一步: click "Screen timeout" → 已生效，activity → SubSettings
+- ⚠ 环境异常: 主屏当前没有输入焦点持有者
+
+## 当前界面
+[0] （可滚动区域：Screen timeout…） | list
+[1] Navigate up | button
+[2] 15 seconds | button
+[3] 30 seconds | button
+[4] 1 minute | button
+[5] 2 minutes | button
+[6] 5 minutes | button
+[7] 10 minutes | button
+
+## 已执行
+1. click "Screen timeout" → 已生效，activity → SubSettings

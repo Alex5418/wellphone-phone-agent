@@ -1,0 +1,29 @@
+{
+  "task": "在设置里打开深色主题",
+  "status": "done",
+  "reason": "规则脚本第 2 步",
+  "elapsed_s": 5.22,
+  "config": {
+    "model": "claude-sonnet-4-5",
+    "provider": "anthropic",
+    "target_pkg": "com.android.settings",
+    "max_steps": 25,
+    "politeness": "normal",
+    "restore": "always (硬编码，无开关)"
+  },
+  "metrics": [
+    {
+      "step": 1,
+      "action": "click",
+      "target": 6,
+      "verdict": "PASS",
+      "restore_ok": true,
+      "restore_focus_ms": 3191,
+      "restore_total_ms": 3307,
+      "disturb_ms": 3335,
+      "action_ms": 144,
+      "total_ms": 3454,
+      "llm_ms": 0
+    }
+  ]
+}

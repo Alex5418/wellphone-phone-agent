@@ -1,0 +1,15 @@
+## 任务
+关闭深色主题
+
+## 环境状态
+- 副屏: display 2 · com.android.settings ✓
+- 主屏焦点: 无
+- 用户输入中: 未知（读不到主屏窗口）
+- ⚠ 环境异常: 主屏当前没有输入焦点持有者
+
+## 当前界面
+[0] （可滚动区域：Dark theme…） | list
+[1] Navigate up | button
+[2] Dark theme | button
+[3] Use Dark theme | button | ⛔ 不可操作：会触发全局配置变更（所有 Activity 重建），实测打扰窗口 ~3s，已排除
+[4] Schedule | button | None

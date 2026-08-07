@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "29466bf755cf",
+  "args": {
+    "display": 2,
+    "locator": {
+      "strategy": "L1",
+      "target": "self",
+      "resource_id": "com.android.settings:id/switchWidget",
+      "cls": "android.widget.Switch"
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

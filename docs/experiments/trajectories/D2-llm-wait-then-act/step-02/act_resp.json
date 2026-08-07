@@ -1,0 +1,63 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L4",
+    "class": "android.widget.LinearLayout",
+    "resource_id": null,
+    "anchor_class": "android.widget.TextView"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 313,
+    "verify_ms": 6,
+    "total_ms": 319,
+    "holder_before": "com.example.composetest",
+    "holder_after": "com.example.composetest",
+    "expect_pkg": "com.example.composetest",
+    "focus_action_result": false,
+    "node_refound": true,
+    "last_resolve_ms": 286,
+    "last_focus_call_ms": 27,
+    "descriptor": {
+      "pkg": "com.example.composetest",
+      "resource_id": null,
+      "class": "android.view.View",
+      "editable": false,
+      "window_id": 243
+    }
+  },
+  "post_state": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "class": "android.widget.LinearLayout",
+    "resource_id": null,
+    "text": null,
+    "raw_text": null,
+    "content_desc": null,
+    "checkable": false,
+    "checked": false,
+    "enabled": true,
+    "focused": false,
+    "selected": false
+  },
+  "window_after": {
+    "display": 2,
+    "pkg": "com.android.settings",
+    "activity": "com.android.settings.SubSettings",
+    "window_count": 1
+  },
+  "timing": {
+    "action_ms": 17,
+    "disturb_ms": 330,
+    "restore_focus_ms": 313,
+    "restore_total_ms": 319,
+    "total_ms": 340
+  }
+}

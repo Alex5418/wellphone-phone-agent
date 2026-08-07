@@ -1,0 +1,53 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L1",
+    "class": "android.widget.Switch",
+    "resource_id": "com.android.settings:id/switchWidget",
+    "anchor_class": "android.widget.Switch"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 3191,
+    "verify_ms": 116,
+    "total_ms": 3307,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": false,
+    "node_refound": true,
+    "last_resolve_ms": 2962,
+    "last_focus_call_ms": 225,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": "com.android.chrome:id/feed_stream_recycler_view",
+      "class": "androidx.recyclerview.widget.RecyclerView",
+      "editable": false,
+      "window_id": 206
+    }
+  },
+  "post_state": {
+    "found": false,
+    "candidates": 0,
+    "note": "no candidate for L1(id=com.android.settings:id/switchWidget text=null cd=null cls=android.widget.Switch idx=0 target=self path=null)"
+  },
+  "window_after": {
+    "display": 2,
+    "pkg": null,
+    "activity": null,
+    "window_count": 1
+  },
+  "timing": {
+    "action_ms": 144,
+    "disturb_ms": 3335,
+    "restore_focus_ms": 3191,
+    "restore_total_ms": 3307,
+    "total_ms": 3454
+  }
+}

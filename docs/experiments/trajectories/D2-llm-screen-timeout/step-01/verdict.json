@@ -1,0 +1,6 @@
+{
+  "result": "PASS",
+  "predicate": "activity_or_tree_changes",
+  "detail": "activity → SubSettings",
+  "notes": []
+}

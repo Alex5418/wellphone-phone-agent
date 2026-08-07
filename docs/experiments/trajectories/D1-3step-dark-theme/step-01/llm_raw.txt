@@ -1,0 +1,1 @@
+{"action": "scroll_forward", "target": 2, "thought": "规则脚本第 1 步"}

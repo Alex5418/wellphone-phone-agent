@@ -1,0 +1,19 @@
+## 任务
+把屏幕超时时间改成 1 分钟
+
+## 环境状态
+- 副屏: display 2 · com.android.settings ✓
+- 主屏焦点: com.example.composetest
+- 用户输入中: 是
+
+## 当前界面
+[0] （可滚动区域：Screen timeout…） | list
+[1] Navigate up | button
+[2] 15 seconds | button
+[3] 30 seconds | button
+[4] 1 minute | button
+[5] 2 minutes | button
+[6] 5 minutes | button
+[7] 10 minutes | button
+
+（用户正在输入。若本步不紧急，可以输出 wait 让路。）

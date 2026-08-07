@@ -1,0 +1,15 @@
+{
+  "task": "关闭深色主题",
+  "status": "impossible",
+  "reason": "关闭深色主题的唯一控件是 Use Dark theme 开关，但它被标记为不可操作且会触发全局配置变更，没有其他可用的替代入口，因此任务无法完成。",
+  "elapsed_s": 3.56,
+  "config": {
+    "model": "claude-sonnet-4-5",
+    "provider": "anthropic",
+    "target_pkg": "com.android.settings",
+    "max_steps": 25,
+    "politeness": "normal",
+    "restore": "always (硬编码，无开关)"
+  },
+  "metrics": []
+}

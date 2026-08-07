@@ -1,0 +1,1 @@
+{"thought": "已点击30秒选项并生效，目标达成", "action": "finish", "target": null, "value": null, "done": true}
