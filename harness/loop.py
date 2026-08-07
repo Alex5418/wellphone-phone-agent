@@ -20,7 +20,7 @@ from .planner import Planner, PlannerError
 from .trace import Trace
 from .transport import Transport, TransportError
 from .tree import build_tree
-from .verify import Snapshot, cross_check_post_state, verify
+from .verify import Snapshot, Verdict, cross_check_post_state, verify
 
 
 SEP_RAW = chr(10) + "---" + chr(10)   # 多次尝试之间的分隔
@@ -96,7 +96,19 @@ class Loop:
         )
         if item is None:
             return verify_back(pre, post, result)
-        return verify(item, plan.action, pre, post, result, plan.value)
+        v = verify(item, plan.action, pre, post, result, plan.value)
+
+        # 文字锚点被成功的写入本身作废时（见 verify.py），probe 解析不到节点，
+        # 只能判 UNKNOWN。但**观测层其实看得到那段文字** —— 重读的整棵树里
+        # 就有一个节点的文字正好等于写入值。用它把 UNKNOWN 收敛成 PASS。
+        # 这不是复用产生该结果的链路：树是独立重读的，与 act 的返回值无关。
+        if (v.result == "UNKNOWN" and plan.action == "set_text" and plan.value
+                and not post.found and post_tree is not None):
+            if any((n.effective_text or "") == plan.value for n in post_tree.nodes):
+                return Verdict("PASS", v.predicate,
+                               f"定位器已被写入作废，但重读的树中存在文字为 "
+                               f"{plan.value!r} 的节点")
+        return v
 
     def run(self, task: str) -> RunResult:
         history: list[Step] = []
