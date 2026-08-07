@@ -83,3 +83,34 @@ class TestPredicates(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestSetTextStaleRead(unittest.TestCase):
+    """写入后读到写入前的值 —— 分不出"没写进去"和"读取滞后"，只能报 UNKNOWN。
+
+    实测依据：Gmail 撰写页正文 4/4 判 FAIL，但收到的邮件正文完全正确。
+    """
+
+    def setUp(self):
+        tp = FakeTransport()
+        self.items = {(i.label, i.kind): i for i in compress(build_tree(tp.observe(6)))}
+
+    def snap(self, **kw):
+        base = dict(found=True, checked=None, text=None, activity="A",
+                    tree_hash="h1", window_count=1)
+        base.update(kw)
+        return Snapshot(**base)
+
+    def test_unchanged_read_is_unknown_not_fail(self):
+        box = self.items[("搜索设置", "input")]
+        v = verify(box, "set_text", self.snap(text="占位"), self.snap(text="占位"),
+                   result(), "新内容")
+        self.assertEqual(v.result, "UNKNOWN")
+        self.assertIn("读取通道滞后", v.detail)
+
+    def test_wrong_value_is_still_fail(self):
+        """读到的是**别的**值 —— 那是真失败，不是滞后。"""
+        box = self.items[("搜索设置", "input")]
+        v = verify(box, "set_text", self.snap(text="占位"), self.snap(text="别的东西"),
+                   result(), "新内容")
+        self.assertEqual(v.result, "FAIL")

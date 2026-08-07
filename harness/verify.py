@@ -90,6 +90,15 @@ def verify(item: Item, action: str, pre: Snapshot, post: Snapshot,
     if pred == "text_equals_value":
         if post.text == value:
             return Verdict("PASS", pred, f"text = {value!r}")
+        if post.text == pre.text:
+            # 读到的仍是写入前的值 —— 分不出"没写进去"和"读取通道滞后"。
+            # 实测：Gmail 撰写页正文 4/4 属后者（判 FAIL，但收到的邮件正文完全正确），
+            # refresh() / 等 3-5 秒 / 发 FOCUS 都不能让它跟上（E12 §5、E13 §7）。
+            # 按「没有证据说明失败时不许报失败」，这里只能是 UNKNOWN。
+            # 真正的哑写入由 stall 判据兜底：界面连续不变照样会中止。
+            return Verdict("UNKNOWN", pred,
+                           f"读到的仍是写入前的值 {post.text!r} —— "
+                           f"可能没写进去，也可能是读取通道滞后")
         return Verdict("FAIL", pred, f"期望 {value!r}，实际 {post.text!r}")
 
     if pred == "tree_hash_changes":
