@@ -58,6 +58,7 @@ python -m harness.cli run "在设置中关闭深色主题"     # 5. 端到端
 
 分阶段自验（state → observe → act 单步 → loop）、LLM 后端切换、
 以及不经过 LLM 单独调 locator 的办法，见 [`harness/README.md`](harness/README.md)。
+想复现演示场景（用户打中文 + Agent 发邮件）：[`docs/DEMO.md`](docs/DEMO.md)。
 
 ## 环境变量
 
