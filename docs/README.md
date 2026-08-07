@@ -33,7 +33,7 @@ docs/
 | [B3-APP-SCOUT.md](experiments/B3-APP-SCOUT.md) | 拿哪个 app 做演示 | 5 个候选 app 的节点树体检数据（只采数据，不作选型建议） |
 | [C2-RELIABILITY.md](experiments/C2-RELIABILITY.md) | 节点树可用性怎么量 | **弃用**「规范 resource-id 覆盖率」，改用「可交互节点中能被唯一指认的比例」 |
 | [C3-EXECUTION.md](experiments/C3-EXECUTION.md) | locator 在执行侧管不管用 | L3/L4/L5 在 Settings 上验证通过；发现 `findByText` 同时匹配 `contentDescription` |
-| [D1-FIRST-REAL-RUN.md](experiments/D1-FIRST-REAL-RUN.md) | harness 端到端跑得起来吗 | 跑通。**打扰窗口不是一个数**：滚动 12 ms，全局配置变更 2526 ms（其中 2962 ms 是重解析阻塞） |
+| [D1-FIRST-REAL-RUN.md](experiments/D1-FIRST-REAL-RUN.md) | harness 端到端跑得起来吗 | 跑通。**打扰窗口不是一个数**：滚动 12 ms，全局配置变更 2526 ms。另一次补了子时间戳的单步重跑显示瓶颈在**重解析**（2962 ms），归还原语本身只要 225 ms —— 两个数出自两次 run，不构成同一次的分解 |
 | [D2-LLM-REAL-RUN.md](experiments/D2-LLM-REAL-RUN.md) | 换成真实模型护栏还成立吗 | 成立，护栏一行没改。deepseek-v4-flash 3 步完成任务并独立验证；模型自己选择 wait 让路；撞上 ⛔ 时一步收尾报 impossible |
 | [E7-KEYSTROKE-LANDING.md](experiments/E7-KEYSTROKE-LANDING.md) | 打扰窗口里用户敲的字去了哪 | **bug 是真的**：不归还时 120 字里 56 个进 agent 工作区且无上界；归还后压到 6 个（≈ 窗口÷打字速率），**有界但不为零**；最坏情况丢 129/200 |
 | [E8-SOFT-KEYBOARD.md](experiments/E8-SOFT-KEYBOARD.md) | 软键盘下还会污染吗 | **不会，一次都没有**。点屏幕这一下自己把焦点带回来，`restore=false` 也无损。E7 的污染结论**限外接键盘**；软键盘的现实风险是全局配置变更下丢 40% 击键 |
