@@ -64,7 +64,11 @@ class TestPredicates(unittest.TestCase):
         box = self.items[("搜索设置", "input")]
         v = verify(box, "set_text", self.snap(), self.snap(text="wifi"), result(), "wifi")
         self.assertEqual(v.result, "PASS")
+        # 读到的仍是写入前的值 → UNKNOWN（分不出没写进去与读取滞后；实测 4/4 是后者）
         v = verify(box, "set_text", self.snap(), self.snap(text=None), result(), "wifi")
+        self.assertEqual(v.result, "UNKNOWN")
+        # 读到的是**别的**值 → 才是真失败
+        v = verify(box, "set_text", self.snap(), self.snap(text="别的"), result(), "wifi")
         self.assertEqual(v.result, "FAIL")
 
     def test_scroll_boundary_is_fail_with_reason(self):
