@@ -83,7 +83,7 @@ python -m harness.cli run "在设置中关闭深色主题"     # 5. 端到端
 
 | 用户在主屏干什么 | 关掉归还 | **开启归还（护栏）** | 证据 |
 |---|---|---|---|
-| 软键盘打字 · 击键落点 | 污染 0 | 污染 0 | [E8](docs/experiments/E8-SOFT-KEYBOARD.md) ×4 复测 |
+| 软键盘打字 · 击键落点 | 污染 0 | 污染 0 | [E8](docs/experiments/E8-SOFT-KEYBOARD.md) 8 组 + [E15](docs/experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) 50 次 |
 | 外接键盘打字 · 击键落点 | **120 键中 56 键灌进副屏，且无上界** | 降到 6 键 —— **有界但非零** | [E7](docs/experiments/E7-KEYSTROKE-LANDING.md) |
 | 中文输入法连打 · 导航类动作 | **10/20 打断 composing** | **0/20** | [E11](docs/experiments/E11-RESULTS.md) |
 | 中文输入法连打 · 滚动类动作 | 0/20 | 0/20 | 同上 |
@@ -126,3 +126,7 @@ tests/      66 条离线测试，不需要设备
 - E14 测的是"会不会暂停 / 长冻结"，不是"会不会掉一帧"—— 唯一能测微卡顿的帧级仪表读不到。
 - 样本量不均：中文 composing 矩阵做到每格 n≥20，其余多数实验每组只有 1 次。
 - 外接物理键盘场景**归还只能减轻污染、不能消除**；判定为 corner case，未继续投入。
+- ⚠ **一条未解释的异常**：一次真实 run 里，agent 写进副屏输入框的文本被读回时多出 2 个字符
+  （`…@gmail.com` → `…@gmail.comge`），疑似用户击键。[E15](docs/experiments/E15-SECONDARY-FIELD-CONTAMINATION.md)
+  用 6 组条件共 50 次未能复现，也排除了 Gmail 自动补全与 SET_TEXT 实现本身。
+  **判定为未知，不是不成立** —— 原始 trajectory 保留在 `runs/2026-08-07T03-52-37/`。

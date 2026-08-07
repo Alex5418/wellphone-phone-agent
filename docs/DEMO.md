@@ -78,12 +78,14 @@ adb shell dumpsys window displays | grep -E "mDisplayId=|mCurrentFocus"
 ```bash
 export ANTHROPIC_API_KEY=...        # 或用 DeepSeek，见下
 
-python -m harness.cli run "给 你的邮箱@gmail.com 发一封邮件，主题写「副屏 agent 演示」，正文写「发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字。」" \
-  --pkg com.google.android.gm \
+python -m harness.cli --pkg com.google.android.gm \
+  run "给 你的邮箱@gmail.com 发一封邮件，主题写「副屏 agent 演示」，正文写「发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字。」" \
   --verbose
 ```
 
-> `--pkg` 必须改成 Gmail，默认是 `com.android.settings`，不改会被自检拦下。
+> ⚠ **`--pkg` 必须放在子命令 `run` 前面。** 它和 `--port` / `--display` 一样属于主解析器，
+> 放到 `run` 后面会报 `unrecognized arguments: --pkg`。`--verbose` 属于 `run`，留在后面。
+> 默认值是 `com.android.settings`，不改会被自检拦下。
 
 **用弱模型跑（更有说服力，E13 证明了它能独立完成）：**
 
@@ -92,7 +94,7 @@ PHONEAGENT_LLM_PROVIDER=openai \
 PHONEAGENT_MODEL=deepseek-chat \
 PHONEAGENT_BASE_URL=https://api.deepseek.com \
 DEEPSEEK_API_KEY=... \
-python -m harness.cli run "同上那段任务描述" --pkg com.google.android.gm --verbose
+python -m harness.cli --pkg com.google.android.gm run "同上那段任务描述" --verbose
 ```
 
 ### 你在镜头前做什么
