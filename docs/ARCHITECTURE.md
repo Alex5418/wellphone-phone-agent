@@ -456,7 +456,7 @@ LLM 输出 `done: true` **且** 硬步数上限（防止卡死，演示不能无
 └────────────────┬──────────────────────────┘
                  │ adb broadcast / socket
 ┌────────────────┴──────────────────────────┐
-│      Android（Kotlin，~400 行）            │
+│      Android（Kotlin，约 1700 行）          │
 │  AccessibilityService                      │
 │  · 跨 display 读取节点树                    │
 │  · 执行动作 + 焦点归还（原子）               │

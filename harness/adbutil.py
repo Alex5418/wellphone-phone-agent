@@ -6,12 +6,9 @@ per-display 语义（实测两块屏可同时为 true），拿它当"全局焦�
 真正的全局持有者只有 window manager 知道，只能从 dumpsys 读。
 
 ⚠ **必须按 display 分段解析**。实测 `dumpsys window displays` 的输出里每块屏各有
-一行 mCurrentFocus，而且副屏排在前面：
-
-    Display: mDisplayId=2 (organized)
-      mCurrentFocus=Window{... com.android.settings/...SubSettings}
-    Display: mDisplayId=0 (organized)
-      mCurrentFocus=Window{... com.android.chrome/...Main}
+一行 mCurrentFocus，而且**哪块屏排在前面是不定的**（翻历史实验日志，
+`0→2`、`2→0`、`0→4`、`6→0` 都出现过；D1 §2 已更正初稿「副屏排在前面」的
+错误结论）。下面的示例只是本次运行恰好副屏在前：
 
 "取第一个 mCurrentFocus" 会拿到副屏的持有者，然后得出"主屏焦点被夺走了"的假警报 ——
 第一次真机跑就踩到了这个（那一版还因为 grep 不到而静默返回 None）。
