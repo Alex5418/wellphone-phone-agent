@@ -6,7 +6,10 @@ per-display 语义（实测两块屏可同时为 true），拿它当"全局焦�
 真正的全局持有者只有 window manager 知道，只能从 dumpsys 读。
 
 ⚠ **必须按 display 分段解析**。实测 `dumpsys window displays` 的输出里每块屏各有
-一行 mCurrentFocus，而且副屏排在前面：
+一行 mCurrentFocus，而且**哪块屏排在前面是不定的**（翻历史实验日志，
+`0→2`、`2→0`、`0→4`、`6→0` 都出现过；D1 §2 已更正初稿「副屏排在前面」的
+错误结论）。下面是**某一次**运行的实际输出，那次恰好副屏在前 ——
+顺序是这个样本的性质，不是规律：
 
     Display: mDisplayId=2 (organized)
       mCurrentFocus=Window{... com.android.settings/...SubSettings}
