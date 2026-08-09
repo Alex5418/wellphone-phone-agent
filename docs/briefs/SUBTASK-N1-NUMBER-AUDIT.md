@@ -63,8 +63,14 @@ cd android && ./gradlew :app:testDebugUnitTest --rerun-tasks
 
 - `docs/experiments/*.md` —— 实验报告正文
 - `docs/experiments/data/*.csv`、`*.jsonl` —— 原始数据
-- `runs/*/` —— trajectory
+- `runs/*/` —— trajectory。**它在你的工作目录里已经备好了**（929 个文件）。
+  它是 gitignore 的，所以 `git status` 看不到它，**这是正常的，不要把它 add 进来**。
 - 测试实际输出
+
+> ⚠ **只读你自己工作目录里的东西。** 上一轮就是死在这一步：agent 去读
+> `C:/Users/76982/Desktop/Work/whaletech/WellPhone/runs/`（另一个目录），
+> 沙箱 auto-reject，整个 run 结束、零交付。
+> **本任务需要的一切都在当前目录内**，用相对路径，不要去别的目录找。
 
 ---
 

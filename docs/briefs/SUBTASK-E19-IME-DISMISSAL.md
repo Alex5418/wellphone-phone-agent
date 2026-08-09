@@ -67,10 +67,22 @@ adb shell settings get secure enabled_accessibility_services
 #   应回显 com.example.phoneagent/com.example.phoneagent.AgentAccessibilityService
 #   空的话去「设置 → 无障碍」打开；改过代码要关掉再打开，否则跑的是旧实例
 
-# ④ 副屏（scrcpy 4.1 在 ~/Desktop/Work/whaletech/scrcpy-win64-v4.1/）
-cd ~/Desktop/Work/whaletech/scrcpy-win64-v4.1 && ./scrcpy --new-display=1280x720 --no-clipboard-autosync &
+# ④ 副屏 —— ⚠⚠ 已经由外部起好了，**你不要去启动它，你也启动不了** ⚠⚠
+#
+#   scrcpy 装在 ~/Desktop/Work/whaletech/scrcpy-win64-v4.1/，那是本任务 --dir 之外的目录，
+#   你的沙箱会 auto-reject（上一轮就是死在这一步：
+#   "permission requested: external_directory (...scrcpy-win64-v4.1\*); auto-rejecting"）。
+#   **不要重试、不要找变通、不要 cd 过去。**
+#
+#   你只需要确认它在：
 adb shell dumpsys window displays | grep mDisplayId
-#   ⚠ display id 每次重开都变（见过 2/3/4/6）。任何硬编码都是 bug
+#   应该看到两块屏：mDisplayId=0（主屏）和另一块（副屏）。
+#   ⚠ display id 每次重开都变（见过 2/3/4/6，本次起来时是 3）。任何硬编码都是 bug，
+#     每次都要现读。
+#
+#   **只看到 display 0 = 副屏没了。这时候立刻停下**，在 PROGRESS.md 和 SUMMARY.md 里
+#   写明「副屏丢失，无法自行恢复（scrcpy 在沙箱外），已停止」，然后结束。
+#   不要试图绕过，不要继续跑没有副屏的组 —— 那些数据没有意义。
 
 # ⑤ 通道。8760 在本机被 Hyper-V 保留段占了，必须 18760
 adb forward tcp:18760 localabstract:phoneagent
@@ -189,11 +201,19 @@ CSV 每行：`arm,iter,ime_before,disappeared,latency_ms,disturb_ms,note`
 
 ## 6 · 模拟器挂了怎么办
 
-**允许你自己重启并恢复，但必须留下记录。**
+> ⚠ **先读这一段再动手。** 重启模拟器会**连带杀掉副屏** —— scrcpy 的虚拟屏随
+> 设备连接消亡，而 scrcpy 在你的沙箱之外，**你重启完就再也拿不回副屏了**。
+>
+> 所以：**模拟器挂了，优先选择停下报告，而不是重启。**
+> 把已采到的数据整理提交，在 `SUMMARY.md` 写明「模拟器在 X 组第 N 轮挂掉，
+> 因副屏无法自行恢复而停止」。**这是本 brief 认可的正常结束方式，不算失败。**
+
+只有在**一组数据都还没采到**的情况下，才值得赌一次重启：
 
 ```bash
 adb emu kill; sleep 10
-# 然后重跑 §1 的 ①–⑦ 和 §2 的标定
+"$LOCALAPPDATA/Android/Sdk/emulator/emulator.exe" -avd wellphone_a14 -no-snapshot-load &
+# 然后重跑 §1 的等待循环 —— 但副屏大概率回不来，回不来就按上面停下报告
 ```
 
 每次重启在 `PROGRESS.md` 追加一行：
