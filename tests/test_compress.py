@@ -18,6 +18,68 @@ def build():
     return tree, compress(tree)
 
 
+def gmail_row_tree():
+    """Gmail 会话列表一行的真实形状（`runs/2026-08-09T18-36-02` 的节点树）。
+
+    整行 ViewGroup **自带** contentDescription；行内的联系人头像 ImageView
+    既可点、又没有任何文字。两者 kind 都是 button。
+    点整行 = 打开邮件；点头像 = 勾选。**同一段文字，两种完全不同的行为。**
+    """
+    def n(idx, parent, depth, cls, **kw):
+        d = {"idx": idx, "parent": parent, "depth": depth, "class": cls,
+             "resource_id": None, "text": None, "content_desc": None,
+             "clickable": False, "long_clickable": False, "scrollable": False,
+             "editable": False, "checkable": False, "checked": False,
+             "focused": False, "enabled": True, "visible": True,
+             "bounds": [0, 0, 1280, 720], "actions": []}
+        d.update(kw)
+        return d
+
+    desc = "Unread, , , Wang, Yiduo, , a test, hello alex, ,  at 6:30 PM"
+    return [
+        n(0, None, 0, "android.widget.FrameLayout"),
+        n(1, 0, 1, "android.view.ViewGroup", content_desc=desc, clickable=True,
+          bounds=[0, 100, 1280, 260]),
+        n(2, 1, 2, "android.widget.ImageView", clickable=True,
+          resource_id="com.google.android.gm:id/contact_image",
+          bounds=[16, 116, 96, 196]),
+        n(3, 1, 2, "android.widget.TextView", text="Wang, Yiduo",
+          bounds=[112, 116, 600, 156]),
+    ]
+
+
+class TestGmailRowIsNotTheAvatar(unittest.TestCase):
+    """整行不能被行内头像挤掉 —— 这条错过一次真实任务。
+
+    旧的去重规则「同锚点同 kind 留最内层」把整行判没了，只留下头像。
+    于是 agent 反复勾选/取消勾选，一次都没打开那封邮件，最后判 impossible。
+    """
+
+    def setUp(self):
+        self.nodes = gmail_row_tree()
+        self.tree = build_tree({
+            "display": 4, "pkg": "com.google.android.gm",
+            "activity": "com.google.android.gm.ui.MailActivityGmail",
+            "tree_hash": "", "window_count": 1, "nodes": self.nodes,
+        })
+        self.items = compress(self.tree)
+
+    def test_the_row_itself_survives(self):
+        row = [i for i in self.items if i.target_idx == 1]
+        self.assertEqual(len(row), 1,
+                         f"整行不见了；产出的是 {[(i.target_idx, i.label) for i in self.items]}")
+
+    def test_the_row_is_not_resolved_to_the_avatar(self):
+        row = next(i for i in self.items if i.target_idx == 1)
+        self.assertNotIn("contact_image", row.locator.describe())
+        self.assertNotIn("ImageView", row.locator.target)
+
+    def test_the_row_locator_round_trips_to_the_row(self):
+        row = next(i for i in self.items if i.target_idx == 1)
+        idx, _ = FakeResolver(self.nodes).resolve(row.locator.to_json())
+        self.assertEqual(idx, 1)
+
+
 class TestCompress(unittest.TestCase):
     def setUp(self):
         self.tree, self.items = build()

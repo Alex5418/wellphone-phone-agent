@@ -213,9 +213,25 @@ def compress(tree: Tree, max_items: int = config.MAX_ITEMS_SHOWN) -> list[Item]:
             anchor_of[n.idx] = a
             inherited.add(n.idx)
 
-    # ③ 去重：共享同一锚点且 **kind 相同** 的，只留最内层（depth 最大）
+    # ③ 去重：共享同一锚点且 **kind 相同** 的，只留一条。
     #    kind 不同的一律都留 —— 整行(button) 与 开关(switch) 行为完全不同，
     #    合成一条就等于让 LLM 在两种结果之间抛硬币。
+    #
+    #    同 kind 时留谁，两条规则按顺序：
+    #
+    #    (a) **锚点的主人优先于借用者。** 自己就带着那段文字的节点，才是这段文字
+    #        描述的东西；借用祖先/后代文字的节点只是它的一部分。
+    #        依据（`runs/2026-08-09T18-36-02`）：Gmail 会话列表里整行 ViewGroup 自带
+    #        contentDescription（"Unread, , , Wang, Yiduo, …"），而行内的联系人头像
+    #        ImageView 没有文字、借用了整行的锚点 —— 两者 kind 都是 button。
+    #        旧规则只按 depth 取最内层，于是**整行被头像挤掉**：
+    #        点整行是"打开邮件"，点头像是"勾选" —— agent 反复勾选/取消，
+    #        一次都没能打开那封邮件，最后判 impossible。
+    #        这与 §4 记的 Settings 那个坑同源：**同一段文字，两种完全不同的行为。**
+    #
+    #    (b) 双方都是借用者时才比 depth，留最内层。Settings 的整行就走这条 ——
+    #        它的文字在不可交互的 TextView 上，行与外层包装都是借用者，
+    #        此时最内层才是真正能执行的那个。
     kinds = {n.idx: _kind_of(n) for n in cands}
     keep: dict[tuple[int, str], Node] = {}
     no_anchor: list[Node] = []
@@ -226,8 +242,14 @@ def compress(tree: Tree, max_items: int = config.MAX_ITEMS_SHOWN) -> list[Item]:
             continue
         key = (a, kinds[n.idx])
         prev = keep.get(key)
-        if prev is None or n.depth > prev.depth:
+        if prev is None:
             keep[key] = n
+            continue
+        n_owns, prev_owns = (a == n.idx), (a == prev.idx)
+        if n_owns != prev_owns:
+            keep[key] = n if n_owns else prev      # (a) 主人赢
+        elif n.depth > prev.depth:
+            keep[key] = n                          # (b) 同为借用者，留最内层
 
     chosen = sorted([*keep.values(), *no_anchor], key=lambda n: n.idx)
 
