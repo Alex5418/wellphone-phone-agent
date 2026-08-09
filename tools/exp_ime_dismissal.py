@@ -169,15 +169,28 @@ def run_arm(tp: Transport, poller: ImePoller, sec: int, arm: str, times: int,
             if arm == "control":
                 pass
             elif arm == "rebuild":
+                # 要测的动作是「点 Compose」—— 收件箱 → ComposeActivityGmail 就是一次
+                # Activity 重建。若上一轮已经停在撰写页，先点 Navigate up 回收件箱，
+                # 但**那一步是复位、不是被测动作**，所以它在 t0 之前完成，不计入窗口。
+                #
+                # 曾经这里要求同时找到 Navigate up 和 Compose 才动手 —— 那是错的：
+                # 收件箱上压根没有 Navigate up，于是 20/20 全部 SKIP，零可用数据。
                 tree, items = pick_items(tp, sec)
                 up = next((i for i in items if "Navigate up" in (i.label or "")), None)
-                comp = next((i for i in items if "Compose" in (i.label or "")
-                             and i.kind == "button"), None)
-                if not (up and comp):
-                    note = "SKIP 找不到 Navigate up / Compose"
+                if up is not None:
+                    try:
+                        tp.act(sec, up.locator, "CLICK", restore=True, verify_read=False)
+                    except TransportError:
+                        pass
+                    time.sleep(1.5)
+                    tree, items = pick_items(tp, sec)
+                comp = next((i for i in items if "Compose" in (i.label or "")), None)
+                if comp is None:
+                    # 失败要可诊断：把当时看得见的条目列出来，而不是只说"没找到"
+                    seen = ", ".join((i.label or "?")[:16] for i in items[:10])
+                    note = f"SKIP 找不到 Compose；可见条目: {seen}"
                 else:
                     t0 = time.time()
-                    tp.act(sec, up.locator, "CLICK", restore=True, verify_read=False)
                     r = tp.act(sec, comp.locator, "CLICK", restore=True, verify_read=False)
                     disturb = (r.get("timing") or {}).get("disturb_ms", "")
             else:
