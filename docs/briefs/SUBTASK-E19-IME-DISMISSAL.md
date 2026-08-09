@@ -35,6 +35,39 @@ E18 已经确认的事：
 
 ---
 
+## 0.5 · 本轮开工状态（外部已完成，**先读这段再动手**）
+
+环境**已经由操作者铺好并验证过**，`§1` 你只需要**确认**，不要重建：
+
+```
+模拟器 boot_completed=1 · 无障碍服务已启用
+scrcpy 副屏在跑 → 本次 display=3（仍要现读，不要硬编码）
+adb forward tcp:18760 已建 · export PHONEAGENT_PORT=18760
+副屏 = Gmail 收件箱 · 主屏 = composetest（输入框已聚焦）
+```
+
+仪表标定已通过一次：`样本 34，中位间隔 53 ms，阳性 ✓，阴性 ✓`。
+**你仍要自己再跑一次 `--check` 并把输出贴进报告**（每次开工都要）。
+
+### 已完成的部分（不要重做）
+
+| 组 | 状态 |
+|---|---|
+| `control` | ✅ **已完成并提交**：20/20 有效，**0 次消失**。CSV 已在 `docs/experiments/data/e19-control.csv` |
+| `rebuild` | ⬜ 待跑。脚本 bug 已修（commit `a5f21af`），冒烟 3 轮出 1 次消失、延迟 47 ms |
+| `click_edit` / `focus_edit` / `set_text_edit` / `click_button` | ⬜ 待跑 |
+
+**你的任务就是把剩下五组各跑满 20 轮，然后写报告。**
+
+### 两条会让你白干的硬约束
+
+- **绝不要启动 scrcpy** —— 它在沙箱外，`auto-reject`，上一轮就死在这里
+- **绝不要重启模拟器** —— 会连带杀死副屏，而你恢复不了
+
+只看到 `mDisplayId=0` 一块屏 = 副屏没了 → **立刻停下写报告**，这是认可的正常结束。
+
+---
+
 ## 1 · 环境重建（每次开工，不可跳过）
 
 不要相信上一次的状态。**下面每一步都要贴出实际输出。**
@@ -67,10 +100,22 @@ adb shell settings get secure enabled_accessibility_services
 #   应回显 com.example.phoneagent/com.example.phoneagent.AgentAccessibilityService
 #   空的话去「设置 → 无障碍」打开；改过代码要关掉再打开，否则跑的是旧实例
 
-# ④ 副屏（scrcpy 4.1 在 ~/Desktop/Work/whaletech/scrcpy-win64-v4.1/）
-cd ~/Desktop/Work/whaletech/scrcpy-win64-v4.1 && ./scrcpy --new-display=1280x720 --no-clipboard-autosync &
+# ④ 副屏 —— ⚠⚠ 已经由外部起好了，**你不要去启动它，你也启动不了** ⚠⚠
+#
+#   scrcpy 装在 ~/Desktop/Work/whaletech/scrcpy-win64-v4.1/，那是本任务 --dir 之外的目录，
+#   你的沙箱会 auto-reject（上一轮就是死在这一步：
+#   "permission requested: external_directory (...scrcpy-win64-v4.1\*); auto-rejecting"）。
+#   **不要重试、不要找变通、不要 cd 过去。**
+#
+#   你只需要确认它在：
 adb shell dumpsys window displays | grep mDisplayId
-#   ⚠ display id 每次重开都变（见过 2/3/4/6）。任何硬编码都是 bug
+#   应该看到两块屏：mDisplayId=0（主屏）和另一块（副屏）。
+#   ⚠ display id 每次重开都变（见过 2/3/4/6，本次起来时是 3）。任何硬编码都是 bug，
+#     每次都要现读。
+#
+#   **只看到 display 0 = 副屏没了。这时候立刻停下**，在 PROGRESS.md 和 SUMMARY.md 里
+#   写明「副屏丢失，无法自行恢复（scrcpy 在沙箱外），已停止」，然后结束。
+#   不要试图绕过，不要继续跑没有副屏的组 —— 那些数据没有意义。
 
 # ⑤ 通道。8760 在本机被 Hyper-V 保留段占了，必须 18760
 adb forward tcp:18760 localabstract:phoneagent
@@ -189,11 +234,19 @@ CSV 每行：`arm,iter,ime_before,disappeared,latency_ms,disturb_ms,note`
 
 ## 6 · 模拟器挂了怎么办
 
-**允许你自己重启并恢复，但必须留下记录。**
+> ⚠ **先读这一段再动手。** 重启模拟器会**连带杀掉副屏** —— scrcpy 的虚拟屏随
+> 设备连接消亡，而 scrcpy 在你的沙箱之外，**你重启完就再也拿不回副屏了**。
+>
+> 所以：**模拟器挂了，优先选择停下报告，而不是重启。**
+> 把已采到的数据整理提交，在 `SUMMARY.md` 写明「模拟器在 X 组第 N 轮挂掉，
+> 因副屏无法自行恢复而停止」。**这是本 brief 认可的正常结束方式，不算失败。**
+
+只有在**一组数据都还没采到**的情况下，才值得赌一次重启：
 
 ```bash
 adb emu kill; sleep 10
-# 然后重跑 §1 的 ①–⑦ 和 §2 的标定
+"$LOCALAPPDATA/Android/Sdk/emulator/emulator.exe" -avd wellphone_a14 -no-snapshot-load &
+# 然后重跑 §1 的等待循环 —— 但副屏大概率回不来，回不来就按上面停下报告
 ```
 
 每次重启在 `PROGRESS.md` 追加一行：

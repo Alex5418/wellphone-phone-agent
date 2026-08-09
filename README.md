@@ -1,157 +1,103 @@
 # WellPhone · 手机 Agent
 
-在**副屏**上自主操作 Android 应用的 Agent。验收标准只有一条：
+在**副屏**上自主操作 Android 应用的 Agent。验收标准只有一条：**用户当前正在进行的交互不被中断。**
 
-> **用户当前正在进行的交互不被中断。**
+🎬 **[演示视频](docs/media/demo.mp4)**（约 100s，同屏三样：终端逐步打印 `disturb_ms`、主屏是用户自己的内容、
+副屏由**弱模型** `deepseek-v4-flash` 独立发出一封 Gmail）· 复现见 [`docs/DEMO.md`](docs/DEMO.md) · trajectory `runs/2026-08-07T05-52-07/`
 
-以「用户在主屏用中文输入法连续打字」作为最严苛的验证场景 —— 它对焦点的依赖最强。
-
-🎬 **[演示视频](docs/media/demo.mp4)**（约 100s）—— 同屏三样东西：终端逐步打印每步的
-`disturb_ms` 与归还耗时、模拟器主屏是用户自己的内容（Chrome/YouTube）、
-副屏由**弱模型** `deepseek-v4-flash` 独立完成一封 Gmail 的撰写与发送
-（7 步：Compose → 收件人 → 主题 → 正文 → Send）。
-终端那一栏是关键：打扰窗口是**屏幕上的数值**，不是我们的说法。
-复现步骤见 [`docs/DEMO.md`](docs/DEMO.md)，本次 trajectory 在 `runs/2026-08-07T05-52-07/`。
-
-## 为什么这不是一个普通的 GUI Agent
-
-Android 的无障碍框架在**动作分发路径**上绑定了单焦点语义：任何经 a11y 发出的动作，
-都会把全系统唯一的 window 焦点夺到目标窗口 —— 与 `performAction` 的返回值无关。
-所以 Agent 的每个动作有三重后果：改变目标状态（正常）、打断用户输入（打扰）、
-**用户的击键灌进 Agent 的工作区**（正确性故障）。
-
-因此 loop 里有两个常规 Agent 没有的环节：**补偿**（焦点归还，与动作原子绑定）
-与**再观测**（不信任动作前的世界模型，也不信任工具的返回值）。
+**为什么不是普通 GUI Agent**：a11y 在**动作分发路径**上绑定单焦点语义 —— 任何经它发出的动作都会夺走
+全系统唯一的 window 焦点，与 `performAction` 的返回值无关。于是每个动作有三重后果：改变目标状态、
+打断用户输入、**用户的击键灌进 Agent 的工作区**（正确性故障）。因此 loop 多了两个环节：
+**补偿**（焦点归还，与动作原子绑定）与**再观测**。
 
 ## 架构
 
 ```
  display 0  用户主屏（只读，从不下发动作）      display N  scrcpy --new-display（Agent 工作区）
  ─────────────────────────────────────────────────────────────────────────────────────
-
 ┌─ PC · harness/ (Python, 零第三方依赖) ─┐             ┌─ Android · AccessibilityService ─┐
 │                                        │             │   只做感知与执行，不做决策         │
-│   observe → compress → planner (LLM)   │  行协议 JSON │                                  │
-│      ↑                      │          │   短连接     │  state    各屏 / 焦点 / 前台包    │
-│      │                      ↓          │ ←─────────→ │  observe  节点树 + tree_hash     │
-│   verify  ←──  act  ←──  policy 护栏    │             │  act      动作 ⊕ 焦点归还（原子） │
-│      │                                 │             │  probe    独立重读（验证专用）    │
+│   observe → compress → planner (LLM)   │  行协议 JSON │  state    各屏 / 焦点 / 前台包    │
+│      ↑                      │          │   短连接     │  observe  节点树 + tree_hash     │
+│      │                      ↓          │ ←─────────→ │  act      动作 ⊕ 焦点归还（原子） │
+│   verify  ←──  act  ←──  policy 护栏    │             │  probe    独立重读（验证专用）    │
 │      └─ adbutil ── dumpsys ────────────┼─────────────┼→ 第二条链路，刻意不复用 a11y 结论 │
 └────────────────────────────────────────┘             └──────────────────────────────────┘
                     adb forward tcp:$PHONEAGENT_PORT → localabstract:phoneagent
 ```
 
-**护栏在代码里写死，不是配置项** —— `loop.py` 中 `restore=True` 硬编码，无开关。
+**护栏写死在代码里，不是配置项** —— `loop.py` 中 `restore=True` 硬编码，无开关。
 能被关掉的护栏不是护栏。可配置的只有策略层（模型、礼貌度、目标包）。
 
 ## 跑起来
 
-需要 `adb`、JDK 17+、Python 3.10+、`scrcpy ≥ 3.0`（`--new-display` 从 3.0 开始有）。
-设备 Android 11+（`minSdk 30`，实测于模拟器 API 34）。
+需要 `adb`、JDK 17+、Python 3.10+、`scrcpy ≥ 3.0`、设备 Android 11+（实测模拟器 API 34）。
 
 ```bash
-scrcpy --new-display                              # 1. 建副屏，别关这个窗口（虚拟屏随进程消亡）
-cd android && ./gradlew :app:installDebug         # 2. 装服务
-                                                  #    再去「设置 → 无障碍」打开 Phone Agent
-                                                  #    ⚠ 改过代码必须关掉再打开，否则跑的是旧实例
-adb forward tcp:8760 localabstract:phoneagent     # 3. 通道（设备重连后失效；cli 会自动补一次）
-
-python -m harness.cli selftest                    # 4. 离线自测，79 条，不需要设备
-python -m harness.cli run "在设置中关闭深色主题"     # 5. 端到端
+scrcpy --new-display                            # 1. 建副屏，别关（虚拟屏随进程消亡）
+cd android && ./gradlew :app:installDebug       # 2. 装服务 →「设置 → 无障碍」打开 Phone Agent
+                                                #    ⚠ 改过代码必须关掉再打开，否则跑旧实例
+adb forward tcp:8760 localabstract:phoneagent   # 3. 通道（设备重连后失效）
+python -m harness.cli selftest                  # 4. 离线自测 79 条，不需要设备
+python -m harness.cli run "在设置中关闭深色主题"   # 5. 端到端
 ```
 
-> Windows 上第 3 步若报 `cannot bind to 127.0.0.1:8760 … (10013)`，是端口落进了
-> Hyper-V 保留段。换端口即可：`adb forward tcp:18760 …` 配 `PHONEAGENT_PORT=18760`。
+> Windows 上第 3 步报 `10013` 是端口落进 Hyper-V 保留段：换 `tcp:18760` 配 `PHONEAGENT_PORT=18760`。
 
-分阶段自验（state → observe → act 单步 → loop）、LLM 后端切换、
-以及不经过 LLM 单独调 locator 的办法，见 [`harness/README.md`](harness/README.md)。
-想复现演示场景（用户打中文 + Agent 发邮件）：[`docs/DEMO.md`](docs/DEMO.md)。
-
-## 环境变量
-
-| 变量 | 默认 | 作用 |
+| 环境变量 | 默认 | 作用 |
 |---|---|---|
 | `PHONEAGENT_PORT` | `8760` | adb forward 端口 |
 | `PHONEAGENT_TARGET_PKG` | `com.android.settings` | 副屏目标应用 |
-| `PHONEAGENT_LLM_PROVIDER` | `anthropic` | `anthropic` / `openai` / `rule` / `scripted` |
+| `PHONEAGENT_LLM_PROVIDER` | `anthropic` | `anthropic`/`openai`/`rule`/`scripted` |
 | `PHONEAGENT_MODEL` | `claude-sonnet-4-5` | 模型名 |
 | `PHONEAGENT_BASE_URL` | — | OpenAI 兼容端点。**用 `openai` 时不传会把 key 发去 api.openai.com 然后 401** |
 | `PHONEAGENT_MAX_TOKENS` | `4096` | 推理模型的思考过程也吃这个预算 |
-| `PHONEAGENT_LLM_TIMEOUT` | `150` | 秒。60s 对推理模型 + 长 observation 偏紧 |
-| `PHONEAGENT_POLITENESS` | `normal` | `off`/`normal`/`patient`，只决定 LLM 能否用 `wait`，**不影响归还行为** |
-| `PHONEAGENT_RUNS_DIR` | `runs` | trajectory 落盘目录 |
+| `PHONEAGENT_LLM_TIMEOUT` | `150` | 秒 |
+| `PHONEAGENT_POLITENESS` | `normal` | 只决定 LLM 能否用 `wait`，**不影响归还** |
 | `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `DEEPSEEK_API_KEY` | — | 按 provider 取 |
 
-其余常量一律写死在 `harness/config.py`，且带了各自的实测依据。
+其余常量写死在 `harness/config.py`，各带实测依据。
 
 ## 实测结论
 
-每一格都有阳性对照（关掉归还重跑一遍）—— 没有阳性对照的"没打扰"什么都不证明。
+把「不打扰」拆成可测的损伤，**每一格都有阴性对照** —— 没有对照的"没打扰"什么都不证明。
 
-| 用户在主屏干什么 | 关掉归还 | **开启归还（护栏）** | 证据 |
-|---|---|---|---|
-| 软键盘打字 · agent 不重建副屏 Activity | 污染 0 | 污染 0 | [E8](docs/experiments/E8-SOFT-KEYBOARD.md) 8 组 + [E15](docs/experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) 70 次 |
-| 软键盘打字 · **agent 重建了副屏 Activity** | — | ❌ **污染 5/30，护栏挡不住** | [E15](docs/experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) |
-| 外接键盘打字 · 击键落点 | **120 键中 56 键灌进副屏，且无上界** | 降到 6 键 —— **有界但非零** | [E7](docs/experiments/E7-KEYSTROKE-LANDING.md) |
-| 中文输入法连打 · 导航类动作 | **10/20 打断 composing** | **0/20** | [E11](docs/experiments/E11-RESULTS.md) |
-| 中文输入法连打 · 滚动类动作 | 0/20 | 0/20 | 同上 |
-| 看视频 | 0 暂停 0 冻结 | 0 暂停 0 冻结 | [E14](docs/experiments/E14-VIDEO-DISTURBANCE.md) |
+| 损伤 | 条件 | 关掉归还 | **开启归还** | 证据 |
+|---|---|---|---|---|
+| window 焦点被夺 | 6 种动作类型 | — | 归还 12ms–1.5s，8/8，dumpsys 交叉校验 | [B1](docs/experiments/B1-RESULTS.md) [E12](docs/experiments/E12-GMAIL-DEMO.md) |
+| 中文 composing 被打断 | 导航点击（滚动两边均 0/20） | **10/20** | **0/20** | [E11](docs/experiments/E11-RESULTS.md) |
+| 击键落进副屏输入框 | 不重建 Activity | 0/70 | 0/70 | [E8](docs/experiments/E8-SOFT-KEYBOARD.md) [E15](docs/experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) |
+| 击键落进副屏输入框 | **重建 Activity** | — | ❌ **5/30** | [E15](docs/experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) |
+| 主屏软键盘被收走 | 不重建 Activity | — | **1/100** | [E19](docs/experiments/E19-IME-DISMISSAL.md) |
+| 主屏软键盘被收走 | **重建 Activity** | — | ❌ **13/30** | [E19](docs/experiments/E19-IME-DISMISSAL.md) |
+| 外接物理键盘击键落点 | — | **56/120，无上界** | 6/120，**有界但非零** | [E7](docs/experiments/E7-KEYSTROKE-LANDING.md) |
+| 看视频 | — | 0 暂停 0 冻结 | 0 暂停 0 冻结 | [E14](docs/experiments/E14-VIDEO-DISTURBANCE.md) |
 
-两条输入链路的行为**完全不同**，不能混谈：物理键盘的事件由 InputDispatcher 直接投递到
-全局焦点窗口，焦点一走就落到副屏；软键盘则是 IME 通过 `InputConnection` 写入它绑定的
-编辑器，失焦时连接解绑，**而且"点屏幕"这个动作本身会把焦点带回来**。
-所以外接键盘那一格是**正确性故障**（归还只能减轻，不能消除），软键盘那一格是无污染。
+**后两类损伤指向同一个变量：agent 的动作有没有重建副屏 Activity。**
+不是"动作碰了输入框"—— 点副屏输入框 0/20、聚焦 0/20、写文字 1/20（E19）。
 
-**唯一确认的用户可见代价：软键盘打字时键盘会被收起一次，需手动点一次恢复。**
-（[E12](docs/experiments/E12-GMAIL-DEMO.md)：焦点 8/8 归还成功，用户仍需点一次 ——
-**我们归还的是 window 焦点，用户需要的是"能继续打字"，两者不等价**。）
+**这一条换实现也绕不过去**：`dumpsys input_method` 里有 37 个 `ClientState`，而 `mCurClient` 只指向其中一个，
+且与 `mCurFocusedWindow` 的 client 相同 —— 谁拿到输入焦点，IMMS 就把唯一的绑定移给谁，归还 window 焦点
+撤销不了它。所以**任何共用同一输入域的方案都一样**（换 UIAutomator / root 无用）；出路是换**输入域**，
+见 [ARCHITECTURE §8](docs/ARCHITECTURE.md)。
 
-[E15](docs/experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) 把这条推到了更锋利的形态：
-当 agent 的动作**重建了副屏的 Activity**，一个全新的编辑器获得焦点，
-**IME 的输入连接会改绑过去**，用户随后的软键盘击键就写进了副屏的输入框。
-`restore=true` 全程开着、dumpsys 确认焦点已回主屏，**照样发生** ——
-归还 window 焦点撤销不了输入连接的改绑。稳态下（不重建）70 次 0 污染，
-重建后 30 次 5 次污染；动作数、写入值、restore 全部对齐时仍是 0/10 vs 3/20。
+## 状态与限度
 
-焦点归还耗时实测 12ms（滚动）到约 1.5s（副屏节点多时主屏重解析更慢）；
-超出 `DISTURB_BUDGET_MS=500` 的目标会被本轮拉黑并上报 —— 全局配置类动作实测 2.5s，
-不是"已知边界"而是**被排除出动作空间**。
-
-端到端：主屏用户打字的同时，Agent 在副屏用真实 Gmail 账号发出一封邮件（收件人 / 主题 /
-正文 / 发送），焦点 8/8 归还（[E12](docs/experiments/E12-GMAIL-DEMO.md)）。
-补上「相比上一步的增删」这层观测后，**弱模型 `deepseek-v4-flash` 8 步独立完成**，
-比强模型步数更少、LLM 延迟从 65.6s 降到 10.9s
-（[E13](docs/experiments/E13-OBSERVATION-NOT-MODEL.md)）——
-结论是 **harness 的质量应该由弱模型来检验**：强模型会用推理掩盖观测层的缺陷。
+- **仅在模拟器 API 34 验证，未在真机复现**；**外部效度是最大短板** —— 结论只来自三个 app。
+- 软键盘收起**原有仪表定位不了**（`ime.dismissed` 45 步 0 次为真，采样点选错位置），
+  重做成 50ms 轮询才测出上表那行：[E18](docs/experiments/E18-IME-DISMISSAL-ATTRIBUTION.md) → [E19](docs/experiments/E19-IME-DISMISSAL.md)。
+- `DISTURB_BUDGET_MS=500` 的**立论依据已被 [E16](docs/experiments/E16-DOSE-RESPONSE.md) 证伪**（九次污染全在
+  272–431ms，一次没拦住）。**值保留不动**，注释已改 —— 改护栏需要比现有更硬的证据。
+- `BACK` 在副屏不生效（三次实证），agent 没有可靠的返回动作。
+- ⚠ **一条未解释的异常**：一次真实 run 里 agent 写进副屏的文本被读回时多出 2 个字符
+  （`…@gmail.com` → `…@gmail.comge`）。6 组共 50 次未能复现，也排除了自动补全与 SET_TEXT 本身。
+  **判定为未知，不是不成立** —— 原始 trajectory 在 `runs/2026-08-07T03-52-37/`。
 
 ## 目录
 
 ```
-docs/       设计（ARCHITECTURE / HARNESS-SPEC）与 B1–E17 的实测记录，先读 docs/README.md
-android/    AccessibilityService —— 只做感知与执行
-harness/    PC 侧 Agent —— 观测 / 压缩 / 定位 / 验证 / 编排 / 规划
-tools/      离线小工具与实验脚本
-tests/      79 条离线测试（PC 侧），不需要设备
-            设备侧另有 15 条 JVM 单测：cd android && ./gradlew :app:testDebugUnitTest --rerun-tasks
-            （⚠ 不加 --rerun-tasks 会命中缓存，BUILD SUCCESSFUL 但一条都没跑）
-            15 条里有覆盖意义的是 13 条（LocatorResolver 8 + treeHash 5），
-            另两条是 mock 探路与模板自带的 stub —— 拆分见 harness/README.md
+docs/     设计（ARCHITECTURE / HARNESS-SPEC）与 B1–E19 实测记录 —— 先读 docs/README.md
+android/  AccessibilityService —— 只做感知与执行
+harness/  PC 侧 Agent —— 观测 / 压缩 / 定位 / 验证 / 编排 / 规划（见 harness/README.md）
+tools/    离线小工具与实验脚本      tests/  79 条离线测试（设备侧另有 15 条 JVM 单测）
 ```
-
-## 状态与限度
-
-- **仅在模拟器 API 34 上验证，未在真机复现**（无可用设备）。
-- 软键盘的收起**无法用现有仪表定位**到是哪个动作触发，也未做无副作用的恢复。
-  `act` 里逐次记的 `ime.dismissed` 45 步 0 次为真，而收起确实发生过 ——
-  它只在单次 `act` 内采两点，而四次可定位的消失一次都不在那个窗口里
-  （[E18](docs/experiments/E18-IME-DISMISSAL-ATTRIBUTION.md)，含能定这件事的实验设计）。
-- ⚠ 演示录制时观察到主屏拼音被强制提交过一次（键盘未收起时也发生）。
-  **单次观察、未定量、无对照。** 它落在 E11 与 E15 两个矩阵的共同空白格里 ——
-  「composing 打断 × 会重建 Activity 的动作类」从未测过。记为未知。
-- E14 测的是"会不会暂停 / 长冻结"，不是"会不会掉一帧"—— 唯一能测微卡顿的帧级仪表读不到。
-- 样本量不均：中文 composing 矩阵做到每格 n≥20，其余多数实验每组只有 1 次。
-- 外接物理键盘场景**归还只能减轻污染、不能消除**；判定为 corner case，未继续投入。
-- ⚠ **一条未解释的异常**：一次真实 run 里，agent 写进副屏输入框的文本被读回时多出 2 个字符
-  （`…@gmail.com` → `…@gmail.comge`），疑似用户击键。[E15](docs/experiments/E15-SECONDARY-FIELD-CONTAMINATION.md)
-  用 6 组条件共 50 次未能复现，也排除了 Gmail 自动补全与 SET_TEXT 实现本身。
-  **判定为未知，不是不成立** —— 原始 trajectory 保留在 `runs/2026-08-07T03-52-37/`。
