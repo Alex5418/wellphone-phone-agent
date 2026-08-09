@@ -77,6 +77,34 @@ class TestPolicy(unittest.TestCase):
         self.assertIsNone(self.p.record_disturbance(it, 12))
         self.assertIsNone(self.p.block_reason(it))
 
+    # ---- 超预算时拉不拉黑，取决于用户到底在不在输入（三值）----
+
+    def test_over_budget_blocks_while_user_is_typing(self):
+        it = item("Compose", kind="button")
+        warn = self.p.record_disturbance(it, 3406, ime_present=True)
+        self.assertIn("排除出动作空间", warn)
+        self.assertIsNotNone(self.p.block_reason(it))
+
+    def test_over_budget_only_reports_when_user_is_not_typing(self):
+        """真实 run（2026-08-09T18-36-02）里 9 步全程 ime_present=False，
+        却拉黑了 7 个目标，把任务逼成 impossible —— 七次拉黑零收益。
+
+        用户没在输入时，这段窗口伤不到任何东西（E14：主屏无焦点持有者时视频照播）。
+        数字照报，动作空间不缩。
+        """
+        it = item("Compose", kind="button")
+        warn = self.p.record_disturbance(it, 3406, ime_present=False)
+        self.assertIn("3406", warn)                      # 数字仍然如实上报
+        self.assertIn("未排除", warn)
+        self.assertIsNone(self.p.block_reason(it))       # 但没有被拉黑
+
+    def test_unknown_ime_state_is_treated_conservatively(self):
+        """读不到 ≠ 用户没在输入。三值里的 None 按保守处理，照旧拉黑。"""
+        it = item("Compose", kind="button")
+        warn = self.p.record_disturbance(it, 3406, ime_present=None)
+        self.assertIn("排除出动作空间", warn)
+        self.assertIsNotNone(self.p.block_reason(it))
+
 
 class TestExclusionIsEnforced(unittest.TestCase):
     def test_loop_refuses_and_sends_nothing(self):

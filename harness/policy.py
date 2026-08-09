@@ -98,10 +98,46 @@ class ActionPolicy:
             it.blocked = self.block_reason(it)
         return items
 
-    def record_disturbance(self, item: Item, disturb_ms: int | None) -> str | None:
-        """动作后回填实测打扰窗口。超预算则拉黑并返回一条要上报的告警。"""
+    def record_disturbance(self, item: Item, disturb_ms: int | None,
+                           ime_present: bool | None = None) -> str | None:
+        """动作后回填实测打扰窗口。超预算**且用户可能正在输入**时才拉黑。
+
+        ## 为什么加 ime_present 这个条件（2026-08-09）
+
+        原来是无条件拉黑。一次真实 run（`runs/2026-08-09T18-36-02`）暴露了它的代价：
+        9 步里拉黑了 7 个目标 —— More options / Add star / 邮件本身 / Compose / To /
+        Navigate up 全被封，agent 最后**正确地**判定 impossible，因为动作空间被清空了。
+        **而那一整轮 `ime_present=False`：用户根本没在打字，七次拉黑零收益。**
+
+        更要紧的是，把 `disturb_ms` 拆开看，拉黑的根本不是动作的伤害：
+
+            step-06 Compose   action_ms=61    restore_focus_ms=3345
+            step-08 Nav up    action_ms=18    restore_focus_ms=1303
+
+        动作本身 18–228 ms，慢的全是**我们自己的归还**；再往下拆，BACK 那步
+        `last_resolve_ms=1800` 而 `last_focus_call_ms=5` —— 99% 花在重解析主屏节点上，
+        而重解析的耗时取决于**主屏 app 有多重**（那次主屏是 Chrome）。
+        于是同一个副屏动作，用户开 Chrome 就被拉黑、开记事本就不会。
+        **预算量的是护栏自己的开销，与该动作会不会伤害用户没有因果关系。**
+
+        ## 为什么是收窄条件而不是删掉
+
+        窗口时长在**软键盘**路径上本来就不是因果变量（E16：九次污染全在 272–431ms，
+        阈值一次没拦住；E19：伤害由「动作是否重建副屏 Activity」决定）。
+        它仍然是**物理键盘**那条路的因果量（E7：污染字符数 ≈ 窗口 ÷ 打字速率），
+        而那条路只在用户真的在敲键盘时才存在。所以条件收窄到「用户可能在输入」。
+
+        三值处理：True 拉黑；False **只上报不拉黑**；None（读不到）按保守处理，拉黑 ——
+        「读不到」不许当成「用户没在输入」。
+        """
         if disturb_ms is None or disturb_ms <= self.disturb_budget_ms:
             return None
+        over = (f"⚠ 打扰窗口 {disturb_ms} ms 超出预算 {self.disturb_budget_ms} ms")
+        if ime_present is False:
+            # 用户确实没在输入 —— 这段窗口伤不到任何东西（E14：主屏无焦点持有者时
+            # 视频照播，0 暂停 0 冻结）。如实上报数字，但不缩减动作空间。
+            return over + "（用户当前未在输入，仅上报，未排除该目标）"
         self.measured_blocked[item.label] = disturb_ms
-        return (f"⚠ 打扰窗口 {disturb_ms} ms 超出预算 {self.disturb_budget_ms} ms"
-                f"（用户击键在这段时间里会落到副屏）—— 已把 \"{item.label}\" 排除出动作空间")
+        why = "用户正在输入" if ime_present else "读不到主屏输入状态，按保守处理"
+        return (over + f"（{why}，用户击键在这段时间里会落到副屏）"
+                f"—— 已把 \"{item.label}\" 排除出动作空间")

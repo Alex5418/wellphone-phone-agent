@@ -20,8 +20,14 @@ import urllib.request
 from . import config
 from .models import Item, Plan
 
+# `back` **不在**动作空间里。它不是"未验证"，是结构上必然打错屏 ——
+# 每次 act 的顺序是「执行动作 → 归还焦点」，所以下一步派发时焦点已经在主屏上，
+# 而 performGlobalAction(GLOBAL_ACTION_BACK) 作用于**当前有焦点的 display**。
+# 归还越好使，BACK 越必然落在用户屏上。实测见 runs/2026-08-09T18-36-02/step-03：
+# holder_before=com.android.chrome，副屏 window_after 无变化，用户的浏览器被退了一页。
+# 它是动作空间里唯一会真正改动用户状态的动作，因此排除。设备侧仍保留该命令（手工调试用）。
 ACTIONS = ("click", "long_click", "set_text", "scroll_forward", "scroll_backward",
-           "back", "wait", "finish")
+           "wait", "finish")
 
 SYSTEM_PROMPT = """你在通过一个受控 harness 操作一台 Android 设备的副屏。
 
@@ -47,8 +53,13 @@ SYSTEM_PROMPT = """你在通过一个受控 harness 操作一台 Android 设备�
 结束时：{"thought": "原因", "action": "finish", "done": true, "outcome": "achieved"}
         outcome 取 "achieved"（目标达成）或 "impossible"（做不成）
 
-action 取值：click / long_click / set_text / scroll_forward / scroll_backward / back / wait / finish
+action 取值：click / long_click / set_text / scroll_forward / scroll_backward / wait / finish
 set_text 必须带 value。其余 value 为 null。
+
+**没有「返回」动作。** 系统级返回键作用在用户自己那块屏上，会退掉用户的页面，
+因此被排除出动作空间 —— 不要尝试输出 back，也不要指望有别的方式返回。
+要离开当前页面，请用页面上可见的控件（如 `Navigate up`、`Close`、`Cancel`）。
+若当前页面确实没有出路，那就是任务无法完成，按上面的规则收尾。
 """
 
 WAIT_CLAUSE = """- 用户正在输入时，如果本步不紧急，可以输出 {"action": "wait"} 让路。

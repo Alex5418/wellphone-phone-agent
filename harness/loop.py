@@ -200,9 +200,21 @@ class Loop:
                 time.sleep(config.WAIT_INTERVAL_S)
                 continue
 
+            # 护栏（不只写在 prompt 里）：back 结构上必然打在用户屏上，一律拒发。
+            # parse_plan 已经不接受它了，这里是第二道 —— 换个 planner 实现也绕不过。
+            if plan.action == "back":
+                consecutive_stall += 1
+                note = ("⛔ 拒绝执行 back：系统返回键作用于当前有焦点的 display，"
+                        "而每步动作前焦点刚被归还到主屏，它必然退掉用户自己的页面")
+                history.append(Step(step_n, plan, None, None, None, note=note))
+                self._emit("blocked", note)
+                if consecutive_stall >= config.MAX_CONSECUTIVE_STALL:
+                    return self._abort(task, history, "反复选择已排除的动作")
+                continue
+
             item = next((i for i in items if i.sid == plan.target), None) \
                 if plan.target is not None else None
-            if plan.action != "back" and item is None:
+            if item is None:
                 # 把有效范围一起写进历史 —— 只说"不存在"，LLM 下一轮还是在猜
                 rng = f"0–{items[-1].sid}" if items else "本轮无可用条目"
                 history.append(Step(step_n, plan, None, None, None,
@@ -240,7 +252,8 @@ class Loop:
 
             # 打扰窗口预算：与语言、与 app 都无关的实测判据。
             # 超预算的目标本轮拉黑 —— 静态名单必然漏，这一条兜住漏掉的。
-            over = self.policy.record_disturbance(item, result.timing.get("disturb_ms")) \
+            over = self.policy.record_disturbance(item, result.timing.get("disturb_ms"),
+                                                  ime_present=env.ime_present) \
                 if item else None
             if over:
                 notes.append(over)

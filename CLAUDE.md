@@ -54,7 +54,7 @@ export PHONEAGENT_PORT=18760
 | **改过 Android 代码要关掉再打开无障碍服务** | 否则跑的是旧实例 |
 | **`observe` 的节点文字是缓存的** | 敲 5 下后仍报旧值。要新鲜值用 `probe`（内部 `refresh()`）或 `state().primary_focus` |
 | **Compose 应用里 `primary_focus.editable=false`** | `findFocus()` 返回 `android.view.View` 包装节点，真 EditText 在树里 |
-| **`BACK` 在副屏是空转** | 三次实证，`loop.py` 里标了「跨屏语义未验证」（行号会漂，grep 那句中文）。**副屏没有可靠的"返回"**，用页面上的 `Navigate up` |
+| **`back` 已排除出动作空间** | 不是「在副屏空转」，是**必然打在主屏上** —— 归还护栏保证派发时焦点在主屏，系统返回键作用于有焦点的 display（`runs/2026-08-09T18-36-02/step-03` 退掉了用户的浏览器）。解析层与 loop 两道都拒。**副屏没有通用「返回」**，用页面上的 `Navigate up` |
 | **主屏 composing 缓冲会撑爆** | 拼音堆到 800+ 字时设备侧遍历超 5s → `act` TIMEOUT → SystemUI 两屏 ANR |
 
 ### Bash 工具的两个雷（今天各踩了两次以上）
@@ -85,7 +85,8 @@ export PHONEAGENT_PORT=18760
    换 UIAutomator/root 都绕不过去。见 ARCHITECTURE §8.1–8.2。
 2. **`DISTURB_BUDGET_MS = 500` 的立论依据已被 E16 证伪**（「12ms 与 2526ms 之间没有灰色地带」）。
    九次污染全在 272–431ms，该阈值一次没拦住。**值保留不动**，注释已改。
-3. **`BACK` 在副屏不生效**，agent 没有可靠的返回动作。
+3. **副屏上没有通用的「返回」** —— `back` 已排除（必然打在主屏，见上），
+   只能用页面上可见的 `Navigate up` 之类控件；页面没有出路时任务就是做不成。
 
 ### 还开着的
 

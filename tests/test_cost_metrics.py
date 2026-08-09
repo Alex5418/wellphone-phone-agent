@@ -1,3 +1,10 @@
+"""trajectory 的成本记账（M1）。
+
+注：这些用例里的 `click target=13`（FakeTransport 的「自动亮度」开关）只是
+**一个能产出 metrics 行的普通动作**，不是被测对象 —— 被测的是 token 与耗时的汇总口径。
+原先用的是 `back`，它已被排除出动作空间（结构上必然打在用户屏上，见 planner.ACTIONS）。
+"""
+
 import json
 import os
 import tempfile
@@ -44,10 +51,10 @@ class TestCostMetrics(unittest.TestCase):
     def test_all_steps_have_tokens(self):
         tp = FakeTransport()
         steps = [
-            {"plan": {"action": "back"},
+            {"plan": {"action": "click", "target": 13},
              "last_meta": {"prompt_tokens": 100, "completion_tokens": 50,
                            "reasoning_tokens": 20}},
-            {"plan": {"action": "back"},
+            {"plan": {"action": "click", "target": 13},
              "last_meta": {"prompt_tokens": 80, "completion_tokens": 40,
                            "reasoning_tokens": 15}},
         ]
@@ -78,11 +85,11 @@ class TestCostMetrics(unittest.TestCase):
     def test_partial_tokens(self):
         tp = FakeTransport()
         steps = [
-            {"plan": {"action": "back"},
+            {"plan": {"action": "click", "target": 13},
              "last_meta": {"prompt_tokens": 100, "completion_tokens": 50,
                            "reasoning_tokens": 20}},
-            {"plan": {"action": "back"}},
-            {"plan": {"action": "back"},
+            {"plan": {"action": "click", "target": 13}},
+            {"plan": {"action": "click", "target": 13},
              "last_meta": {"prompt_tokens": 80}},
             {"plan": {"action": "finish", "done": True}},
         ]
@@ -104,8 +111,8 @@ class TestCostMetrics(unittest.TestCase):
     def test_no_tokens_scripted(self):
         tp = FakeTransport()
         planner = Planner(ScriptedBackend([
-            {"action": "back"},
-            {"action": "back"},
+            {"action": "click", "target": 13},
+            {"action": "click", "target": 13},
             {"action": "finish", "done": True},
         ]))
         with tempfile.TemporaryDirectory() as d:
@@ -148,9 +155,9 @@ class TestCostMetrics(unittest.TestCase):
     def test_disturb_ms_none(self):
         tp = DisturbTransport(disturb_none_steps={2})
         steps = [
-            {"plan": {"action": "back"},
+            {"plan": {"action": "click", "target": 13},
              "last_meta": {"prompt_tokens": 10, "completion_tokens": 5}},
-            {"plan": {"action": "back"},
+            {"plan": {"action": "click", "target": 13},
              "last_meta": {"prompt_tokens": 10, "completion_tokens": 5}},
             {"plan": {"action": "finish", "done": True}},
         ]

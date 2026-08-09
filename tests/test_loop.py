@@ -13,11 +13,37 @@ import unittest
 from harness import config
 from harness.compress import compress
 from harness.loop import Loop
+from harness.models import Plan
 from harness.observe import build_observation, self_check
 from harness.planner import Planner
 from harness.trace import Trace
 from harness.tree import build_tree
 from tests.fake_device import FakeTransport
+
+
+class RawPlanner:
+    """绕开 parse_plan，把 Plan 直接交给 loop。
+
+    用来验证「loop 里那道护栏本身」而不是解析层 —— 只写在 prompt 或只挡在解析层的
+    不算护栏，换个 planner 实现就绕过去了。这个类扮演的就是那个"换掉的实现"。
+    """
+
+    politeness = "off"
+
+    def __init__(self, plans):
+        self.plans = list(plans)
+        self.calls = 0
+        self.last_latency_ms = 0
+        self.last_meta = None
+
+    def describe(self):
+        return {"provider": "raw", "model": None, "endpoint": None}
+
+    def decide(self, observation, items):
+        self.calls += 1
+        if not self.plans:
+            return Plan("", "finish", None, None, True), ["(raw)"]
+        return self.plans.pop(0), ["(raw)"]
 
 
 class Script:
@@ -157,21 +183,47 @@ class TestLoop(unittest.TestCase):
         # 纠正后正常下发，没有把错误的 ID 发到设备上
         self.assertEqual(len(tp.acts), 1)
 
-    def test_back_needs_no_target(self):
-        """BACK 走 performGlobalAction，没有目标节点 —— locator 必须允许缺席。
-
-        早先这里借了 items[0] 的 locator 充数：界面上一条可交互条目都没有时会崩，
-        而设备侧"解析不到就不执行"的护栏会把 BACK 一起挡掉，表现为 BACK 永远不生效。
-        """
+    def test_back_never_reaches_the_device_through_a_normal_planner(self):
+        """第一道：解析层拒绝 back，设备侧一个动作都收不到。"""
         tp = FakeTransport()
         planner = Planner(Script([{"action": "back"},
                                   {"action": "finish", "done": True}]))
-        res = Loop(tp, planner, trace=None, cross_check=False, recheck_ms=0).run("退回上一页")
-        self.assertEqual(res.status, "done")
-        self.assertEqual(len(tp.acts), 1)
-        self.assertIsNone(tp.acts[0]["locator"])
-        self.assertTrue(tp.acts[0]["restore"])        # 护栏对全局动作同样生效
-        self.assertEqual(res.steps[0].verdict.result, "PASS")
+        Loop(tp, planner, trace=None, cross_check=False, recheck_ms=0).run("退回上一页")
+        self.assertEqual(tp.acts, [])
+
+    def test_back_is_refused_by_the_loop_even_bypassing_the_parser(self):
+        """back 已被排除出动作空间 —— 一个动作都不许发。
+
+        它不是"跨屏语义未验证"，是结构上必然打错屏：每次 act 的顺序是
+        「执行动作 → 归还焦点」，所以下一步派发时焦点已经在主屏上，而
+        `performGlobalAction(GLOBAL_ACTION_BACK)` 作用于**当前有焦点的 display**。
+        **归还越好使，BACK 越必然退掉用户自己的页面。**
+        实测 `runs/2026-08-09T18-36-02/step-03`：holder_before=com.android.chrome、
+        副屏 window_after 无变化 —— 用户的浏览器被退了一页。
+
+        护栏在两处：parse_plan 不接受 back（下面单测），loop 再拒一次（本测）。
+        只写在 prompt 里的不算护栏 —— 换个 planner 实现就绕过去了。
+        """
+        tp = FakeTransport()
+        res = Loop(tp, RawPlanner([Plan("", "back", None, None, False)]),
+                   trace=None, cross_check=False, recheck_ms=0).run("退回上一页")
+        self.assertEqual(tp.acts, [])                       # 设备侧一个动作都没收到
+        self.assertIn("⛔ 拒绝执行 back", res.steps[0].note)
+        self.assertIsNone(res.steps[0].result)
+
+    def test_back_is_not_a_parseable_action(self):
+        from harness.planner import PlannerError, parse_plan
+        with self.assertRaises(PlannerError) as cm:
+            parse_plan('{"action": "back"}', [])
+        self.assertIn("back", str(cm.exception))
+
+    def test_repeatedly_choosing_back_aborts(self):
+        """反复选已排除的动作要中止，不能一路空转到步数上限。"""
+        tp = FakeTransport()
+        res = Loop(tp, RawPlanner([Plan("", "back", None, None, False)] * 10),
+                   trace=None, cross_check=False, recheck_ms=0).run("t")
+        self.assertEqual(res.status, "aborted")
+        self.assertEqual(tp.acts, [])
 
     def test_fatal_anomaly_aborts_immediately(self):
         tp = FakeTransport(secondary=6)

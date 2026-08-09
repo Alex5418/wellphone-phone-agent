@@ -239,8 +239,9 @@ Python 侧连 `127.0.0.1:8760`，**一次请求一次连接**（短连接，避�
 
 - `SET_TEXT` 是唯一需要 `Bundle` 参数的动作
   （`ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE`），其余无参
-- `BACK` 走 `performGlobalAction(GLOBAL_ACTION_BACK)`，
-  ⚠️ 它作用于**当前有焦点的 display**，跨屏语义未验证，先实现并标记为未验证
+- `BACK` 走 `performGlobalAction(GLOBAL_ACTION_BACK)`，作用于**当前有焦点的 display**。
+  ⚠️ **设备侧保留此命令（手工调试用），但它已被排除出 agent 的动作空间** ——
+  归还护栏保证了派发时焦点在主屏，于是它必然退掉用户的页面。见 ARCHITECTURE §5
 
 ### 2.4 `probe` — 只读单节点
 
@@ -522,7 +523,8 @@ observation 文本 + 任务目标 + 历史摘要
 }
 ```
 
-`action` 取值：`click` / `long_click` / `set_text` / `scroll_forward` / `scroll_backward` / `back` / `wait` / `finish`
+`action` 取值：`click` / `long_click` / `set_text` / `scroll_forward` / `scroll_backward` / `wait` / `finish`
+（**没有 `back`** —— 见 ARCHITECTURE §5，解析层与 loop 两道都拒）
 
 ### 解析要求
 

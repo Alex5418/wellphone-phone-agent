@@ -45,7 +45,16 @@ OBSERVE_RETRY_DELAY_MS = 250
 # 那是任务必需的三个动作。**漏掉真阳性，同时拦住必需动作。**
 #
 # 重设计方向（设计建议，非实测）：判据从"窗口时长"换成"副屏 Activity 是否重建"
-# —— 后者是因果的，且我们每步本来就在记 activity 与 tree_hash。
+# —— 后者是因果的（E19 已确认），且我们每步本来就在记 activity 与 tree_hash。
+#
+# 2026-08-09 已做的一步收窄（见 policy.record_disturbance）：
+#   **只在用户可能正在输入时才拉黑**（ime_present 三值，读不到按保守处理）。
+#   起因是一次真实 run（runs/2026-08-09T18-36-02）9 步拉黑 7 个目标、把任务逼成
+#   impossible，而全程 ime_present=False —— 七次拉黑零收益。
+#   更要命的是拆开 disturb_ms 之后：动作本身 18–228ms，慢的全是**我们自己的归还**
+#   （Compose 那步 action_ms=61 / restore_focus_ms=3345），而归还耗时取决于
+#   **主屏 app 有多重**。同一个副屏动作，用户开 Chrome 就被拉黑、开记事本就不会。
+#   **这个参数量的是护栏自己的开销，不是动作的伤害。** 值仍未动。
 DISTURB_BUDGET_MS = 500
 TREE_DEPTH_LIMIT = 25
 MAX_CONSECUTIVE_FAIL = 3      # 连续 FAIL 达此数则中止（疑似卡死）
