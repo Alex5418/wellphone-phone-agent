@@ -45,6 +45,7 @@ docs/
 | [E15-SECONDARY-FIELD-CONTAMINATION.md](experiments/E15-SECONDARY-FIELD-CONTAMINATION.md) | 软键盘击键会不会落进副屏输入框（E8 漏测的那一格） | **会，且护栏挡不住** —— 条件是 agent 的动作**重建了副屏 Activity**：新编辑器获得焦点后 IME 输入连接改绑过去。不重建 70 次 0 命中，重建 30 次 5 命中；动作数/写入值/restore 全部对齐时 0/10 vs 3/20。**证伪 E8 §4.1**。打字侧已用 `input tap` 自动化（与鼠标点 scrcpy 同源）。附五个仪表缺陷的更正史 |
 | [E16-DOSE-RESPONSE.md](experiments/E16-DOSE-RESPONSE.md) | 污染率随打扰窗口怎么变 | **九次污染全在 272–431ms，`DISTURB_BUDGET_MS=500` 一次没拦住**。<200ms 时 0/67，300–500ms 时 47%。该参数只捕捉了三因素里最弱的一个（另两个：用户在干什么、动作有没有重建副屏编辑器） |
 | [E17-LOCAL-MODEL-REPLAY.md](experiments/E17-LOCAL-MODEL-REPLAY.md) | 换本地小模型，哪一层先塌 | **护栏层没塌**：30/30 可解析、30/30 从不选中 ⛔ 拉黑的目标。塌的是「从变化标记做跨轮推断」——E13 加的 `✦新出现`/`消失` 标记两个本地模型 6/6 全无视，说明**观测层的改进有能力门槛**。26B 并不比 9B 强，参数量不是分界线 |
+| [E18-IME-DISMISSAL-ATTRIBUTION.md](experiments/E18-IME-DISMISSAL-ATTRIBUTION.md) | 软键盘收起是哪个动作干的 | **查不出来，而且知道为什么**。仪表 45 步 `dismissed` 0 次，而收起确实发生过 —— 它只在单次 `act` 内采两点，四次可定位的消失**没有一次落在那个窗口里**（含一次「前一步根本没有动作」和一次「消失后自行恢复」）。采样间隔＝LLM 延迟（1.5–149 s），该尺度下无法归因。附能定这件事的实验设计（50ms 轮询 + 单动作 + 阴性对照） |
 
 完整 trajectory 在 [`experiments/trajectories/`](experiments/trajectories/) —— 一次完整的
 observation / LLM 输出 / act 请求响应 / 独立 probe / verdict，逐步落盘。
@@ -55,5 +56,7 @@ observation / LLM 输出 / act 请求响应 / 独立 probe / verdict，逐步落
 
 - `android/` —— AccessibilityService，只做感知与执行
 - `harness/` —— PC 侧，规划 / 树压缩 / locator 生成 / 验证判据 / 编排
-- `tools/` —— 离线小工具（`compress_tree.py` 是 B2/C1/C2 的产物，走 uiautomator XML，与 harness 独立）
+- `tools/` —— 离线小工具（`compress_tree.py` 是 B2/C1/C2 的产物，走 uiautomator XML，与 harness 独立；
+  `replay_observation.py` 回放历史 observation 给任意模型，E17 用它；
+  `scan_ime_transitions.py` 复算 E18 的键盘消失区间，只读 `runs/`）
 - `tests/` —— 离线测试，不需要设备
