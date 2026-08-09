@@ -70,7 +70,9 @@ adb forward --list → tcp:18760 localabstract:phoneagent   （8760 是 Hyper-V 
 ### 作废行
 
 **无。** 全部 100 轮 `ime_before=True` 且 `note=ok`，没有 `SKIP`、没有 `ime_before=False`。
-（`rebuild` 组前 5 行来自冒烟期，`note=ok`，属有效数据，已计入 20。）
+（`rebuild` 组分两次调用完成 —— `--times 5` 后接 `--times 15`，故 CSV 的 `iter` 列是
+`1–5` 再 `1–15`。同脚本同条件、同一次开工、追加到同一文件，合并计为 n=20。
+**注意与操作者在修脚本后跑的那 3 轮冒烟区分**：那次写在 `/tmp`，未进本 CSV。）
 
 ## 4 · 对比表（brief §4）
 
