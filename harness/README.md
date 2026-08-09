@@ -32,7 +32,7 @@ cd android && ./gradlew :app:installDebug
 adb forward tcp:8760 localabstract:phoneagent
 
 # 4. 分阶段自验（HARNESS-SPEC §10）
-python -m harness.cli selftest                          # 离线，61 条，不需要设备
+python -m harness.cli selftest                          # 离线，79 条，不需要设备
 python -m harness.cli state                             # 阶段 1
 python -m harness.cli observe --locators                # 阶段 2/3
 python -m harness.cli act --sid 5 --action click        # 阶段 4/5，不经过 LLM
@@ -84,10 +84,18 @@ python -m harness.cli run "在设置中关闭深色主题"
 
 ## 已验证 / 未验证
 
-离线（`selftest`，46 条）覆盖：locator 生成→解析的闭环（L1–L6 各一条以上）、
+离线（`selftest`，79 条）覆盖：locator 生成→解析的闭环（L1–L6 各一条以上）、
 整行与开关必须分成两条、空 EditText 的 hint 不当作内容、判据三态（含
-「哑动作」连续 FAIL 触发中止）、致命异常时一个动作都不发、归还失败必须上报、
-LLM 输出解析与重试、trajectory 落盘完整性。
+「哑动作」连续 FAIL 触发中止、「界面毫无变化」独立触发中止）、致命异常时一个动作都不发、
+归还失败必须上报、LLM 输出解析与重试、trajectory 落盘完整性、
+被成功的写入作废的定位器只能判 UNKNOWN（并从独立重读的树里找回写入值）、
+条目增删标记（整页换掉时不报）、token 与延迟汇总缺失时记 None 不记 0。
+
+设备侧另有 15 条 JVM 单测（`cd android && ./gradlew :app:testDebugUnitTest --rerun-tasks`，
+⚠ 不加 `--rerun-tasks` 会命中缓存，`BUILD SUCCESSFUL` 但一条都没跑）。
+其中真正有覆盖意义的是 13 条：`LocatorResolver` 8 条 + `Snapshot.treeHash` 5 条；
+另两条是 `ProbeMockTest`（探路：能不能 mock `AccessibilityNodeInfo`）与模板自带的 `ExampleUnitTest`。
+`AgentCommands` / `AgentServer` 仍无测试 —— 它们依赖真实 Service 生命周期。
 
 **没有真机验证**：本机无设备。以下必须上机再确认 ——
 `observe` 的 512 KB 降级路径、`act` 的 11 步时序在真实窗口重建下的表现、

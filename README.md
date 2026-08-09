@@ -127,13 +127,15 @@ python -m harness.cli run "在设置中关闭深色主题"     # 5. 端到端
 ## 目录
 
 ```
-docs/       设计（ARCHITECTURE / HARNESS-SPEC）与 B1–E14 的实测记录，先读 docs/README.md
+docs/       设计（ARCHITECTURE / HARNESS-SPEC）与 B1–E17 的实测记录，先读 docs/README.md
 android/    AccessibilityService —— 只做感知与执行
 harness/    PC 侧 Agent —— 观测 / 压缩 / 定位 / 验证 / 编排 / 规划
 tools/      离线小工具与实验脚本
 tests/      79 条离线测试（PC 侧），不需要设备
             设备侧另有 15 条 JVM 单测：cd android && ./gradlew :app:testDebugUnitTest --rerun-tasks
             （⚠ 不加 --rerun-tasks 会命中缓存，BUILD SUCCESSFUL 但一条都没跑）
+            15 条里有覆盖意义的是 13 条（LocatorResolver 8 + treeHash 5），
+            另两条是 mock 探路与模板自带的 stub —— 拆分见 harness/README.md
 ```
 
 ## 状态与限度

@@ -72,6 +72,8 @@ export PHONEAGENT_PORT=18760
 
 - 测试：**Python 79 条**（`python -m unittest discover -s tests -q`）
   + **Kotlin 15 条**（`cd android && ./gradlew :app:testDebugUnitTest --rerun-tasks`）
+  —— Kotlin 那 15 条里只有 13 条有覆盖意义（`LocatorResolver` 8 + `treeHash` 5），
+  另两条是 mock 探路与模板 stub。**被问到时报 13，别拿总数充数。**
 - 演示视频 `docs/media/demo.mp4`，对应 trajectory `runs/2026-08-07T05-52-07/`
 - 实验记录 B1–E17 在 `docs/experiments/`，索引在 `docs/README.md`
 
