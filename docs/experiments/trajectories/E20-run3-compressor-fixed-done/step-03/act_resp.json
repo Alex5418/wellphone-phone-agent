@@ -1,0 +1,71 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L6",
+    "class": "android.widget.EditText",
+    "resource_id": null,
+    "anchor_class": "android.widget.EditText"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 881,
+    "verify_ms": 8,
+    "total_ms": 889,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 859,
+    "last_focus_call_ms": 22,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": null,
+      "class": "android.widget.FrameLayout",
+      "editable": false,
+      "window_id": 102
+    }
+  },
+  "post_state": {
+    "refreshed": true,
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "class": "android.widget.EditText",
+    "resource_id": null,
+    "text": "Hi Yiduo,\n\nThanks for your message! Here's a short Shakespeare-style dialogue:\n\nAlex: Prithee, dear Yiduo, what makes thee love the Bard so well?\nYiduo: His words, like jewels, sparkle in the mind's dark night.\nAlex: Then let us speak in verse and revel in his mirth!\n\nBest,\nAlex",
+    "raw_text": "Hi Yiduo,\n\nThanks for your message! Here's a short Shakespeare-style dialogue:\n\nAlex: Prithee, dear Yiduo, what makes thee love the Bard so well?\nYiduo: His words, like jewels, sparkle in the mind's dark night.\nAlex: Then let us speak in verse and revel in his mirth!\n\nBest,\nAlex",
+    "content_desc": null,
+    "checkable": false,
+    "checked": false,
+    "enabled": true,
+    "focused": true,
+    "selected": false,
+    "sel_start": 16,
+    "sel_end": 16
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": "com.google.android.gm",
+    "activity": "android.widget.FrameLayout",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 5,
+    "disturb_ms": 886,
+    "restore_focus_ms": 881,
+    "restore_total_ms": 889,
+    "total_ms": 898
+  }
+}

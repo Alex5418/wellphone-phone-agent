@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "da9c52d930b8",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L1",
+      "target": "self",
+      "resource_id": "com.google.android.calendar:id/floating_action_button",
+      "cls": "android.widget.ImageButton"
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

@@ -1,0 +1,1 @@
+{"thought": "我已写好回复并点击了 Send，邮件已进入发送流程，任务达成。", "action": "finish", "done": true, "outcome": "achieved"}

@@ -1,0 +1,31 @@
+## 任务
+我的朋友Yiduo好像给我的Gmail发了封邮件，你能帮我回复他一下吗？
+
+## 环境状态
+- 副屏: display 4 · com.google.android.gm ✓
+- 主屏焦点: com.android.chrome · 已归还 (3345 ms)
+- 用户输入中: 否
+- 上一步: click "Compose" → 已生效，activity → ComposeActivityGmail，⚠ 打扰窗口 3406 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "Compose" 排除出动作空间
+
+## 当前界面
+[0] Navigate up | button
+[1] Attach file | button
+[2] Send | button
+[3] More options | button | ⛔ 不可操作：上一次操作它的实际打扰窗口超预算，已在本轮排除（实测 969 ms）
+[4] From | button
+[5] To | button
+[6] (无文字) | button
+[7] (无文字) | input | (空)
+[8] Add Cc/Bcc | button
+[9] Subject | input | (空)
+[10] （可滚动区域） | list
+[11] Compose email | input | Compose email
+[12] Help me write | button
+
+## 已执行
+1. click "Unread, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM" → 已生效，activity → ViewGroup
+2. click "More options" → 已生效，activity → FrameLayout，⚠ 打扰窗口 969 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "More options" 排除出动作空间
+3. back → 结果未知，界面无变化；BACK 的跨屏语义未验证，可能作用在了主屏上
+4. click "Add star" → 已生效，activity → MailActivityGmail，⚠ 打扰窗口 2916 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "Add star" 排除出动作空间
+5. click "Unread and Starred, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM" → 已生效，activity → ViewGroup，⚠ 打扰窗口 1808 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "Unread and Starred, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM" 排除出动作空间
+6. click "Compose" → 已生效，activity → ComposeActivityGmail，⚠ 打扰窗口 3406 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "Compose" 排除出动作空间

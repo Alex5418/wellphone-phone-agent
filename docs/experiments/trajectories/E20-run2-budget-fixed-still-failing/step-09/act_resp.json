@@ -1,0 +1,27 @@
+{
+  "resolved": {
+    "found": false,
+    "candidates": 0,
+    "note": "no candidate for L3(id=null text=null cd=More options cls=android.widget.ImageView idx=0 target=self path=null)",
+    "strategy": "L3"
+  },
+  "action_ok": false,
+  "restore": {
+    "attempted": false,
+    "reason": "target_not_found"
+  },
+  "post_state": {
+    "found": false
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": "com.google.android.gm",
+    "activity": "android.view.ViewGroup",
+    "window_count": 1
+  },
+  "timing": {
+    "action_ms": 0,
+    "restore_ms": 0,
+    "total_ms": 0
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L2",
+    "class": "android.view.ViewGroup",
+    "resource_id": "com.google.android.gm:id/viewified_conversation_item_view",
+    "anchor_class": "android.view.ViewGroup"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": null,
+    "ok_unknown_reason": "display 0 上没有窗口自报 focused/active，a11y 侧无法判定持有者",
+    "retried": false,
+    "focus_ms": 500,
+    "verify_ms": 1,
+    "total_ms": 501,
+    "holder_before": null,
+    "holder_after": null,
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 492,
+    "last_focus_call_ms": 8,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": null,
+      "class": "android.widget.FrameLayout",
+      "editable": false,
+      "window_id": 102
+    }
+  },
+  "post_state": {
+    "refreshed": false,
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "class": "android.view.ViewGroup",
+    "resource_id": "com.google.android.gm:id/viewified_conversation_item_view",
+    "text": ", , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM",
+    "raw_text": ", , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM",
+    "content_desc": null,
+    "checkable": false,
+    "checked": false,
+    "enabled": true,
+    "focused": false,
+    "selected": false,
+    "sel_start": -1,
+    "sel_end": -1
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": "com.google.android.gm",
+    "activity": "android.view.ViewGroup",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 7,
+    "disturb_ms": 507,
+    "restore_focus_ms": 500,
+    "restore_total_ms": 501,
+    "total_ms": 730
+  }
+}

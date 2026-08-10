@@ -1,0 +1,54 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 0,
+    "note": "global action, no locator",
+    "strategy": "-"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 1805,
+    "verify_ms": 9,
+    "total_ms": 1814,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": false,
+    "node_refound": true,
+    "last_resolve_ms": 1800,
+    "last_focus_call_ms": 5,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": null,
+      "class": "android.widget.FrameLayout",
+      "editable": false,
+      "window_id": 102
+    }
+  },
+  "post_state": {
+    "found": false,
+    "skipped": true
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": "com.google.android.gm",
+    "activity": "android.widget.FrameLayout",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 1,
+    "disturb_ms": 1806,
+    "restore_focus_ms": 1805,
+    "restore_total_ms": 1814,
+    "total_ms": 1815
+  }
+}

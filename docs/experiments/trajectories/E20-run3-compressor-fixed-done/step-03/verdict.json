@@ -1,0 +1,8 @@
+{
+  "result": "PASS",
+  "predicate": "text_equals_value",
+  "detail": "text = \"Hi Yiduo,\\n\\nThanks for your message! Here's a short Shakespeare-style dialogue:\\n\\nAlex: Prithee, dear Yiduo, what makes thee love the Bard so well?\\nYiduo: His words, like jewels, sparkle in the mind's dark night.\\nAlex: Then let us speak in verse and revel in his mirth!\\n\\nBest,\\nAlex\"",
+  "notes": [
+    "⚠ 打扰窗口 886 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 57,
+  "completion_tokens": 100,
+  "reasoning_head": "We have a reply compose screen in Gmail. The body already contains a reply text. To reply to Yiduo, we need to send the email. The Send button is [3]. We should click Send. Check recipient etc. Seems ready. Output click on 3."
+}

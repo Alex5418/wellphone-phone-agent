@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 777,
+  "completion_tokens": 827,
+  "reasoning_head": "We need answer JSON. Need determine current state. Task: open calendar, see today's schedule. We launched calendar. Then previous click \"Create new event and more\" appears to have opened a menu? Current screen: [0] Create new event and more button, [1] no text new, [2] Reminder, [3] Event, [4] Task. These are likely options after tapping FAB \"Create new event and more\" in Google Calendar: a bottom"
+}

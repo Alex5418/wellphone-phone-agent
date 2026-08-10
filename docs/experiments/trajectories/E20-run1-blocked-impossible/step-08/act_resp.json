@@ -1,0 +1,58 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L3",
+    "class": "android.widget.ImageButton",
+    "resource_id": null,
+    "anchor_class": "android.widget.ImageButton"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 1303,
+    "verify_ms": 3,
+    "total_ms": 1306,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 1288,
+    "last_focus_call_ms": 15,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": null,
+      "class": "android.widget.FrameLayout",
+      "editable": false,
+      "window_id": 102
+    }
+  },
+  "post_state": {
+    "found": false,
+    "candidates": 0,
+    "note": "no candidate for L3(id=null text=null cd=Navigate up cls=android.widget.ImageButton idx=0 target=self path=null)"
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": null,
+    "activity": "com.google.android.gm.ComposeActivityGmail",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 18,
+    "disturb_ms": 1321,
+    "restore_focus_ms": 1303,
+    "restore_total_ms": 1306,
+    "total_ms": 1326
+  }
+}

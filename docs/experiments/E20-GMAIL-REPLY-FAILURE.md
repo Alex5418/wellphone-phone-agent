@@ -3,7 +3,10 @@
 **日期** 2026-08-09 · **标签** `[真实任务]` · API 34 · 模拟器 · display 4 · Gmail
 **任务** 「我的朋友 Yiduo 好像给我的 Gmail 发了封邮件，你能帮我回复他一下吗？」
 **模型** `deepseek-v4-flash`
-**trajectory** `runs/2026-08-09T18-36-02`（失败）· `18-51-51`（仍失败）· `18-58-14`（成功）
+**trajectory（已随仓库提交）**
+`trajectories/E20-run1-blocked-impossible/`（10 步 impossible）·
+`trajectories/E20-run2-budget-fixed-still-failing/`（20 步仍失败 —— **归因的关键**）·
+`trajectories/E20-run3-compressor-fixed-done/`（4 个动作完成）
 
 ---
 
@@ -75,9 +78,9 @@ Settings 那行不受影响：它的文字在**不可交互的 TextView** 上，
 
 | # | 打扰预算 | 压缩去重 | 步数 | 结果 |
 |---|---|---|---|---|
-| `18-36-02` | 旧（无条件拉黑） | 旧 | 10 | 拉黑 7 个目标 → `impossible` |
-| `18-51-51` | **新**（仅在用户可能输入时拉黑） | 旧 | 20 | **零拉黑**，仍在勾选里打转 → `aborted: TIMEOUT` |
-| `18-58-14` | 新 | **新** | **4 个动作** | **`done`** |
+| [run1](trajectories/E20-run1-blocked-impossible/) | 旧（无条件拉黑） | 旧 | 10 | 拉黑 7 个目标 → `impossible` |
+| [run2](trajectories/E20-run2-budget-fixed-still-failing/) | **新**（仅在用户可能输入时拉黑） | 旧 | 20 | **零拉黑**，仍在勾选里打转 → `aborted: TIMEOUT` |
+| [run3](trajectories/E20-run3-compressor-fixed-done/) | 新 | **新** | **4 个动作** | **`done`** |
 
 **中间那一行证明了预算不是真因**：动作空间完整保留、步数翻倍，失败照旧。
 

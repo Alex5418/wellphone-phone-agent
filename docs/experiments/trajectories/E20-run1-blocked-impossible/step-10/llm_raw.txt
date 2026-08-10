@@ -1,0 +1,1 @@
+{"thought":"Yiduo 的邮件条目和 Compose 入口都已被排除为不可操作，无法打开邮件或新建回复邮件；其他列表项均与 Yiduo 无关，没有可用入口，任务无法完成。","action":"finish","target":null,"value":null,"done":true,"outcome":"impossible"}

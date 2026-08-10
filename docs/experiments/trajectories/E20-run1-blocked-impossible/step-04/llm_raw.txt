@@ -1,0 +1,1 @@
+{"thought":"当前在邮件的更多操作弹层里，没有回复入口。先选一个会立即生效并关闭弹层的操作，回到邮件页后再找 Reply。","action":"click","target":3,"value":null,"done":false}

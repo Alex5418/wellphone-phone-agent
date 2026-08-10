@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "2570069d38b7",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L4",
+      "target": "ancestor_clickable",
+      "text": "Remove star",
+      "cls": "android.widget.TextView"
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "result": "FAIL",
+  "predicate": "activity_or_tree_changes",
+  "detail": "locator 没解析到节点，动作未执行",
+  "notes": []
+}

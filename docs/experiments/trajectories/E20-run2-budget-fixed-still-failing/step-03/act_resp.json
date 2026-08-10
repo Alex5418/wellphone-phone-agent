@@ -1,0 +1,58 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L4",
+    "class": "android.widget.LinearLayout",
+    "resource_id": null,
+    "anchor_class": "android.widget.TextView"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 882,
+    "verify_ms": 2,
+    "total_ms": 884,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 854,
+    "last_focus_call_ms": 28,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": null,
+      "class": "android.widget.FrameLayout",
+      "editable": false,
+      "window_id": 102
+    }
+  },
+  "post_state": {
+    "found": false,
+    "candidates": 0,
+    "note": "no candidate for L4(id=null text=Add star cd=null cls=android.widget.TextView idx=0 target=ancestor_clickable path=null)"
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": null,
+    "activity": "android.widget.FrameLayout",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 7,
+    "disturb_ms": 889,
+    "restore_focus_ms": 882,
+    "restore_total_ms": 884,
+    "total_ms": 894
+  }
+}

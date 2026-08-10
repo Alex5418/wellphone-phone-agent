@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "c32c2c7ab742",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L3",
+      "target": "self",
+      "content_desc": "More options",
+      "cls": "android.widget.ImageView"
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

@@ -1,0 +1,2 @@
+{"step": 2, "action": "click", "target": 0, "verdict": "PASS", "restore_ok": null, "restore_focus_ms": null, "restore_total_ms": null, "disturb_ms": 82, "action_ms": 82, "total_ms": 138, "llm_ms": 14797, "prompt_tokens": null, "completion_tokens": 1288, "reasoning_tokens": 1237}
+{"step": 3, "action": "click", "target": 1, "verdict": "PASS", "restore_ok": null, "restore_focus_ms": null, "restore_total_ms": null, "disturb_ms": 6, "action_ms": 6, "total_ms": 47, "llm_ms": 9274, "prompt_tokens": null, "completion_tokens": 827, "reasoning_tokens": 777}

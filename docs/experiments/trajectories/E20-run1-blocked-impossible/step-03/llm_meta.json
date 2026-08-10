@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 251,
+  "completion_tokens": 300,
+  "reasoning_head": "We need answer JSON. Need understand task. User wants reply to Yiduo's email in Gmail. Current interface after click More options shows menu items: Move to, Snooze, Change labels, Add star, Mark not important, Mute, Report spam. We are in conversation view? Need reply. We omitted More options due overlay. Need find reply button. On current screen list only menu options from overflow? We clicked Mo"
+}

@@ -1,0 +1,18 @@
+{
+  "refreshed": false,
+  "found": true,
+  "candidates": 1,
+  "note": "ok",
+  "class": "android.view.View",
+  "resource_id": "com.google.android.calendar:id/fade_layer",
+  "text": null,
+  "raw_text": null,
+  "content_desc": null,
+  "checkable": false,
+  "checked": false,
+  "enabled": true,
+  "focused": false,
+  "selected": false,
+  "sel_start": -1,
+  "sel_end": -1
+}

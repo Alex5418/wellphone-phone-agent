@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 420,
+  "completion_tokens": 476,
+  "reasoning_head": "We need to respond to task: friend Yiduo sent email asking for short dialogue in Shakespeare style. We need to reply to him. We are in Gmail app, on email detail view? The current screen shows list of emails including Yiduo's email, and also buttons: Compose, Done, Archive, Delete, Mark read, More options. We need to figure out how to reply. Typically in Gmail, when viewing an email, there is a Re"
+}

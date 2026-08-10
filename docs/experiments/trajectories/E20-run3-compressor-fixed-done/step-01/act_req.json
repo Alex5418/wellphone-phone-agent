@@ -1,0 +1,18 @@
+{
+  "cmd": "act",
+  "req_id": "c1b5a2a14585",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L2",
+      "target": "self",
+      "resource_id": "com.google.android.gm:id/viewified_conversation_item_view",
+      "text": ", , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM",
+      "cls": "android.view.ViewGroup"
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "5f9f27f6a86e",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L3",
+      "target": "self",
+      "content_desc": "Navigate up",
+      "cls": "android.widget.ImageButton"
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

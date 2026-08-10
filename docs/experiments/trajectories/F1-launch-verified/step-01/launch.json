@@ -1,0 +1,10 @@
+{
+  "pkg": "com.google.android.calendar",
+  "display": 4,
+  "ok": true,
+  "settled": true,
+  "settle_ms": 1091,
+  "restore": null,
+  "guarded": false,
+  "note": "PC 侧 adb 启动，不经过 act 的原子归还"
+}

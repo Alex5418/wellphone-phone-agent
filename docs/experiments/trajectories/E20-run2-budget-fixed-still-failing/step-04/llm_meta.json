@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 397,
+  "completion_tokens": 447,
+  "reasoning_head": "We need answer JSON only. Need parse task. User asks: \"我的朋友Yiduo好像给我的Gmail发了封邮件，你能帮我回复他一下吗？\" Need reply to Yiduo's email. Current interface in Gmail. We have list of emails. Previous steps: clicked Yiduo email, then More options, then Add star. Now current interface shows a list? Let's inspect entries. [2] Unread and Starred, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespe"
+}

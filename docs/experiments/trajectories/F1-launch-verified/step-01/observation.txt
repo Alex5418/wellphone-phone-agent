@@ -1,0 +1,40 @@
+## 任务
+打开日历，看看今天有什么安排
+
+## 环境状态
+- 副屏: display 4 · com.android.settings ✓
+- 主屏焦点: 无
+- 用户输入中: 否
+- ⚠ 环境异常: 主屏当前没有输入焦点持有者
+
+## 当前界面
+[0] （可滚动区域：Network & internet…） | list
+[1] Navigate up | button
+[2] （可滚动区域：Data Saver…） | list
+[3] Internet | button | AndroidWifi
+[4] Calls & SMS | button | T-Mobile
+[5] SIMs | button | T-Mobile
+[6] Hotspot & tethering | button | Off
+
+## 可启动的应用（副屏当前：com.android.settings）
+[7] com.android.camera2
+[8] com.android.chrome
+[9] com.android.settings
+[10] com.android.stk
+[11] com.example.composetest
+[12] com.fsck.k9
+[13] com.google.android.apps.docs
+[14] com.google.android.apps.maps
+[15] com.google.android.apps.messaging
+[16] com.google.android.apps.photos
+[17] com.google.android.apps.youtube.music
+[18] com.google.android.calendar
+[19] com.google.android.contacts
+[20] com.google.android.deskclock
+[21] com.google.android.dialer
+[22] com.google.android.documentsui
+[23] com.google.android.gm
+[24] com.google.android.googlequicksearchbox
+[25] com.google.android.youtube
+[26] org.fossify.notes
+（用 launch 打开其中一个。⚠ 该动作不经过焦点归还护栏）

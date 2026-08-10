@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 301,
+  "completion_tokens": 353,
+  "reasoning_head": "We need respond with JSON. Need understand task: user friend Yiduo sent email in Gmail, wants to reply. We are viewing email detail. Need find reply action. There are multiple Reply buttons [7], [13]. Which one? [7] likely toolbar reply? [13] maybe bottom? Need decide. We need reply to email. In Gmail, message view has Reply button at top/bottom. [7] Reply, [13] Reply also maybe \"Reply\" action. Ne"
+}

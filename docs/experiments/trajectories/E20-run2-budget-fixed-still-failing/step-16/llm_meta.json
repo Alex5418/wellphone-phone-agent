@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 4749,
+  "completion_tokens": 4815,
+  "reasoning_head": "我们需要理解任务。用户说：“我的朋友Yiduo好像给我的Gmail发了封邮件，你能帮我回复他一下吗？” 意思是需要回复Yiduo的邮件。当前界面是在Gmail中打开了某封邮件？看当前界面：\n\n[2] Unread, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, , at 6:30 PM | button\n[3] , , , me, , 副屏 agent 演示... 等邮件列表\n[7] Compose | button\n[8] Done | button\n[9] Archive | button\n[10] Delete | butt"
+}

@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 225,
+  "completion_tokens": 283,
+  "reasoning_head": "The user wants me to reply to an email from Yiduo in Gmail. I'm on the Gmail inbox screen. The email from Wang, Yiduo is visible at item [5]. I need to open it and reply.\n\nBut wait, the environment shows the current screen is the inbox list. The task history shows many attempts to open the email, but the last click result was unknown and interface didn't change. The current screen shows the inbox "
+}

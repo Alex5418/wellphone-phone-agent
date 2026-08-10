@@ -1,0 +1,1 @@
+{"thought":"当前在写新邮件，需要填入收件人Yiduo，点击To选择联系人","action":"click","target":5,"value":null,"done":false}

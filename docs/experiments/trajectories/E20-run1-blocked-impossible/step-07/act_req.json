@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "a6df781cb3ad",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L1",
+      "target": "self",
+      "resource_id": "com.google.android.gm:id/peoplekit_autocomplete_to_prefix",
+      "cls": "android.widget.TextView"
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

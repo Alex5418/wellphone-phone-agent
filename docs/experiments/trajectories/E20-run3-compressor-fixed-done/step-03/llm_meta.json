@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 230,
+  "completion_tokens": 363,
+  "reasoning_head": "We need answer JSON. Need determine next action. We are in Gmail reply compose. Task: reply to Yiduo's email. Need compose reply text and send. Current screen shows reply compose with To: Wang, Yiduo, subject Re: a test, body input empty? [13] (无文字) | input | (空). Need set text in body, then send. User not inputting. Need use short IDs current. Need click body [13]? set_text target 13 value messag"
+}

@@ -1,0 +1,27 @@
+{
+  "resolved": {
+    "found": false,
+    "candidates": 0,
+    "note": "no candidate for L4(id=null text=Remove star cd=null cls=android.widget.TextView idx=0 target=ancestor_clickable path=null)",
+    "strategy": "L4"
+  },
+  "action_ok": false,
+  "restore": {
+    "attempted": false,
+    "reason": "target_not_found"
+  },
+  "post_state": {
+    "found": false
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": "com.google.android.gm",
+    "activity": "com.google.android.gm.ui.MailActivityGmail",
+    "window_count": 1
+  },
+  "timing": {
+    "action_ms": 0,
+    "restore_ms": 0,
+    "total_ms": 0
+  }
+}

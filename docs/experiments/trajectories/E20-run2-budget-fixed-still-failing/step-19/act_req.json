@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "d039705ae308",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L4",
+      "target": "descendant_class:android.widget.ImageView",
+      "text": "Unread, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM",
+      "cls": "android.view.ViewGroup"
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

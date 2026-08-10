@@ -1,0 +1,1 @@
+{"thought": "当前界面疑似处于邮件列表的多选模式（有 Done、Archive、Delete 等工具栏按钮），点击邮件只会切换选择而不是打开。先点 Done 退出多选，再进入 Yiduo 的邮件查看 Reply 入口。", "action": "click", "target": 9, "value": null, "done": false}

@@ -1,0 +1,52 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L1",
+    "class": "android.view.View",
+    "resource_id": "com.google.android.calendar:id/fade_layer",
+    "anchor_class": "android.view.View"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": false,
+    "reason": "no_primary_focus"
+  },
+  "post_state": {
+    "refreshed": true,
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "class": "android.view.View",
+    "resource_id": "com.google.android.calendar:id/fade_layer",
+    "text": null,
+    "raw_text": null,
+    "content_desc": null,
+    "checkable": false,
+    "checked": false,
+    "enabled": true,
+    "focused": false,
+    "selected": false,
+    "sel_start": -1,
+    "sel_end": -1
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": "com.google.android.calendar",
+    "activity": "com.google.android.calendar.AllInOneCalendarActivity",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 6,
+    "disturb_ms": 6,
+    "restore_focus_ms": 0,
+    "restore_total_ms": 0,
+    "total_ms": 47
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 3802,
+  "completion_tokens": 3856,
+  "reasoning_head": "We need answer only JSON. Need assess current situation. Task: friend Yiduo sent email, reply. Current interface shows action bar options? List items: Move to, Snooze, Change labels, Add star, Mark not important, Mute, Report spam. This seems after clicking More options? Actually entries are options in a bottom sheet/menu. Need reply to email. Need navigate back from menu? We need find reply actio"
+}

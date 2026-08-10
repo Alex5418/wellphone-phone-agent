@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 54,
+  "completion_tokens": 95,
+  "reasoning_head": "We need respond to friend Yiduo's email. Need reply. Current screen Gmail inbox. Need open email from Yiduo maybe item [5]. Then reply. Need follow instructions, one action at a time. Let's click [5] to open."
+}

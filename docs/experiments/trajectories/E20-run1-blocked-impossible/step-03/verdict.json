@@ -1,0 +1,6 @@
+{
+  "result": "UNKNOWN",
+  "predicate": "activity_or_tree_changes",
+  "detail": "界面无变化；BACK 的跨屏语义未验证，可能作用在了主屏上",
+  "notes": []
+}

@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 1036,
+  "completion_tokens": 1079,
+  "reasoning_head": "We need answer JSON. Need inspect. Task: reply to Yiduo's email. Previous actions: clicked email, Reply, set_text, click Send. Now current interface shows MailActivityGmail. It seems in Gmail compose? Actually after send maybe returned to mail? Current list: \"Hide quoted text\", \"a test Inbox\", star, Wang Yiduo, reply/forward etc, Sending… button? There are two messages? Need determine if sent succ"
+}

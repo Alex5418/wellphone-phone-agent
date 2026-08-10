@@ -1,0 +1,18 @@
+{
+  "cmd": "act",
+  "req_id": "64095d234e9d",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L5",
+      "target": "self",
+      "text": "Reply",
+      "cls": "android.widget.ImageView",
+      "index": 0
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

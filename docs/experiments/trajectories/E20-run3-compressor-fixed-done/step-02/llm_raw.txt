@@ -1,0 +1,1 @@
+{"thought": "这封来自 Yiduo 的邮件已打开，点击顶部的 Reply 按钮即可进入回复编辑界面。", "action": "click", "target": 7, "value": null, "done": false}

@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 1237,
+  "completion_tokens": 1288,
+  "reasoning_head": "We need respond JSON only. Need assess current screen. Task: open calendar, see today's schedule. We launched calendar. Current UI: only [0] Create new event and more | button. This is odd, maybe calendar main screen not loaded? Only a floating action button visible? Need see today's arrangements. Need maybe scroll? But only one entry. Maybe need wait for content to load? Could click create? No, w"
+}

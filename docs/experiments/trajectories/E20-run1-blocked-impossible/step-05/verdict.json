@@ -1,0 +1,8 @@
+{
+  "result": "PASS",
+  "predicate": "activity_or_tree_changes",
+  "detail": "activity → ViewGroup",
+  "notes": [
+    "⚠ 打扰窗口 1808 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 \"Unread and Starred, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM\" 排除出动作空间"
+  ]
+}

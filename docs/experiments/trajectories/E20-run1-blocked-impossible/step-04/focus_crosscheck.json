@@ -1,0 +1,8 @@
+{
+  "device_reported": "com.android.chrome",
+  "device_verdict": true,
+  "dumpsys": "com.android.chrome",
+  "expect_pkg": "com.android.chrome",
+  "final_restore_ok": true,
+  "confirmed_by": "device"
+}

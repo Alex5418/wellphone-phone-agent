@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 33,
+  "completion_tokens": 69,
+  "reasoning_head": "We need respond to friend Yiduo's email. Need open email first. Target 5 is unread email from Wang, Yiduo. Click it."
+}

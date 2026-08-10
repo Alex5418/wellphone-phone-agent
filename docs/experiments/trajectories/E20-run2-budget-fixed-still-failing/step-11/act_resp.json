@@ -1,0 +1,71 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L4",
+    "class": "android.widget.ImageView",
+    "resource_id": "com.google.android.gm:id/contact_image",
+    "anchor_class": "android.view.ViewGroup"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 718,
+    "verify_ms": 2,
+    "total_ms": 720,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 693,
+    "last_focus_call_ms": 23,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": null,
+      "class": "android.widget.FrameLayout",
+      "editable": false,
+      "window_id": 102
+    }
+  },
+  "post_state": {
+    "refreshed": true,
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "class": "android.widget.ImageView",
+    "resource_id": "com.google.android.gm:id/contact_image",
+    "text": null,
+    "raw_text": null,
+    "content_desc": null,
+    "checkable": false,
+    "checked": false,
+    "enabled": true,
+    "focused": false,
+    "selected": false,
+    "sel_start": -1,
+    "sel_end": -1
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": "com.google.android.gm",
+    "activity": "android.view.ViewGroup",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 20,
+    "disturb_ms": 738,
+    "restore_focus_ms": 718,
+    "restore_total_ms": 720,
+    "total_ms": 748
+  }
+}

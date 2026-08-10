@@ -1,0 +1,21 @@
+## 任务
+我的朋友Yiduo好像给我的Gmail发了封邮件，你能帮我回复他一下吗？
+
+## 环境状态
+- 副屏: display 4 · com.google.android.gm ✓
+- 主屏焦点: com.android.chrome · 已归还 (888 ms)
+- 用户输入中: 否
+- 上一步: click "More options" → 已生效，activity → FrameLayout，⚠ 打扰窗口 969 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "More options" 排除出动作空间
+
+## 当前界面
+[0] Move to | button
+[1] Snooze | button
+[2] Change labels | button
+[3] Add star | button
+[4] Mark not important | button
+[5] Mute | button
+[6] Report spam | button
+
+## 已执行
+1. click "Unread, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM" → 已生效，activity → ViewGroup
+2. click "More options" → 已生效，activity → FrameLayout，⚠ 打扰窗口 969 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "More options" 排除出动作空间

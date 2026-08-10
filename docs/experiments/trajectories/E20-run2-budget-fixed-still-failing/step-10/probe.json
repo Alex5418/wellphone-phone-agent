@@ -1,0 +1,18 @@
+{
+  "refreshed": true,
+  "found": true,
+  "candidates": 1,
+  "note": "ok",
+  "class": "android.widget.ImageView",
+  "resource_id": "com.google.android.gm:id/contact_image",
+  "text": null,
+  "raw_text": null,
+  "content_desc": null,
+  "checkable": false,
+  "checked": false,
+  "enabled": true,
+  "focused": false,
+  "selected": false,
+  "sel_start": -1,
+  "sel_end": -1
+}

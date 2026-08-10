@@ -1,0 +1,8 @@
+{
+  "result": "UNKNOWN",
+  "predicate": "activity_or_tree_changes",
+  "detail": "activity 与界面内容均无变化，无法判定",
+  "notes": [
+    "⚠ 打扰窗口 625 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 \"To\" 排除出动作空间"
+  ]
+}

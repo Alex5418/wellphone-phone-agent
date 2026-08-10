@@ -1,0 +1,32 @@
+{
+  "cmd": "act",
+  "req_id": "d9b43133c9dc",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L6",
+      "target": "self",
+      "cls": "android.widget.EditText",
+      "path": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "action": "SET_TEXT",
+    "value": "Hi Yiduo,\n\nThanks for your message! Here's a short Shakespeare-style dialogue:\n\nAlex: Prithee, dear Yiduo, what makes thee love the Bard so well?\nYiduo: His words, like jewels, sparkle in the mind's dark night.\nAlex: Then let us speak in verse and revel in his mirth!\n\nBest,\nAlex",
+    "restore": true,
+    "verify_read": true
+  }
+}

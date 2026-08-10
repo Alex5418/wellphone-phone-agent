@@ -1,0 +1,58 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L3",
+    "class": "android.widget.ImageView",
+    "resource_id": null,
+    "anchor_class": "android.widget.ImageView"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 676,
+    "verify_ms": 6,
+    "total_ms": 682,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 663,
+    "last_focus_call_ms": 13,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": null,
+      "class": "android.widget.FrameLayout",
+      "editable": false,
+      "window_id": 102
+    }
+  },
+  "post_state": {
+    "found": false,
+    "candidates": 0,
+    "note": "no candidate for L3(id=null text=null cd=More options cls=android.widget.ImageView idx=0 target=self path=null)"
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": null,
+    "activity": "android.view.ViewGroup",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 18,
+    "disturb_ms": 694,
+    "restore_focus_ms": 676,
+    "restore_total_ms": 682,
+    "total_ms": 705
+  }
+}

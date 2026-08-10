@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 201,
+  "completion_tokens": 252,
+  "reasoning_head": "We need respond JSON only. Need understand task: \"我的朋友Yiduo好像给我的Gmail发了封邮件，你能帮我回复他一下吗？\" We need reply to Yiduo's email. We are in Gmail viewing email from Yiduo. Current interface shows email list? Actually after click, now has list entries and buttons: Compose, Done, Archive, Delete, Mark read, More options. We need reply to email. Need find Reply button? Not listed. Possibly More options contain"
+}

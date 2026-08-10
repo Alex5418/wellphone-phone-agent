@@ -1,0 +1,18 @@
+{
+  "refreshed": true,
+  "found": true,
+  "candidates": 1,
+  "note": "ok",
+  "class": "android.widget.EditText",
+  "resource_id": null,
+  "text": "Hi Yiduo,\n\nThanks for your message! Here's a short Shakespeare-style dialogue:\n\nAlex: Prithee, dear Yiduo, what makes thee love the Bard so well?\nYiduo: His words, like jewels, sparkle in the mind's dark night.\nAlex: Then let us speak in verse and revel in his mirth!\n\nBest,\nAlex",
+  "raw_text": "Hi Yiduo,\n\nThanks for your message! Here's a short Shakespeare-style dialogue:\n\nAlex: Prithee, dear Yiduo, what makes thee love the Bard so well?\nYiduo: His words, like jewels, sparkle in the mind's dark night.\nAlex: Then let us speak in verse and revel in his mirth!\n\nBest,\nAlex",
+  "content_desc": null,
+  "checkable": false,
+  "checked": false,
+  "enabled": true,
+  "focused": true,
+  "selected": false,
+  "sel_start": 16,
+  "sel_end": 16
+}

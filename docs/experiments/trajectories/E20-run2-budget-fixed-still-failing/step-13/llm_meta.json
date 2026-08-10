@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 1102,
+  "completion_tokens": 1161,
+  "reasoning_head": "We need respond to Yiduo's email in Gmail. We have current interface showing after clicking More options on an email? The list shows Move to, Snooze, Change labels, Remove star, Mark not important, Mute, Report spam. This seems like a menu for email actions. Need reply to email. We need find \"Reply\" perhaps in More options? But current options don't include Reply. Maybe need exit this menu and fin"
+}

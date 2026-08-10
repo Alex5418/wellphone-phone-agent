@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "e98d10059193",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L1",
+      "target": "self",
+      "resource_id": "com.google.android.gm:id/open_search",
+      "cls": "android.widget.EditText"
+    },
+    "action": "SET_TEXT",
+    "value": "Yiduo",
+    "restore": true,
+    "verify_read": true
+  }
+}

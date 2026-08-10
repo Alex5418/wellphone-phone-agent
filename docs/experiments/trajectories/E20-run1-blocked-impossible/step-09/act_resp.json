@@ -1,0 +1,71 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L1",
+    "class": "android.widget.EditText",
+    "resource_id": "com.google.android.gm:id/open_search",
+    "anchor_class": "android.widget.EditText"
+  },
+  "action_ok": false,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 348,
+    "verify_ms": 4,
+    "total_ms": 352,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 332,
+    "last_focus_call_ms": 16,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": null,
+      "class": "android.widget.FrameLayout",
+      "editable": false,
+      "window_id": 102
+    }
+  },
+  "post_state": {
+    "refreshed": true,
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "class": "android.widget.EditText",
+    "resource_id": "com.google.android.gm:id/open_search",
+    "text": null,
+    "raw_text": "Search in mail",
+    "content_desc": null,
+    "checkable": false,
+    "checked": false,
+    "enabled": true,
+    "focused": false,
+    "selected": false,
+    "sel_start": -1,
+    "sel_end": -1
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": "com.google.android.gm",
+    "activity": "android.widget.FrameLayout",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 10,
+    "disturb_ms": 358,
+    "restore_focus_ms": 348,
+    "restore_total_ms": 352,
+    "total_ms": 374
+  }
+}

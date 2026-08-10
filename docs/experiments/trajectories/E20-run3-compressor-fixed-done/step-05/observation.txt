@@ -1,0 +1,42 @@
+## 任务
+我的朋友Yiduo好像给我的Gmail发了封邮件，你能帮我回复他一下吗？
+
+## 环境状态
+- 副屏: display 4 · com.google.android.gm ✓
+- 主屏焦点: com.android.chrome · 已归还 (1573 ms)
+- 用户输入中: 否
+- 上一步: click "Send" → 已生效，activity → MailActivityGmail，⚠ 打扰窗口 1624 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）
+
+## 当前界面
+[0] （可滚动区域） | list
+[1] （可滚动区域：hello alex,…） | list
+[2] Hide quoted text | button
+[3] a test Inbox  | button
+[4] Add star | button
+[5] Wang, Yiduo | button
+[6] Show contact information for Wang, Yiduo | button
+[7] to me | button
+[8] Reply | button
+[9] Forward | button
+[10] More options | button
+[11] Sending… | button
+[12] Show contact information for Alex | button
+[13] to Wang | button
+[14] Reply | button
+[15] Forward | button
+[16] More options | button
+[17] （可滚动区域：发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字或者做他的事。…） | list
+[18] Navigate up | button
+[19] Archive | button
+[20] Delete | button
+[21] Mark unread | button
+[22] More options | button
+[23] Undo | button
+[24] Meet | button
+[25] More options | button
+
+## 已执行
+1. click ", , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM" → 已生效，界面内容已变化，⚠ 打扰窗口 507 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）；post_state 与独立 probe 不一致: found: act=True probe=False
+2. click "Reply" → 已生效，activity → FrameLayout，⚠ 打扰窗口 2565 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）；post_state 与独立 probe 不一致: found: act=False probe=True
+3. set_text "" → 已生效，text = "Hi Yiduo,\n\nThanks for your message! Here's a short Shakespeare-style dialogue:\n\nAlex: Prithee, dear Yiduo, what makes thee love the Bard so well?\nYiduo: His words, like jewels, sparkle in the mind's dark night.\nAlex: Then let us speak in verse and revel in his mirth!\n\nBest,\nAlex"，⚠ 打扰窗口 886 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）
+4. click "Send" → 已生效，activity → MailActivityGmail，⚠ 打扰窗口 1624 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）

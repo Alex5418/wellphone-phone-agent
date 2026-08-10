@@ -1,0 +1,33 @@
+## 任务
+我的朋友Yiduo好像给我的Gmail发了封邮件，你能帮我回复他一下吗？
+
+## 环境状态
+- 副屏: display 4 · com.google.android.gm ✓
+- 主屏焦点: com.android.chrome
+- 用户输入中: 否
+- 上一步: click "More options" → 未生效，locator 没解析到节点，动作未执行
+
+## 当前界面
+[0] （可滚动区域） | list
+[1] Search in mail | input | (空)
+[2] Open navigation drawer | button
+[3] Signed in as Alex alexw769829@gmail.com
+Account and settings. | button
+[4] （可滚动区域：, , , me, , 副屏 agent 彩排, 这封邮件由副屏上的 agent 独立完成撰写与发送。, ,  on Aug 6…） | list
+[5] Unread and Starred, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM | button
+[6] , , , me, , 副屏 agent 演示, 发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字或者做他的事。, ,  on Aug 7 | button
+[7] , , , me, , flash 补观测层后重跑, 观测层加上变化标记之后，弱模型能否独立完成。, ,  on Aug 6 | button
+[8] Unread, , , me, , 副屏 agent 正式演示, 发送这封邮件时，用户正在主屏用中文输入法连续打字。, ,  on Aug 6 | button
+[9] Compose | button
+[10] Meet | button
+
+## 已执行
+1. click "Unread, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM" → 已生效，activity → ViewGroup，⚠ 打扰窗口 709 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）
+2. click "More options" → 已生效，activity → FrameLayout，⚠ 打扰窗口 694 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）
+3. click "Add star" → 已生效，activity → MailActivityGmail，⚠ 打扰窗口 889 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）
+4. click "Unread and Starred, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM" → 已生效，activity → ViewGroup，⚠ 打扰窗口 661 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）
+5. click "Unread and Starred, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM" → 已生效，界面内容已变化，⚠ 打扰窗口 560 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）
+6. click "More options" → 已生效，activity → FrameLayout，⚠ 打扰窗口 818 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）
+7. click "Remove star" → 未生效，locator 没解析到节点，动作未执行
+8. click "Unread and Starred, , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM" → 已生效，activity → ViewGroup，⚠ 打扰窗口 721 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）
+9. click "More options" → 未生效，locator 没解析到节点，动作未执行

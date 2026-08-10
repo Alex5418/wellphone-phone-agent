@@ -1,0 +1,6 @@
+{
+  "result": "UNKNOWN",
+  "predicate": "text_equals_value",
+  "detail": "读到的仍是写入前的值 None —— 可能没写进去，也可能是读取通道滞后",
+  "notes": []
+}

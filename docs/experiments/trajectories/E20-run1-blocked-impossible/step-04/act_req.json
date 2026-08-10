@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "c1134fb3f723",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L4",
+      "target": "ancestor_clickable",
+      "text": "Add star",
+      "cls": "android.widget.TextView"
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

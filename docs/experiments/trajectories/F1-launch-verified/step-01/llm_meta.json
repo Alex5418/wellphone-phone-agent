@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 50,
+  "completion_tokens": 95,
+  "reasoning_head": "我们需打开日历看今天安排。当前副屏是设置。可启动应用列表中有 com.google.android.calendar (ID 18)。使用 launch 打开它。然后看日历界面。注意用户没在输入，应该可以。"
+}

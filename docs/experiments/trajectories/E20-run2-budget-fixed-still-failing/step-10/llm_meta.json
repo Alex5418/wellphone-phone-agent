@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 511,
+  "completion_tokens": 552,
+  "reasoning_head": "我们需要 understand the task: \"我的朋友Yiduo好像给我的Gmail发了封邮件，你能帮我回复他一下吗？\" So user wants to reply to email from Yiduo in Gmail.\n\nWe are on Gmail app, display 4. We have a current interface listing emails. We need to open the email from Yiduo and then find reply button. But there are weird previous actions: they clicked on the email, more options, add star, etc. We need to continue from current state.\n\nCurre"
+}

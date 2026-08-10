@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 2277,
+  "completion_tokens": 2343,
+  "reasoning_head": "We need respond JSON. We are in Gmail, opened email from Yiduo, clicked More options, now menu with Move to, Snooze, Change labels, Add star, Mark not important, Mute, Report spam. Task: reply to Yiduo's email. We need find reply option. Current menu doesn't have Reply. Need close menu perhaps via back? No back. We need visible control to leave current page. Menu might have outside scrim? But list"
+}

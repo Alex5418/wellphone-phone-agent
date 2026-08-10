@@ -1,0 +1,1 @@
+{"thought": "当前在设置页，目标应用日历在可启动列表中，启动日历应用", "action": "launch", "target": 18, "value": null, "done": false}

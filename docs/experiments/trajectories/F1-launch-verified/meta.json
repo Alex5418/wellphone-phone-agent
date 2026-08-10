@@ -1,0 +1,63 @@
+{
+  "task": "打开日历，看看今天有什么安排",
+  "status": "done",
+  "reason": "日历已打开，当前界面没有可点击的日程条目，只有创建按钮，说明今天没有安排（或日程视图已展示为空）。",
+  "elapsed_s": 77.6,
+  "config": {
+    "provider": "openai",
+    "model": "deepseek-v4-flash",
+    "endpoint": "https://api.deepseek.com/v1/chat/completions",
+    "politeness": "normal",
+    "target_pkg": "com.android.settings",
+    "max_steps": 25,
+    "restore": "always (硬编码，无开关)"
+  },
+  "totals": {
+    "steps": 4,
+    "llm_calls": 2,
+    "llm_ms_total": 24071,
+    "llm_ms_median": 12035.5,
+    "prompt_tokens": null,
+    "completion_tokens": 2115,
+    "reasoning_tokens": 2014,
+    "token_steps": 2,
+    "disturb_ms_total": 88,
+    "disturb_ms_max": 82
+  },
+  "metrics": [
+    {
+      "step": 2,
+      "action": "click",
+      "target": 0,
+      "verdict": "PASS",
+      "restore_ok": null,
+      "restore_focus_ms": null,
+      "restore_total_ms": null,
+      "disturb_ms": 82,
+      "action_ms": 82,
+      "total_ms": 138,
+      "llm_ms": 14797,
+      "prompt_tokens": null,
+      "completion_tokens": 1288,
+      "reasoning_tokens": 1237
+    },
+    {
+      "step": 3,
+      "action": "click",
+      "target": 1,
+      "verdict": "PASS",
+      "restore_ok": null,
+      "restore_focus_ms": null,
+      "restore_total_ms": null,
+      "disturb_ms": 6,
+      "action_ms": 6,
+      "total_ms": 47,
+      "llm_ms": 9274,
+      "prompt_tokens": null,
+      "completion_tokens": 827,
+      "reasoning_tokens": 777
+    }
+  ],
+  "llm_calls": 4,
+  "steps": 4
+}

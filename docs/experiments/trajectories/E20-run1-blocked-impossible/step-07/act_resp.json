@@ -1,0 +1,71 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L1",
+    "class": "android.widget.TextView",
+    "resource_id": "com.google.android.gm:id/peoplekit_autocomplete_to_prefix",
+    "anchor_class": "android.widget.TextView"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 568,
+    "verify_ms": 4,
+    "total_ms": 572,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 555,
+    "last_focus_call_ms": 13,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": null,
+      "class": "android.widget.FrameLayout",
+      "editable": false,
+      "window_id": 102
+    }
+  },
+  "post_state": {
+    "refreshed": true,
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "class": "android.widget.TextView",
+    "resource_id": "com.google.android.gm:id/peoplekit_autocomplete_to_prefix",
+    "text": "To",
+    "raw_text": "To",
+    "content_desc": null,
+    "checkable": false,
+    "checked": false,
+    "enabled": true,
+    "focused": false,
+    "selected": false,
+    "sel_start": -1,
+    "sel_end": -1
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": "com.google.android.gm",
+    "activity": "com.google.android.gm.ComposeActivityGmail",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 57,
+    "disturb_ms": 625,
+    "restore_focus_ms": 568,
+    "restore_total_ms": 572,
+    "total_ms": 634
+  }
+}

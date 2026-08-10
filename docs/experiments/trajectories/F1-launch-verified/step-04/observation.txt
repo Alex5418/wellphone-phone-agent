@@ -1,0 +1,40 @@
+## 任务
+打开日历，看看今天有什么安排
+
+## 环境状态
+- 副屏: display 4 · com.google.android.calendar ✓
+- 主屏焦点: 无
+- 用户输入中: 否
+- 上一步: click "" → 已生效，界面内容已变化
+- ⚠ 环境异常: 主屏当前没有输入焦点持有者
+
+## 当前界面
+[0] Create new event and more | button
+
+## 可启动的应用（副屏当前：com.google.android.calendar）
+[1] com.android.camera2
+[2] com.android.chrome
+[3] com.android.settings
+[4] com.android.stk
+[5] com.example.composetest
+[6] com.fsck.k9
+[7] com.google.android.apps.docs
+[8] com.google.android.apps.maps
+[9] com.google.android.apps.messaging
+[10] com.google.android.apps.photos
+[11] com.google.android.apps.youtube.music
+[12] com.google.android.calendar
+[13] com.google.android.contacts
+[14] com.google.android.deskclock
+[15] com.google.android.dialer
+[16] com.google.android.documentsui
+[17] com.google.android.gm
+[18] com.google.android.googlequicksearchbox
+[19] com.google.android.youtube
+[20] org.fossify.notes
+（用 launch 打开其中一个。⚠ 该动作不经过焦点归还护栏）
+
+## 已执行
+1. launch "com.google.android.calendar" → launch 成功，副屏 1091 ms 后变为 com.google.android.calendar；⚠ 该动作未经护栏：无焦点归还、无 disturb_ms
+2. click "Create new event and more" → 已生效，界面内容已变化
+3. click "" → 已生效，界面内容已变化

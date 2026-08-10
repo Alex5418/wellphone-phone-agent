@@ -1,0 +1,30 @@
+## 任务
+我的朋友Yiduo好像给我的Gmail发了封邮件，你能帮我回复他一下吗？
+
+## 环境状态
+- 副屏: display 4 · com.google.android.gm ✓
+- 主屏焦点: com.android.chrome · 已归还 (2477 ms)
+- 用户输入中: 否
+- 上一步: click "Reply" → 已生效，activity → FrameLayout，⚠ 打扰窗口 2565 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）；post_state 与独立 probe 不一致: found: act=False probe=True
+
+## 当前界面
+[0] Navigate up | button
+[1] （可滚动区域：Reply…） | list
+[2] Attach file | button
+[3] Send | button
+[4] More options | button
+[5] （可滚动区域） | list
+[6] From | button
+[7] To | button
+[8] (无文字) | button
+[9] Wang, Yiduo | button
+[10] Add Cc/Bcc | button
+[11] Re: a test | input | Re: a test
+[12] （可滚动区域） | list
+[13] (无文字) | input | (空)
+[14] Include quoted text | button
+[15] Help me write | button
+
+## 已执行
+1. click ", , , Wang, Yiduo, , a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo, ,  at 6:30 PM" → 已生效，界面内容已变化，⚠ 打扰窗口 507 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）；post_state 与独立 probe 不一致: found: act=True probe=False
+2. click "Reply" → 已生效，activity → FrameLayout，⚠ 打扰窗口 2565 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）；post_state 与独立 probe 不一致: found: act=False probe=True

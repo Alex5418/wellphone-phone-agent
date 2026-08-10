@@ -1,0 +1,58 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L1",
+    "class": "android.widget.Button",
+    "resource_id": "com.google.android.gm:id/send",
+    "anchor_class": "android.widget.Button"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 1573,
+    "verify_ms": 13,
+    "total_ms": 1586,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 1561,
+    "last_focus_call_ms": 12,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": null,
+      "class": "android.widget.FrameLayout",
+      "editable": false,
+      "window_id": 102
+    }
+  },
+  "post_state": {
+    "found": false,
+    "candidates": 0,
+    "note": "no candidate for L1(id=com.google.android.gm:id/send text=null cd=null cls=android.widget.Button idx=0 target=self path=null)"
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": null,
+    "activity": "android.widget.FrameLayout",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 51,
+    "disturb_ms": 1624,
+    "restore_focus_ms": 1573,
+    "restore_total_ms": 1586,
+    "total_ms": 1638
+  }
+}

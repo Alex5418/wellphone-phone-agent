@@ -1,0 +1,71 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L4",
+    "class": "android.widget.ImageView",
+    "resource_id": "com.google.android.gm:id/contact_image",
+    "anchor_class": "android.view.ViewGroup"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": null,
+    "ok_unknown_reason": "display 0 上没有窗口自报 focused/active，a11y 侧无法判定持有者",
+    "retried": false,
+    "focus_ms": 64,
+    "verify_ms": 0,
+    "total_ms": 64,
+    "holder_before": null,
+    "holder_after": null,
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": false,
+    "node_refound": true,
+    "last_resolve_ms": 27,
+    "last_focus_call_ms": 37,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": "com.android.chrome:id/feed_stream_recycler_view",
+      "class": "androidx.recyclerview.widget.RecyclerView",
+      "editable": false,
+      "window_id": 102
+    }
+  },
+  "post_state": {
+    "refreshed": true,
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "class": "android.widget.ImageView",
+    "resource_id": "com.google.android.gm:id/contact_image",
+    "text": null,
+    "raw_text": null,
+    "content_desc": null,
+    "checkable": false,
+    "checked": false,
+    "enabled": true,
+    "focused": false,
+    "selected": false,
+    "sel_start": -1,
+    "sel_end": -1
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": "com.google.android.gm",
+    "activity": "com.google.android.gm.ui.MailActivityGmail",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 60,
+    "disturb_ms": 124,
+    "restore_focus_ms": 64,
+    "restore_total_ms": 64,
+    "total_ms": 355
+  }
+}

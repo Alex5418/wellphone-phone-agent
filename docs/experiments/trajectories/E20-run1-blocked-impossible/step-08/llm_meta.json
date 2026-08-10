@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 1303,
+  "completion_tokens": 1349,
+  "reasoning_head": "We need respond JSON action. Need understand task: friend Yiduo sent email to user's Gmail, want reply to him. Current interface is compose email? Actually after clicking Compose, now in ComposeActivityGmail. We need reply to Yiduo's email. We are in compose new email? Current fields: From, To, Add Cc/Bcc, Subject, Compose email. To is excluded, More options excluded, etc. Need craft reply to Yidu"
+}

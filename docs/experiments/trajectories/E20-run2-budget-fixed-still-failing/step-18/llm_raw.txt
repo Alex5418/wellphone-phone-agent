@@ -1,0 +1,1 @@
+{"thought": "当前界面可能处于多选模式（有 Done/Archive/Delete/Mark read 操作栏），先点 Done 退出多选，恢复普通列表后再打开 Yiduo 的邮件。", "action": "click", "target": 8, "value": null, "done": false}

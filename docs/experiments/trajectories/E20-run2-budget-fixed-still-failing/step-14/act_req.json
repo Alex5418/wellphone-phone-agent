@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "47ff86f28545",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L1",
+      "target": "self",
+      "resource_id": "com.google.android.gm:id/action_mode_close_button",
+      "cls": "android.widget.ImageView"
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

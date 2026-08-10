@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 82,
+  "completion_tokens": 131,
+  "reasoning_head": "We need respond to email from Yiduo. Need compose reply. Current Gmail inbox. There is email from Wang, Yiduo \"a test, hello alex, I'm really interested in Shakespeare recently. Can you write me a short dialogue in Shakespeare style? Best, Yiduo\". Need reply him. Probably open email first. Tap [5] to open. Then reply button etc."
+}

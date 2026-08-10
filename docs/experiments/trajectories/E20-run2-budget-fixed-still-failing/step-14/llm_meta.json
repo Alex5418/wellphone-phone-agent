@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 3397,
+  "completion_tokens": 3475,
+  "reasoning_head": "We need answer JSON. Need decide action. Task: friend Yiduo sent email asking reply: \"Can you write me a short dialogue in Shakespeare style?\" We need reply. Current screen is Gmail inbox after removing star? We see list includes Yiduo email unread button and Compose button [7]. Need reply to email. Usually Gmail has reply button in open conversation. We are currently at list? Let's parse current "
+}

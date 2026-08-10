@@ -1,0 +1,8 @@
+{
+  "result": "PASS",
+  "predicate": "activity_or_tree_changes",
+  "detail": "activity → FrameLayout",
+  "notes": [
+    "⚠ 打扰窗口 818 ms 超出预算 500 ms（用户当前未在输入，仅上报，未排除该目标）"
+  ]
+}

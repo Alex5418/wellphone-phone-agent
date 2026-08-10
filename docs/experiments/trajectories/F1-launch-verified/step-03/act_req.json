@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "89fc940a933a",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L1",
+      "target": "self",
+      "resource_id": "com.google.android.calendar:id/fade_layer",
+      "cls": "android.view.View"
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}
