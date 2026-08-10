@@ -1,0 +1,1 @@
+{"thought": "点击写邮件按钮以开始创建新邮件", "action": "click", "target": 9, "value": null, "done": false}

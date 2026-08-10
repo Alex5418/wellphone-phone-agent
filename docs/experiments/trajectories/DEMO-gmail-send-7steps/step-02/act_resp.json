@@ -1,0 +1,71 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L6",
+    "class": "android.widget.EditText",
+    "resource_id": null,
+    "anchor_class": "android.widget.EditText"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 43,
+    "verify_ms": 20,
+    "total_ms": 63,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": false,
+    "node_refound": true,
+    "last_resolve_ms": 7,
+    "last_focus_call_ms": 36,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": "com.android.chrome:id/url_bar",
+      "class": "android.widget.EditText",
+      "editable": true,
+      "window_id": 75
+    }
+  },
+  "post_state": {
+    "refreshed": true,
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "class": "android.widget.EditText",
+    "resource_id": null,
+    "text": "alexw769829@gmail.com",
+    "raw_text": "alexw769829@gmail.com",
+    "content_desc": null,
+    "checkable": false,
+    "checked": false,
+    "enabled": true,
+    "focused": true,
+    "selected": false,
+    "sel_start": 21,
+    "sel_end": 21
+  },
+  "window_after": {
+    "display": 2,
+    "pkg": "com.google.android.gm",
+    "activity": "android.widget.FrameLayout",
+    "window_count": 1
+  },
+  "ime": {
+    "before": true,
+    "after": true,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 8,
+    "disturb_ms": 51,
+    "restore_focus_ms": 43,
+    "restore_total_ms": 63,
+    "total_ms": 151
+  }
+}

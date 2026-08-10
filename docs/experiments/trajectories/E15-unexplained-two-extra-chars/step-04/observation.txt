@@ -1,0 +1,34 @@
+## 任务
+给 alexw769829@gmail.com 发一封邮件，主题写「副屏 agent 演示」，正文写「发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字或者做他的事。」
+
+## 环境状态
+- 副屏: display 4 · com.google.android.gm ✓
+- 主屏焦点: com.example.composetest · 已归还 (603 ms)
+- 用户输入中: 是
+- 上一步: set_text "" → 未生效，期望 'alexw769829@gmail.com'，实际 'alexw769829@gmail.comge'，⚠ 打扰窗口 788 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "" 排除出动作空间
+
+## 当前界面
+[0] Navigate up | button
+[1] Attach file | button
+[2] Send | button
+[3] More options | button
+[4] （可滚动区域） | list
+[5] From | button
+[6] To | button
+[7] (无文字) | button | ⛔ 不可操作：上一次操作它的实际打扰窗口超预算，已在本轮排除（实测 788 ms）
+[8] alexw769829@gmail.comge | input | alexw769829@gmail.comge | ✦上一步之后新出现
+[9] Add recipient | button | ✦上一步之后新出现
+[10] Add Cc/Bcc | button
+[11] （可滚动区域） | list
+[12] Compose email | input | Compose email
+[13] Help me write | button
+
+上一步之后**消失**的条目： | input；Subject | input
+（消失多半是被浮层顶掉或页面局部替换，不是需要滚动去找）
+
+## 已执行
+1. click "Compose" → 已生效，activity → ComposeActivityGmail，⚠ 打扰窗口 700 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "Compose" 排除出动作空间
+2. click "" → 已生效，界面内容已变化
+3. set_text "" → 未生效，期望 'alexw769829@gmail.com'，实际 'alexw769829@gmail.comge'，⚠ 打扰窗口 788 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "" 排除出动作空间
+
+（用户正在输入。若本步不紧急，可以输出 wait 让路。）

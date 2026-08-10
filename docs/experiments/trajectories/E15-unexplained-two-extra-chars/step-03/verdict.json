@@ -1,0 +1,8 @@
+{
+  "result": "FAIL",
+  "predicate": "text_equals_value",
+  "detail": "期望 'alexw769829@gmail.com'，实际 'alexw769829@gmail.comge'",
+  "notes": [
+    "⚠ 打扰窗口 788 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 \"\" 排除出动作空间"
+  ]
+}

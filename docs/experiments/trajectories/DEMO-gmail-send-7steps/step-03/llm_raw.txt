@@ -1,0 +1,1 @@
+{"thought": "收件人已填好，但 Subject 输入框被联想浮层遮挡。先点击正文输入框，让联想浮层消失，之后应能看到主题输入框。", "action": "click", "target": 12, "value": null, "done": false}

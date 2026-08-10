@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "c7a7db1a98fb",
+  "args": {
+    "display": 2,
+    "locator": {
+      "strategy": "L4",
+      "target": "self",
+      "text": "Compose email",
+      "cls": "android.widget.EditText"
+    },
+    "action": "SET_TEXT",
+    "value": "发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字或者做他的事。",
+    "restore": true,
+    "verify_read": true
+  }
+}

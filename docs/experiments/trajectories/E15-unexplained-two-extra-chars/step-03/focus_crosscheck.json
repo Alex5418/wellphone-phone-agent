@@ -1,0 +1,8 @@
+{
+  "device_reported": "com.example.composetest",
+  "device_verdict": true,
+  "dumpsys": "com.example.composetest",
+  "expect_pkg": "com.example.composetest",
+  "final_restore_ok": true,
+  "confirmed_by": "device"
+}

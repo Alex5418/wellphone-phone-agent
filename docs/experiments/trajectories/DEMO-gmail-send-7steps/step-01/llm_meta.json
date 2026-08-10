@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 43,
+  "completion_tokens": 80,
+  "reasoning_head": "我们需要给 alexw769829@gmail.com 发邮件。当前界面是 Gmail 主界面（收件箱）。我们需要点击 Compose 按钮（[9]）来开始写新邮件。"
+}

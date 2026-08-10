@@ -1,0 +1,1 @@
+{"thought": "在主题输入框填入指定主题", "action": "set_text", "target": 9, "value": "副屏 agent 演示", "done": false}

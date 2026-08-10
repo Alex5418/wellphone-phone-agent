@@ -1,0 +1,58 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L1",
+    "class": "android.widget.Button",
+    "resource_id": "com.google.android.gm:id/compose_button",
+    "anchor_class": "android.widget.Button"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 670,
+    "verify_ms": 205,
+    "total_ms": 875,
+    "holder_before": "com.example.composetest",
+    "holder_after": "com.example.composetest",
+    "expect_pkg": "com.example.composetest",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 566,
+    "last_focus_call_ms": 104,
+    "descriptor": {
+      "pkg": "com.example.composetest",
+      "resource_id": null,
+      "class": "android.widget.EditText",
+      "editable": true,
+      "window_id": 116
+    }
+  },
+  "post_state": {
+    "found": false,
+    "candidates": 0,
+    "note": "no candidate for L1(id=com.google.android.gm:id/compose_button text=null cd=null cls=android.widget.Button idx=0 target=self path=null)"
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": null,
+    "activity": "android.widget.LinearLayout",
+    "window_count": 1
+  },
+  "ime": {
+    "before": true,
+    "after": true,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 30,
+    "disturb_ms": 700,
+    "restore_focus_ms": 670,
+    "restore_total_ms": 875,
+    "total_ms": 970
+  }
+}

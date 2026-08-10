@@ -3,7 +3,7 @@
 在**副屏**上自主操作 Android 应用的 Agent。验收标准只有一条：**用户当前正在进行的交互不被中断。**
 
 🎬 **[演示视频](docs/media/demo.mp4)**（约 100s，同屏三样：终端逐步打印 `disturb_ms`、主屏是用户自己的内容、
-副屏由**弱模型** `deepseek-v4-flash` 独立发出一封 Gmail）· 复现见 [`docs/DEMO.md`](docs/DEMO.md) · trajectory `runs/2026-08-07T05-52-07/`
+副屏由**弱模型** `deepseek-v4-flash` 独立发出一封 Gmail）· 复现见 [`docs/DEMO.md`](docs/DEMO.md) · trajectory [`DEMO-gmail-send-7steps/`](docs/experiments/trajectories/DEMO-gmail-send-7steps/)
 
 **为什么不是普通 GUI Agent**：a11y 在**动作分发路径**上绑定单焦点语义 —— 任何经它发出的动作都会夺走
 全系统唯一的 window 焦点，与 `performAction` 的返回值无关。于是每个动作有三重后果：改变目标状态、
@@ -38,7 +38,7 @@ scrcpy --new-display                            # 1. 建副屏，别关（虚拟
 cd android && ./gradlew :app:installDebug       # 2. 装服务 →「设置 → 无障碍」打开 Phone Agent
                                                 #    ⚠ 改过代码必须关掉再打开，否则跑旧实例
 adb forward tcp:8760 localabstract:phoneagent   # 3. 通道（设备重连后失效）
-python -m harness.cli selftest                  # 4. 离线自测 79 条，不需要设备
+python -m harness.cli selftest                  # 4. 离线自测 98 条，不需要设备
 python -m harness.cli run "在设置中关闭深色主题"   # 5. 端到端
 ```
 
@@ -76,38 +76,32 @@ python -m harness.cli run "在设置中关闭深色主题"   # 5. 端到端
 **后两类损伤指向同一个变量：agent 的动作有没有重建副屏 Activity。**
 不是"动作碰了输入框"—— 点副屏输入框 0/20、聚焦 0/20、写文字 1/20（E19）。
 
-**这一条换实现也绕不过去**：`dumpsys input_method` 里有 37 个 `ClientState`，而 `mCurClient` 只指向其中一个，
-且与 `mCurFocusedWindow` 的 client 相同 —— 谁拿到输入焦点，IMMS 就把唯一的绑定移给谁，归还 window 焦点
-撤销不了它。所以**任何共用同一输入域的方案都一样**（换 UIAutomator / root 无用）；出路是换**输入域**，
-见 [ARCHITECTURE §8](docs/ARCHITECTURE.md)。
+**换实现也绕不过去**：`dumpsys input_method` 里有 37 个 `ClientState`，`mCurClient` 只指向其中一个，
+且与 `mCurFocusedWindow` 的 client 相同 —— 谁拿到输入焦点，IMMS 就把唯一的绑定移给谁。
+所以**任何共用同一输入域的方案都一样**；出路是换**输入域**，见 [ARCHITECTURE §8](docs/ARCHITECTURE.md)。
 
 ## 状态与限度
 
 - **仅在模拟器 API 34 验证，未在真机复现**；**外部效度是最大短板** —— 结论只来自三个 app。
-- 软键盘收起**原有仪表定位不了**（`ime.dismissed` 45 步 0 次为真，采样点选错位置），
-  重做成 50ms 轮询才测出上表那行：[E18](docs/experiments/E18-IME-DISMISSAL-ATTRIBUTION.md) → [E19](docs/experiments/E19-IME-DISMISSAL.md)。
+- 软键盘收起**原有仪表定位不了**（`ime.dismissed` 45 步 0 次为真 —— 采样点选错位置），
+  重做成 50ms 轮询才测出上表那行：[E18](docs/experiments/E18-IME-DISMISSAL-ATTRIBUTION.md) → [E19](docs/experiments/E19-IME-DISMISSAL.md)
 - `DISTURB_BUDGET_MS=500` 的**立论依据已被 [E16](docs/experiments/E16-DOSE-RESPONSE.md) 证伪**（九次污染全在
   272–431ms，一次没拦住）。**值保留不动**，注释已改 —— 改护栏需要比现有更硬的证据。
-- `back` **已排除出动作空间**：它不是"在副屏不生效"，而是**必然生效在主屏上** ——
-  每步「动作 → 归还焦点」的顺序保证了下一步派发时焦点在主屏，而系统返回键作用于
-  当前有焦点的 display。实测退掉了用户的浏览器页面（`runs/2026-08-09T18-36-02/step-03`）。
-  **归还越好使它越必然打错屏。** 遗留缺口：副屏上没有通用的「返回」。
-- 打扰窗口预算**只在用户可能正在输入时才拉黑目标**（`ime_present` 三值，读不到按保守处理）。
-  无条件拉黑曾把一次真实任务逼成 `impossible`：9 步拉黑 7 个目标，而全程用户并未输入。
-- ⚠ **`--free-app` 下的 `launch` 是唯一不受护栏保护的动作**（默认关闭，不带这个 flag
-  时行为与加它之前完全一致）。它走 PC 侧 `adb am start`，不经过 `act`，**没有焦点归还** ——
-  实测启动后主屏 `mCurrentFocus=null`，正是 E7 量到「击键 120/120 落进 agent 工作区」的状态。
-  代价在 observation 与 `launch.json` 两处强制暴露，且用户可能在输入时一律拒发。
-  正确做法是把启动搬进设备侧并入 `act` 的原子流程，**未做，时间原因**。
+- `back` **已排除**：不是"在副屏不生效"，是**必然生效在主屏上** —— 每步「动作 → 归还焦点」
+  保证了下一步派发时焦点在主屏，而系统返回键作用于有焦点的 display。**归还越好使它越必然打错屏。**
+  遗留缺口：副屏没有通用的「返回」（[E20](docs/experiments/E20-GMAIL-REPLY-FAILURE.md) 同一次 run 实证）。
+- 打扰窗口预算**只在用户可能正在输入时才拉黑**（`ime_present` 三值）。无条件拉黑曾把一次真实任务
+  逼成 `impossible`：9 步拉黑 7 个目标，而全程用户并未输入。
+- ⚠ **`--free-app` 下的 `launch` 是唯一不受护栏保护的动作**（默认关闭，不带 flag 时行为不变）。
+  它走 PC 侧 `adb am start`，不经过 `act`、**没有焦点归还** —— 实测启动后主屏 `mCurrentFocus=null`，
+  正是 E7 量到「击键 120/120 落进 agent 工作区」的状态。代价在 observation 与 `launch.json`
+  两处强制暴露，用户可能在输入时一律拒发。正确做法是搬进设备侧并入 `act`，**未做，时间原因**。
 - ⚠ **一条未解释的异常**：一次真实 run 里 agent 写进副屏的文本被读回时多出 2 个字符
   （`…@gmail.com` → `…@gmail.comge`）。6 组共 50 次未能复现，也排除了自动补全与 SET_TEXT 本身。
-  **判定为未知，不是不成立** —— 原始 trajectory 在 `runs/2026-08-07T03-52-37/`。
+  **判定为未知，不是不成立** —— 原始 trajectory 在 [`E15-unexplained-two-extra-chars/`](docs/experiments/trajectories/E15-unexplained-two-extra-chars/)。
 
-## 目录
+---
 
-```
-docs/     设计（ARCHITECTURE / HARNESS-SPEC）与 B1–E19 实测记录 —— 先读 docs/README.md
-android/  AccessibilityService —— 只做感知与执行
-harness/  PC 侧 Agent —— 观测 / 压缩 / 定位 / 验证 / 编排 / 规划（见 harness/README.md）
-tools/    离线小工具与实验脚本      tests/  79 条离线测试（设备侧另有 15 条 JVM 单测）
-```
+`docs/` 设计与 B1–E20 实测记录（**先读 [docs/README.md](docs/README.md)**）· `android/` 只做感知与执行 ·
+`harness/` PC 侧 agent（[说明](harness/README.md)）· `tools/` 实验脚本 ·
+`tests/` 98 条离线测试，设备侧另有 15 条 JVM 单测

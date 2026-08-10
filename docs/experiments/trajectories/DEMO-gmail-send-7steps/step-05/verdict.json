@@ -1,0 +1,9 @@
+{
+  "result": "FAIL",
+  "predicate": "text_equals_value",
+  "detail": "期望 '发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字或者做他的事。'，实际 None",
+  "notes": [
+    "复读仍 UNKNOWN，聚焦刷新后读到 FAIL（该字段的无障碍读数慢一个动作）",
+    "post_state 与独立 probe 不一致: found: act=True probe=False"
+  ]
+}

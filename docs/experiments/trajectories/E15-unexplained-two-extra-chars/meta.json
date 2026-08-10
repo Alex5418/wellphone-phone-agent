@@ -1,0 +1,56 @@
+{
+  "task": "给 alexw769829@gmail.com 发一封邮件，主题写「副屏 agent 演示」，正文写「发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字或者做他的事。」",
+  "status": "aborted",
+  "reason": "LLM 输出连续解析失败: 输出被 max_tokens=4096 截断：这是推理模型，思考过程（4096 tokens）占满了预算，content 为空。调大 PHONEAGENT_MAX_TOKENS。",
+  "elapsed_s": 110.42,
+  "config": {
+    "provider": "openai",
+    "model": "deepseek-v4-flash",
+    "endpoint": "https://api.deepseek.com/v1/chat/completions",
+    "politeness": "normal",
+    "target_pkg": "com.android.settings",
+    "max_steps": 25,
+    "restore": "always (硬编码，无开关)"
+  },
+  "metrics": [
+    {
+      "step": 1,
+      "action": "click",
+      "target": 9,
+      "verdict": "PASS",
+      "restore_ok": true,
+      "restore_focus_ms": 670,
+      "restore_total_ms": 875,
+      "disturb_ms": 700,
+      "action_ms": 30,
+      "total_ms": 970,
+      "llm_ms": 2253
+    },
+    {
+      "step": 2,
+      "action": "click",
+      "target": 7,
+      "verdict": "PASS",
+      "restore_ok": true,
+      "restore_focus_ms": 58,
+      "restore_total_ms": 78,
+      "disturb_ms": 71,
+      "action_ms": 13,
+      "total_ms": 103,
+      "llm_ms": 12258
+    },
+    {
+      "step": 3,
+      "action": "set_text",
+      "target": 7,
+      "verdict": "FAIL",
+      "restore_ok": true,
+      "restore_focus_ms": 603,
+      "restore_total_ms": 745,
+      "disturb_ms": 788,
+      "action_ms": 185,
+      "total_ms": 1344,
+      "llm_ms": 14469
+    }
+  ]
+}

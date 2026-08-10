@@ -1,0 +1,23 @@
+## 任务
+给 alexw769829@gmail.com 发一封邮件，主题写「副屏 agent 演示」，正文写「发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字或者做他的事。」
+
+## 环境状态
+- 副屏: display 4 · com.google.android.gm ✓
+- 主屏焦点: com.example.composetest
+- 用户输入中: 是
+
+## 当前界面
+[0] （可滚动区域） | list
+[1] Search in mail | input | (空)
+[2] Open navigation drawer | button
+[3] Signed in as Alex alexw769829@gmail.com
+Account and settings. | button
+[4] （可滚动区域：, , , me, , 来自副屏 agent 的测试邮件, 第二次写入：验证聚焦后 SET_TEXT 是否会被无障碍树立刻反映。, ,  on Aug 6…） | list
+[5] Dismiss | button
+[6] , , , me, , flash 补观测层后重跑, 观测层加上变化标记之后，弱模型能否独立完成。, ,  on Aug 6 | button
+[7] Unread, , , me, , 副屏 agent 正式演示, 发送这封邮件时，用户正在主屏用中文输入法连续打字。, ,  on Aug 6 | button
+[8] , , , me, , 副屏 agent 彩排, 这封邮件由副屏上的 agent 独立完成撰写与发送。, ,  on Aug 6 | button
+[9] Compose | button
+[10] Meet | button
+
+（用户正在输入。若本步不紧急，可以输出 wait 让路。）

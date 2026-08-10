@@ -1,0 +1,17 @@
+{
+  "cmd": "act",
+  "req_id": "bc16807f1987",
+  "args": {
+    "display": 2,
+    "locator": {
+      "strategy": "L1",
+      "target": "self",
+      "resource_id": "com.google.android.gm:id/subject",
+      "cls": "android.widget.EditText"
+    },
+    "action": "SET_TEXT",
+    "value": "副屏 agent 演示",
+    "restore": true,
+    "verify_read": true
+  }
+}

@@ -1,0 +1,6 @@
+{"step": 1, "action": "click", "target": 9, "verdict": "PASS", "restore_ok": true, "restore_focus_ms": 854, "restore_total_ms": 854, "disturb_ms": 871, "action_ms": 17, "total_ms": 876, "llm_ms": 1529}
+{"step": 2, "action": "set_text", "target": 7, "verdict": "PASS", "restore_ok": true, "restore_focus_ms": 43, "restore_total_ms": 63, "disturb_ms": 51, "action_ms": 8, "total_ms": 151, "llm_ms": 9042}
+{"step": 3, "action": "click", "target": 12, "verdict": "PASS", "restore_ok": true, "restore_focus_ms": 17, "restore_total_ms": 20, "disturb_ms": 39, "action_ms": 22, "total_ms": 191, "llm_ms": 30890}
+{"step": 4, "action": "set_text", "target": 9, "verdict": "PASS", "restore_ok": true, "restore_focus_ms": 316, "restore_total_ms": 319, "disturb_ms": 331, "action_ms": 15, "total_ms": 344, "llm_ms": 18746}
+{"step": 5, "action": "set_text", "target": 12, "verdict": "FAIL", "restore_ok": true, "restore_focus_ms": 435, "restore_total_ms": 439, "disturb_ms": 441, "action_ms": 6, "total_ms": 458, "llm_ms": 6384}
+{"step": 6, "action": "click", "target": 2, "verdict": "PASS", "restore_ok": true, "restore_focus_ms": 2239, "restore_total_ms": 2267, "disturb_ms": 2322, "action_ms": 83, "total_ms": 2352, "llm_ms": 3619}

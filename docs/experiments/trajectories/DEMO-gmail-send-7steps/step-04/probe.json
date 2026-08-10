@@ -1,0 +1,18 @@
+{
+  "refreshed": true,
+  "found": true,
+  "candidates": 1,
+  "note": "ok",
+  "class": "android.widget.EditText",
+  "resource_id": "com.google.android.gm:id/subject",
+  "text": "副屏 agent 演示",
+  "raw_text": "副屏 agent 演示",
+  "content_desc": null,
+  "checkable": false,
+  "checked": false,
+  "enabled": true,
+  "focused": false,
+  "selected": false,
+  "sel_start": 11,
+  "sel_end": 11
+}

@@ -1,0 +1,32 @@
+{
+  "cmd": "act",
+  "req_id": "aac40f9e6324",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L6",
+      "target": "self",
+      "cls": "android.widget.EditText",
+      "path": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    "action": "SET_TEXT",
+    "value": "alexw769829@gmail.com",
+    "restore": true,
+    "verify_read": true
+  }
+}

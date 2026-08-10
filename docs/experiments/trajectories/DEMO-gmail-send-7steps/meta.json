@@ -1,0 +1,95 @@
+{
+  "task": "给 alexw769829@gmail.com 发一封邮件，主题写「副屏 agent 演示」，正文写「发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字或者做他的事。」",
+  "status": "done",
+  "reason": "收件箱中已出现主题为「副屏 agent 演示」、正文预览匹配「发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字或者做他的事。」的邮件，说明邮件已成功发送，任务完成。",
+  "elapsed_s": 89.06,
+  "config": {
+    "provider": "openai",
+    "model": "deepseek-v4-flash",
+    "endpoint": "https://api.deepseek.com/v1/chat/completions",
+    "politeness": "normal",
+    "target_pkg": "com.android.settings",
+    "max_steps": 25,
+    "restore": "always (硬编码，无开关)"
+  },
+  "metrics": [
+    {
+      "step": 1,
+      "action": "click",
+      "target": 9,
+      "verdict": "PASS",
+      "restore_ok": true,
+      "restore_focus_ms": 854,
+      "restore_total_ms": 854,
+      "disturb_ms": 871,
+      "action_ms": 17,
+      "total_ms": 876,
+      "llm_ms": 1529
+    },
+    {
+      "step": 2,
+      "action": "set_text",
+      "target": 7,
+      "verdict": "PASS",
+      "restore_ok": true,
+      "restore_focus_ms": 43,
+      "restore_total_ms": 63,
+      "disturb_ms": 51,
+      "action_ms": 8,
+      "total_ms": 151,
+      "llm_ms": 9042
+    },
+    {
+      "step": 3,
+      "action": "click",
+      "target": 12,
+      "verdict": "PASS",
+      "restore_ok": true,
+      "restore_focus_ms": 17,
+      "restore_total_ms": 20,
+      "disturb_ms": 39,
+      "action_ms": 22,
+      "total_ms": 191,
+      "llm_ms": 30890
+    },
+    {
+      "step": 4,
+      "action": "set_text",
+      "target": 9,
+      "verdict": "PASS",
+      "restore_ok": true,
+      "restore_focus_ms": 316,
+      "restore_total_ms": 319,
+      "disturb_ms": 331,
+      "action_ms": 15,
+      "total_ms": 344,
+      "llm_ms": 18746
+    },
+    {
+      "step": 5,
+      "action": "set_text",
+      "target": 12,
+      "verdict": "FAIL",
+      "restore_ok": true,
+      "restore_focus_ms": 435,
+      "restore_total_ms": 439,
+      "disturb_ms": 441,
+      "action_ms": 6,
+      "total_ms": 458,
+      "llm_ms": 6384
+    },
+    {
+      "step": 6,
+      "action": "click",
+      "target": 2,
+      "verdict": "PASS",
+      "restore_ok": true,
+      "restore_focus_ms": 2239,
+      "restore_total_ms": 2267,
+      "disturb_ms": 2322,
+      "action_ms": 83,
+      "total_ms": 2352,
+      "llm_ms": 3619
+    }
+  ]
+}

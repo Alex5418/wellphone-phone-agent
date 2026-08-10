@@ -1,0 +1,4 @@
+{
+  "error": "输出被 max_tokens=4096 截断：这是推理模型，思考过程（4096 tokens）占满了预算，content 为空。调大 PHONEAGENT_MAX_TOKENS。",
+  "attempts": 0
+}

@@ -1,0 +1,58 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L1",
+    "class": "android.widget.Button",
+    "resource_id": "com.google.android.gm:id/compose_button",
+    "anchor_class": "android.widget.Button"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": null,
+    "ok_unknown_reason": "display 0 上没有窗口自报 focused/active，a11y 侧无法判定持有者",
+    "retried": false,
+    "focus_ms": 854,
+    "verify_ms": 0,
+    "total_ms": 854,
+    "holder_before": null,
+    "holder_after": null,
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 796,
+    "last_focus_call_ms": 58,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": null,
+      "class": "android.widget.FrameLayout",
+      "editable": false,
+      "window_id": 75
+    }
+  },
+  "post_state": {
+    "found": false,
+    "candidates": 0,
+    "note": "no candidate for L1(id=com.google.android.gm:id/compose_button text=null cd=null cls=android.widget.Button idx=0 target=self path=null)"
+  },
+  "window_after": {
+    "display": 2,
+    "pkg": null,
+    "activity": "android.widget.LinearLayout",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 17,
+    "disturb_ms": 871,
+    "restore_focus_ms": 854,
+    "restore_total_ms": 854,
+    "total_ms": 876
+  }
+}

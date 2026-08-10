@@ -1,0 +1,1 @@
+{"thought": "先点击收件人输入框以聚焦，方便下一步填写地址", "action": "click", "target": 7, "value": null, "done": false}

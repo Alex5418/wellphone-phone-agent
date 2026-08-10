@@ -1,0 +1,1 @@
+{"thought": "需要先填写收件人地址，目标是 alexw769829@gmail.com，收件人输入框是 [7]", "action": "set_text", "target": 7, "value": "alexw769829@gmail.com", "done": false}

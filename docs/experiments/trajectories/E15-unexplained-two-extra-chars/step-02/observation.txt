@@ -1,0 +1,28 @@
+## 任务
+给 alexw769829@gmail.com 发一封邮件，主题写「副屏 agent 演示」，正文写「发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字或者做他的事。」
+
+## 环境状态
+- 副屏: display 4 · com.google.android.gm ✓
+- 主屏焦点: com.example.composetest · 已归还 (670 ms)
+- 用户输入中: 是
+- 上一步: click "Compose" → 已生效，activity → ComposeActivityGmail，⚠ 打扰窗口 700 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "Compose" 排除出动作空间
+
+## 当前界面
+[0] Navigate up | button
+[1] Attach file | button
+[2] Send | button
+[3] More options | button
+[4] From | button
+[5] To | button
+[6] (无文字) | button
+[7] (无文字) | input | (空)
+[8] Add Cc/Bcc | button
+[9] Subject | input | (空)
+[10] （可滚动区域） | list
+[11] Compose email | input | Compose email
+[12] (无文字) | button
+
+## 已执行
+1. click "Compose" → 已生效，activity → ComposeActivityGmail，⚠ 打扰窗口 700 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "Compose" 排除出动作空间
+
+（用户正在输入。若本步不紧急，可以输出 wait 让路。）

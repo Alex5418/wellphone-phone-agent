@@ -1,0 +1,71 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L4",
+    "class": "android.widget.EditText",
+    "resource_id": null,
+    "anchor_class": "android.widget.EditText"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 17,
+    "verify_ms": 3,
+    "total_ms": 20,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": false,
+    "node_refound": true,
+    "last_resolve_ms": 13,
+    "last_focus_call_ms": 4,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": "com.android.chrome:id/url_bar",
+      "class": "android.widget.EditText",
+      "editable": true,
+      "window_id": 75
+    }
+  },
+  "post_state": {
+    "refreshed": true,
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "class": "android.widget.EditText",
+    "resource_id": null,
+    "text": "Compose email",
+    "raw_text": "Compose email",
+    "content_desc": null,
+    "checkable": false,
+    "checked": false,
+    "enabled": true,
+    "focused": true,
+    "selected": false,
+    "sel_start": 13,
+    "sel_end": 13
+  },
+  "window_after": {
+    "display": 2,
+    "pkg": "com.google.android.gm",
+    "activity": "android.widget.FrameLayout",
+    "window_count": 1
+  },
+  "ime": {
+    "before": true,
+    "after": true,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 22,
+    "disturb_ms": 39,
+    "restore_focus_ms": 17,
+    "restore_total_ms": 20,
+    "total_ms": 191
+  }
+}

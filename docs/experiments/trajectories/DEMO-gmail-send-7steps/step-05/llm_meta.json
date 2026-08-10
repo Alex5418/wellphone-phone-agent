@@ -1,0 +1,6 @@
+{
+  "finish_reason": "stop",
+  "reasoning_tokens": 499,
+  "completion_tokens": 562,
+  "reasoning_head": "We need respond JSON. Need determine next action. Task: send email to alexw769829@gmail.com, subject \"副屏 agent 演示\", body \"发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字或者做他的事。\"\n\nCurrent screen compose. We have To field [8] value alexw769829@gmail.com, Subject [10] \"副屏 agent 演示\", Compose email input [12] empty. Need set body to specified text. Then send [2]. Need perhaps check keyboard? Current input maybe Compose e"
+}

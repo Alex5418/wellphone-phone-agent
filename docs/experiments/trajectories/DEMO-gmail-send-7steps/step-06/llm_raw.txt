@@ -1,0 +1,1 @@
+{"thought": "收件人、主题和正文均已填写，点击发送完成邮件。", "action": "click", "target": 2, "value": null, "done": false}

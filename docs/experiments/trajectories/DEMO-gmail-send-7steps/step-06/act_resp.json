@@ -1,0 +1,58 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L1",
+    "class": "android.widget.Button",
+    "resource_id": "com.google.android.gm:id/send",
+    "anchor_class": "android.widget.Button"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 2239,
+    "verify_ms": 28,
+    "total_ms": 2267,
+    "holder_before": "com.android.chrome",
+    "holder_after": "com.android.chrome",
+    "expect_pkg": "com.android.chrome",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 2221,
+    "last_focus_call_ms": 18,
+    "descriptor": {
+      "pkg": "com.android.chrome",
+      "resource_id": null,
+      "class": "android.widget.FrameLayout",
+      "editable": false,
+      "window_id": 75
+    }
+  },
+  "post_state": {
+    "found": false,
+    "candidates": 0,
+    "note": "no candidate for L1(id=com.google.android.gm:id/send text=null cd=null cls=android.widget.Button idx=0 target=self path=null)"
+  },
+  "window_after": {
+    "display": 2,
+    "pkg": null,
+    "activity": "com.google.android.gm.ComposeActivityGmail",
+    "window_count": 1
+  },
+  "ime": {
+    "before": false,
+    "after": false,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 83,
+    "disturb_ms": 2322,
+    "restore_focus_ms": 2239,
+    "restore_total_ms": 2267,
+    "total_ms": 2352
+  }
+}

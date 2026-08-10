@@ -1,0 +1,6 @@
+{
+  "result": "PASS",
+  "predicate": "text_equals_value",
+  "detail": "text = '副屏 agent 演示'",
+  "notes": []
+}

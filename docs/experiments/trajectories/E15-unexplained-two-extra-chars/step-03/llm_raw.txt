@@ -1,0 +1,1 @@
+{"thought": "先填写收件人地址，在空的收件人输入框中输入目标邮箱。", "action": "set_text", "target": 7, "value": "alexw769829@gmail.com", "done": false}

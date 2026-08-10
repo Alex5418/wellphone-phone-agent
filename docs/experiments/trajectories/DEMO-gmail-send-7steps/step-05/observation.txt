@@ -1,0 +1,33 @@
+## 任务
+给 alexw769829@gmail.com 发一封邮件，主题写「副屏 agent 演示」，正文写「发送这封邮件的整个过程中，用户正在主屏上用中文输入法打字或者做他的事。」
+
+## 环境状态
+- 副屏: display 2 · com.google.android.gm ✓
+- 主屏焦点: com.android.chrome · 已归还 (316 ms)
+- 用户输入中: 否
+- 上一步: set_text "Subject" → 已生效，text = '副屏 agent 演示'
+
+## 当前界面
+[0] Navigate up | button
+[1] Attach file | button
+[2] Send | button
+[3] More options | button
+[4] （可滚动区域） | list
+[5] From | button
+[6] To | button
+[7] (无文字) | button
+[8] alexw769829@gmail.com | input | alexw769829@gmail.com
+[9] Add Cc/Bcc | button
+[10] 副屏 agent 演示 | input | 副屏 agent 演示 | ✦上一步之后新出现
+[11] （可滚动区域） | list
+[12] Compose email | input | Compose email
+[13] Help me write | button
+
+上一步之后**消失**的条目：Subject | input
+（消失多半是被浮层顶掉或页面局部替换，不是需要滚动去找）
+
+## 已执行
+1. click "Compose" → 已生效，activity → FrameLayout，⚠ 打扰窗口 871 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 "Compose" 排除出动作空间
+2. set_text "" → 已生效，text = 'alexw769829@gmail.com'
+3. click "Compose email" → 已生效，界面内容已变化
+4. set_text "Subject" → 已生效，text = '副屏 agent 演示'

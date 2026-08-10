@@ -1,0 +1,3 @@
+{"step": 1, "action": "click", "target": 9, "verdict": "PASS", "restore_ok": true, "restore_focus_ms": 670, "restore_total_ms": 875, "disturb_ms": 700, "action_ms": 30, "total_ms": 970, "llm_ms": 2253}
+{"step": 2, "action": "click", "target": 7, "verdict": "PASS", "restore_ok": true, "restore_focus_ms": 58, "restore_total_ms": 78, "disturb_ms": 71, "action_ms": 13, "total_ms": 103, "llm_ms": 12258}
+{"step": 3, "action": "set_text", "target": 7, "verdict": "FAIL", "restore_ok": true, "restore_focus_ms": 603, "restore_total_ms": 745, "disturb_ms": 788, "action_ms": 185, "total_ms": 1344, "llm_ms": 14469}

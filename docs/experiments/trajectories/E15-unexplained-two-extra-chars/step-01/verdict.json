@@ -1,0 +1,8 @@
+{
+  "result": "PASS",
+  "predicate": "activity_or_tree_changes",
+  "detail": "activity → ComposeActivityGmail",
+  "notes": [
+    "⚠ 打扰窗口 700 ms 超出预算 500 ms（用户击键在这段时间里会落到副屏）—— 已把 \"Compose\" 排除出动作空间"
+  ]
+}

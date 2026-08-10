@@ -1,0 +1,71 @@
+{
+  "resolved": {
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "strategy": "L6",
+    "class": "android.widget.EditText",
+    "resource_id": null,
+    "anchor_class": "android.widget.EditText"
+  },
+  "action_ok": true,
+  "restore": {
+    "attempted": true,
+    "ok": true,
+    "ok_unknown_reason": null,
+    "retried": false,
+    "focus_ms": 58,
+    "verify_ms": 20,
+    "total_ms": 78,
+    "holder_before": "com.example.composetest",
+    "holder_after": "com.example.composetest",
+    "expect_pkg": "com.example.composetest",
+    "focus_action_result": true,
+    "node_refound": true,
+    "last_resolve_ms": 53,
+    "last_focus_call_ms": 5,
+    "descriptor": {
+      "pkg": "com.example.composetest",
+      "resource_id": null,
+      "class": "android.widget.EditText",
+      "editable": true,
+      "window_id": 116
+    }
+  },
+  "post_state": {
+    "refreshed": true,
+    "found": true,
+    "candidates": 1,
+    "note": "ok",
+    "class": "android.widget.EditText",
+    "resource_id": null,
+    "text": null,
+    "raw_text": null,
+    "content_desc": null,
+    "checkable": false,
+    "checked": false,
+    "enabled": true,
+    "focused": true,
+    "selected": false,
+    "sel_start": -1,
+    "sel_end": -1
+  },
+  "window_after": {
+    "display": 4,
+    "pkg": "com.google.android.gm",
+    "activity": "android.widget.FrameLayout",
+    "window_count": 1
+  },
+  "ime": {
+    "before": true,
+    "after": true,
+    "dismissed": false
+  },
+  "timing": {
+    "action_ms": 13,
+    "disturb_ms": 71,
+    "restore_focus_ms": 58,
+    "restore_total_ms": 78,
+    "total_ms": 103
+  }
+}

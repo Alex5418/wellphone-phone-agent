@@ -1,0 +1,32 @@
+{
+  "cmd": "act",
+  "req_id": "630dcf13207f",
+  "args": {
+    "display": 4,
+    "locator": {
+      "strategy": "L6",
+      "target": "self",
+      "cls": "android.widget.EditText",
+      "path": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    "action": "CLICK",
+    "value": null,
+    "restore": true,
+    "verify_read": true
+  }
+}

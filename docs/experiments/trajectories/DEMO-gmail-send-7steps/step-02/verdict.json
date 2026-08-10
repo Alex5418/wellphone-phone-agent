@@ -1,0 +1,6 @@
+{
+  "result": "PASS",
+  "predicate": "text_equals_value",
+  "detail": "text = 'alexw769829@gmail.com'",
+  "notes": []
+}

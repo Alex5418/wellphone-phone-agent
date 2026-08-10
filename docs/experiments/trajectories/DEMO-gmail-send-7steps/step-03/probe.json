@@ -1,0 +1,18 @@
+{
+  "refreshed": true,
+  "found": true,
+  "candidates": 1,
+  "note": "ok",
+  "class": "android.widget.EditText",
+  "resource_id": null,
+  "text": "Compose email",
+  "raw_text": "Compose email",
+  "content_desc": null,
+  "checkable": false,
+  "checked": false,
+  "enabled": true,
+  "focused": true,
+  "selected": false,
+  "sel_start": 13,
+  "sel_end": 13
+}
