@@ -46,6 +46,8 @@ docs/
 | [E16-DOSE-RESPONSE.md](experiments/E16-DOSE-RESPONSE.md) | 污染率随打扰窗口怎么变 | **九次污染全在 272–431ms，`DISTURB_BUDGET_MS=500` 一次没拦住**。<200ms 时 0/67，300–500ms 时 47%。该参数只捕捉了三因素里最弱的一个（另两个：用户在干什么、动作有没有重建副屏编辑器） |
 | [E17-LOCAL-MODEL-REPLAY.md](experiments/E17-LOCAL-MODEL-REPLAY.md) | 换本地小模型，哪一层先塌 | **护栏层没塌**：30/30 可解析、30/30 从不选中 ⛔ 拉黑的目标。塌的是「从变化标记做跨轮推断」——E13 加的 `✦新出现`/`消失` 标记两个本地模型 6/6 全无视，说明**观测层的改进有能力门槛**。26B 并不比 9B 强，参数量不是分界线 |
 | [E18-IME-DISMISSAL-ATTRIBUTION.md](experiments/E18-IME-DISMISSAL-ATTRIBUTION.md) | 软键盘收起是哪个动作干的 | **查不出来，而且知道为什么**。仪表 45 步 `dismissed` 0 次，而收起确实发生过 —— 它只在单次 `act` 内采两点，四次可定位的消失**没有一次落在那个窗口里**（含一次「前一步根本没有动作」和一次「消失后自行恢复」）。采样间隔＝LLM 延迟（1.5–149 s），该尺度下无法归因。附能定这件事的实验设计（50ms 轮询 + 单动作 + 阴性对照） |
+| [E19-IME-DISMISSAL.md](experiments/E19-IME-DISMISSAL.md) | 键盘到底是被哪一类动作抢走的（E18 定不了的那个） | **是「动作有没有重建副屏 Activity」**。六组各 n=20 加阴性对照：control 0/20、点输入框 0/20、聚焦 0/20、点按钮 0/20、写文字 1/20，而**重建组 10/20、复现 3/10**，消失延迟全在动作后 44–55 ms。同时排除了最直觉的解释 —— 伤害不来自「碰了输入框」。与 E15 对另一种损伤模式隔离出的是**同一个变量** |
+| [E20-GMAIL-REPLY-FAILURE.md](experiments/E20-GMAIL-REPLY-FAILURE.md) | 一次真实任务为什么失败 | **不是护栏太狠，是整行被行内头像挤掉了**。点整行=打开邮件、点头像=勾选，去重规则「留最内层」把整行判没了，agent 20 步没打开过那封邮件。三次跑的对照把两个原因分开（改预算仍失败 → 改压缩后 4 步完成）。附带暴露：`activity_or_tree_changes` 只证明「变了」，不证明「变对了」 |
 
 完整 trajectory 在 [`experiments/trajectories/`](experiments/trajectories/) —— 一次完整的
 observation / LLM 输出 / act 请求响应 / 独立 probe / verdict，逐步落盘。
