@@ -247,6 +247,134 @@ class TestLoop(unittest.TestCase):
         self.assertEqual(res.status, "done")
         self.assertEqual(tp.acts, [])
 
+    # ---------------- F1 · agent 自己启动 app ----------------
+
+    def test_default_free_app_keeps_target_app_anomaly_fatal(self):
+        """free_app 默认 False：副屏上不是目标 app 仍然致命，行为与改动前一致。"""
+        tp = FakeTransport(secondary=6)
+        tp.pkg = "com.android.chrome"
+        env = self_check(tp.state(), "com.android.settings", None)
+        self.assertTrue(env.fatal)
+        self.assertIn("target_app_not_on_secondary", env.anomalies)
+
+    def test_free_app_makes_target_app_anomaly_non_fatal(self):
+        """free_app=True：同样的状态只是普通异常，loop 继续跑而不是中止。"""
+        tp = FakeTransport(secondary=6)
+        tp.pkg = "com.android.chrome"
+        env = self_check(tp.state(), "com.android.settings", None, free_app=True)
+        self.assertFalse(env.fatal)
+        self.assertIn("target_app_not_on_secondary", env.anomalies)
+
+        import harness.loop as loopmod
+        orig = loopmod.adbutil.launchable_apps
+        loopmod.adbutil.launchable_apps = lambda: []     # 测试不许碰真实 adb
+        try:
+            planner = RawPlanner([Plan("", "finish", None, None, True)])
+            res = Loop(tp, planner, free_app=True, trace=None, cross_check=False,
+                       recheck_ms=0).run("t")
+        finally:
+            loopmod.adbutil.launchable_apps = orig
+        self.assertEqual(res.status, "done")
+
+    def test_launch_refused_when_free_app_off(self):
+        """free_app 默认关：LLM 输出 launch 被拒，adbutil.launch_app 一次都不许调。"""
+        import harness.loop as loopmod
+        calls = {"n": 0}
+        orig = loopmod.adbutil.launch_app
+        def counting(pkg, display):
+            calls["n"] += 1
+            return True
+        loopmod.adbutil.launch_app = counting
+        try:
+            tp = FakeTransport()
+            planner = RawPlanner([Plan("", "launch", 0, None, False),
+                                  Plan("", "finish", None, None, True)])
+            res = Loop(tp, planner, trace=None, cross_check=False, recheck_ms=0).run("启动 app")
+        finally:
+            loopmod.adbutil.launch_app = orig
+        self.assertEqual(calls["n"], 0)
+        self.assertIn("未启用 --free-app", res.steps[0].note)
+        self.assertEqual(res.status, "done")
+
+    def test_launch_refused_while_user_is_typing(self):
+        """free_app=True 但 ime_present=True：launch 被拒，一次都不许调 adb。"""
+        import harness.loop as loopmod
+        calls = {"n": 0}
+        orig_app, orig_apps = loopmod.adbutil.launch_app, loopmod.adbutil.launchable_apps
+        def counting(pkg, display):
+            calls["n"] += 1
+            return True
+        loopmod.adbutil.launch_app = counting
+        loopmod.adbutil.launchable_apps = lambda: ["com.google.android.calendar"]
+        try:
+            tp = FakeTransport()
+            tp.ime_present = True
+            planner = RawPlanner([Plan("", "launch", 0, None, False),
+                                  Plan("", "finish", None, None, True)])
+            res = Loop(tp, planner, free_app=True, trace=None, cross_check=False,
+                       recheck_ms=0).run("启动 app")
+        finally:
+            loopmod.adbutil.launch_app = orig_app
+            loopmod.adbutil.launchable_apps = orig_apps
+        self.assertEqual(calls["n"], 0)
+        self.assertIn("⛔ 拒绝执行 launch", res.steps[0].note)
+        self.assertEqual(res.status, "done")
+
+    def test_app_sids_follow_ui_items(self):
+        """app 条目的 sid 接在界面条目最大 sid 之后，不重号。"""
+        tp = FakeTransport()
+        items = compress(build_tree(tp.observe(tp.secondary)))
+        env = self_check(tp.state(), "com.android.settings", None)
+        obs = build_observation("t", env, items, [],
+                                apps=["com.android.settings", "com.google.android.calendar"])
+        max_ui = items[-1].sid
+        self.assertIn(f"## 可启动的应用（副屏当前：com.android.settings）", obs)
+        self.assertIn(f"[{max_ui + 1}] com.android.settings", obs)
+        self.assertIn(f"[{max_ui + 2}] com.google.android.calendar", obs)
+        self.assertNotIn(f"[{max_ui + 1}] com.android.settings |", obs)   # app 条目没有 kind 后缀
+        self.assertIn("不经过焦点归还护栏", obs)
+
+    def test_successful_launch_surfaces_unguarded_warning(self):
+        """成功 launch 后：历史条目、observation、launch.json 三处都暴露「未经护栏」。"""
+        import harness.loop as loopmod
+        calls = []
+        orig_app, orig_apps = loopmod.adbutil.launch_app, loopmod.adbutil.launchable_apps
+        loopmod.adbutil.launchable_apps = lambda: ["com.google.android.calendar"]
+        def fake_launch(pkg, display):
+            calls.append((pkg, display))
+            return True
+        loopmod.adbutil.launch_app = fake_launch
+        try:
+            tp = FakeTransport()
+            items = compress(build_tree(tp.observe(tp.secondary)))
+            app_sid = items[-1].sid + 1
+            with tempfile.TemporaryDirectory() as d:
+                trace = Trace("启动日历", root=d)
+                planner = RawPlanner([Plan("", "launch", app_sid, None, False),
+                                      Plan("", "finish", None, None, True)])
+                res = Loop(tp, planner, free_app=True, trace=trace, cross_check=False,
+                           recheck_ms=0).run("启动日历")
+                self.assertEqual(res.status, "done")
+                step = res.steps[0]
+                self.assertIn("未经护栏", step.summarize())
+                self.assertEqual(calls, [("com.google.android.calendar", tp.secondary)])
+
+                env = self_check(tp.state(), "com.android.settings", None, free_app=True)
+                obs = build_observation("启动日历", env, items, res.steps[:1])
+                self.assertIn("未经护栏", obs)
+
+                with open(os.path.join(trace.dir, "step-01", "launch.json"),
+                          encoding="utf-8") as f:
+                    launch = json.load(f)
+                self.assertEqual(launch["pkg"], "com.google.android.calendar")
+                self.assertEqual(launch["display"], tp.secondary)
+                self.assertTrue(launch["ok"])
+                self.assertIsNone(launch["restore"])
+                self.assertFalse(launch["guarded"])
+        finally:
+            loopmod.adbutil.launch_app = orig_app
+            loopmod.adbutil.launchable_apps = orig_apps
+
 
 class TestObservation(unittest.TestCase):
     def test_reports_deviation_not_normality(self):

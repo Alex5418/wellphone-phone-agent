@@ -71,3 +71,50 @@ def focus_holder_pkg(display: int = 0) -> str | None:
     if not win:
         return None
     return win.split("/", 1)[0]
+
+
+# ---------------------------------------------------------------- 启动应用（F1）
+
+# ⚠ 这三条函数走 PC 侧 adb，**不经过 act，没有焦点归还**。调用方必须把这一点
+# 上报给用户（observation 的「已执行」与 trajectory 的 launch.json 各暴露一次）。
+
+
+def launchable_apps() -> list[str]:
+    """可启动应用的包名，去重升序。读不到返回 []（不是 None，调用方按空列表处理）。"""
+    out = _sh("cmd", "package", "query-activities",
+              "-a", "android.intent.action.MAIN",
+              "-c", "android.intent.category.LAUNCHER")
+    if not out:
+        return []
+    pkgs = set()
+    for m in re.finditer(r"packageName=([\w.]+)", out):
+        pkgs.add(m.group(1))
+    return sorted(pkgs)
+
+
+def resolve_launch_component(pkg: str) -> str | None:
+    """包名 → 'pkg/activity'。解析不到返回 None。"""
+    out = _sh("cmd", "package", "resolve-activity", "--brief", pkg)
+    if not out:
+        return None
+    lines = [ln.strip() for ln in out.splitlines() if ln.strip()]
+    if not lines:
+        return None
+    last = lines[-1]
+    if "/" not in last:
+        return None
+    return last
+
+
+def launch_app(pkg: str, display: int) -> bool:
+    """在 display 上启动 pkg。成功返回 True。
+
+    ⚠ 走 adb，**不经过 act，没有焦点归还**。调用方必须把这一点上报给用户。
+    """
+    comp = resolve_launch_component(pkg)
+    if not comp:
+        return False
+    out = _sh("am", "start", "--display", str(display), "-n", comp)
+    if not out:
+        return False
+    return "Error" not in out

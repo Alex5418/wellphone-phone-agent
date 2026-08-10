@@ -77,6 +77,20 @@ def is_toggle_like(item: Item) -> bool:
     return any(p.search(rid) for p in _TOGGLE_ID)
 
 
+def launch_block_reason(ime_present: bool | None) -> str | None:
+    """用户可能正在输入时，拒绝 launch。
+
+    依据：E19 —— 启动 app 是最彻底的一次 Activity 重建（重建组 13/30 抢走主屏键盘），
+    而本动作又恰好没有焦点归还兜底。两者叠加 = 主动触发已知缺陷。
+    三值：True 拒；None（读不到）**也拒**，保守处理；False 放行。
+    """
+    if ime_present:
+        return "用户正在输入：launch 不经过焦点归还，会抢走主屏键盘"
+    if ime_present is None:
+        return "读不到主屏输入状态，按保守处理拒绝 launch"
+    return None
+
+
 class ActionPolicy:
     """本轮 run 的动作空间策略。measured 名单随 run 累积，不跨 run 保留。"""
 

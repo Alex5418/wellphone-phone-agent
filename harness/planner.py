@@ -27,7 +27,7 @@ from .models import Item, Plan
 # holder_before=com.android.chrome，副屏 window_after 无变化，用户的浏览器被退了一页。
 # 它是动作空间里唯一会真正改动用户状态的动作，因此排除。设备侧仍保留该命令（手工调试用）。
 ACTIONS = ("click", "long_click", "set_text", "scroll_forward", "scroll_backward",
-           "wait", "finish")
+           "wait", "launch", "finish")
 
 SYSTEM_PROMPT = """你在通过一个受控 harness 操作一台 Android 设备的副屏。
 
@@ -53,8 +53,13 @@ SYSTEM_PROMPT = """你在通过一个受控 harness 操作一台 Android 设备�
 结束时：{"thought": "原因", "action": "finish", "done": true, "outcome": "achieved"}
         outcome 取 "achieved"（目标达成）或 "impossible"（做不成）
 
-action 取值：click / long_click / set_text / scroll_forward / scroll_backward / wait / finish
+action 取值：click / long_click / set_text / scroll_forward / scroll_backward / wait / launch / finish
 set_text 必须带 value。其余 value 为 null。
+
+- 「可启动的应用」那一节列出的是**副屏之外**可以打开的 app（只有包名）。
+  用 {"action": "launch", "target": <短 ID>} 启动其中一个。
+  ⚠ launch 走 adb、**没有 act 的焦点保护兜底**：用户正在输入时它会被 harness 拒绝；
+  不要用它启动当前已经在副屏上的 app。
 
 **没有「返回」动作。** 系统级返回键作用在用户自己那块屏上，会退掉用户的页面，
 因此被排除出动作空间 —— 不要尝试输出 back，也不要指望有别的方式返回。
@@ -109,7 +114,7 @@ def parse_plan(raw: str, items: list[Item]) -> Plan:
     else:
         if not isinstance(target, int):
             raise PlannerError("target 必须是整数短 ID")
-        if not any(i.sid == target for i in items):
+        if action != "launch" and not any(i.sid == target for i in items):
             # 带上有效范围：这条错误会被回灌给 LLM 让它重来一次，
             # 只说"不存在"它下一轮还是在猜
             rng = f"0–{items[-1].sid}" if items else "本轮没有可用条目"
