@@ -14,8 +14,8 @@ import time
 from . import adbutil, config
 from .compress import compress
 from .models import ActionResult, Plan, RunResult, Step, Tree
-from .observe import build_observation, self_check
-from .policy import ActionPolicy
+from .observe import app_items, build_observation, self_check
+from .policy import ActionPolicy, launch_block_reason
 from .planner import Planner, PlannerError
 from .trace import Trace
 from .transport import Transport, TransportError
@@ -34,10 +34,12 @@ class Loop:
                  cross_check: bool = True,
                  recheck_ms: int = config.RECHECK_DELAY_MS,
                  disturb_budget_ms: int = config.DISTURB_BUDGET_MS,
+                 free_app: bool = False,
                  on_event=None):
         self.tp = transport
         self.planner = planner
         self.target_pkg = target_pkg
+        self.free_app = free_app
         self.max_steps = max_steps
         self.trace = trace
         if trace is not None:
@@ -70,6 +72,35 @@ class Loop:
                     raise
                 time.sleep(config.OBSERVE_RETRY_DELAY_MS / 1000.0)
         raise last  # type: ignore[misc]
+
+    def _secondary_pkg(self, sec) -> str | None:
+        """副屏当前的前台包名。读不到返回 None。"""
+        try:
+            state = self.tp.state()
+        except (TransportError, ValueError):
+            return None
+        for d in state.get("displays", []):
+            if d.get("id") == sec:
+                wins = d.get("windows") or []
+                return next((w.get("pkg") for w in wins if w.get("pkg")), None)
+        return None
+
+    def _await_launch(self, sec, pkg: str) -> tuple[bool, int]:
+        """等副屏真的换成 pkg。返回 (确认到了吗, 等了多少 ms)。
+
+        `am start` 立刻返回 —— 它只说明 intent 已下发，不说明窗口起来了。
+        实测（`runs/2026-08-09T19-39-00`）日历要 3–4 s 才可观测，而 loop 紧接着
+        就 observe，读到的还是旧 app，agent 因此判了 impossible —— 启动其实成功了。
+
+        **等不到不许折成失败。** 返回 False 的含义是"未确认"，调用方要如实上报。
+        """
+        deadline = time.time() + config.LAUNCH_SETTLE_TIMEOUT_MS / 1000.0
+        t0 = time.time()
+        while time.time() < deadline:
+            if (self._secondary_pkg(sec) or "") == pkg:
+                return True, int((time.time() - t0) * 1000)
+            time.sleep(config.LAUNCH_SETTLE_POLL_MS / 1000.0)
+        return False, int((time.time() - t0) * 1000)
 
     def _read_post(self, display, locator):
         """独立重读一次：目标节点 + 整棵树。返回 (probe, tree|None, err|None)。"""
@@ -122,17 +153,19 @@ class Loop:
 
         for step_n in range(1, self.max_steps + 1):
             # ---------- 观测（护栏） ----------
+            # 可启动应用列表只有 free_app 模式才取 —— 默认路径一行 adb 都不许多调
+            apps = adbutil.launchable_apps() if self.free_app else None
             try:
                 state = self.tp.state()
                 env = self_check(state, self.target_pkg, last_hash, None, last_claimed_ok,
-                                 secondary)
+                                 secondary, free_app=self.free_app)
                 if env.fatal:
                     return self._abort(task, history, "环境自检失败: "
                                        + "；".join(env.anomalies))
                 secondary = env.secondary_display
                 tree: Tree = self._observe(secondary)
                 env = self_check(state, self.target_pkg, last_hash, tree, last_claimed_ok,
-                                 secondary)
+                                 secondary, free_app=self.free_app)
                 if env.fatal:
                     return self._abort(task, history, "环境自检失败: "
                                        + "；".join(env.anomalies))
@@ -142,7 +175,7 @@ class Loop:
             items = self.policy.annotate(compress(tree))
             obs = build_observation(task, env, items, history,
                                     politeness=self.planner.politeness,
-                                    prev_items=prev_items)
+                                    prev_items=prev_items, apps=apps)
             prev_items = items
             if self.trace:
                 self.trace.text(step_n, "observation.txt", obs)
@@ -210,6 +243,58 @@ class Loop:
                 self._emit("blocked", note)
                 if consecutive_stall >= config.MAX_CONSECUTIVE_STALL:
                     return self._abort(task, history, "反复选择已排除的动作")
+                continue
+
+            if plan.action == "launch":
+                # launch 走 PC 侧 adb，不经过 act，因此没有焦点归还（F1 的核心约束）。
+                # 它是唯一不受归还护栏保护的动作，必须在每一处拒绝/成功里写清楚。
+                if not self.free_app:
+                    history.append(Step(step_n, plan, None, None, None,
+                                        note="⛔ 拒绝执行 launch：未启用 --free-app（默认关闭）"))
+                    continue
+                reason = launch_block_reason(env.ime_present)
+                if reason is not None:
+                    consecutive_stall += 1
+                    note = f"⛔ 拒绝执行 launch：{reason}"
+                    history.append(Step(step_n, plan, None, None, None, note=note))
+                    self._emit("blocked", note)
+                    if consecutive_stall >= config.MAX_CONSECUTIVE_STALL:
+                        return self._abort(task, history, "反复选择已排除的动作")
+                    continue
+                app_entries = app_items(apps or [], items)
+                entry = next((it for it in app_entries if it.sid == plan.target), None)
+                if entry is None:
+                    rng = (f"{app_entries[0].sid}–{app_entries[-1].sid}" if app_entries
+                           else "本轮无可用应用条目")
+                    history.append(Step(step_n, plan, None, None, None,
+                                        note=f"launch target {plan.target} 不是可启动的应用"
+                                             f"（有效范围 {rng}）"))
+                    continue
+                pkg = entry.label
+                ok = adbutil.launch_app(pkg, secondary)
+                # intent 下发 ≠ 窗口起来了。等副屏真的换过去再往下走，
+                # 否则下一轮观测读到的还是旧 app（实测见 _await_launch 的注释）。
+                settled, settle_ms = self._await_launch(secondary, pkg) if ok else (False, 0)
+                if not ok:
+                    note = "launch 失败：adb 未能下发"
+                elif settled:
+                    note = f"launch 成功，副屏 {settle_ms} ms 后变为 {pkg}"
+                else:
+                    # 三值：下发了但没确认。既不报成功也不报失败。
+                    note = (f"⚠ launch 已下发，但 {settle_ms} ms 内副屏仍不是 {pkg} —— "
+                            f"**未确认**，可能还在启动")
+                note += "；⚠ 该动作未经护栏：无焦点归还、无 disturb_ms"
+                history.append(Step(step_n, plan, entry, None, None, note=note))
+                self._emit("launch", note)
+                if self.trace:
+                    self.trace.json(step_n, "launch.json", {
+                        "pkg": pkg, "display": secondary, "ok": ok,
+                        "settled": settled if ok else None, "settle_ms": settle_ms,
+                        "restore": None, "guarded": False,
+                        "note": "PC 侧 adb 启动，不经过 act 的原子归还",
+                    })
+                # launch 没有 disturb_ms 可记，也不更新卡死判据的环境基准
+                last_claimed_ok = False
                 continue
 
             item = next((i for i in items if i.sid == plan.target), None) \

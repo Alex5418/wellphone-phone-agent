@@ -26,6 +26,14 @@ RECHECK_DELAY_MS = 300
 OBSERVE_RETRY = 3
 OBSERVE_RETRY_DELAY_MS = 250
 
+# launch 之后等副屏真的换成那个 app 的上限。
+# `am start` 是**立刻返回**的 —— 它只表示 intent 已下发，不表示窗口起来了。
+# 实测（runs/2026-08-09T19-39-00）：日历要 3–4 s 才可观测，而 loop 紧接着就 observe，
+# 于是读到的还是旧 app，agent 据此判了 impossible —— 启动其实成功了。
+# 等不到不许当成失败，也不许当成成功：如实报"未确认"（三值）。
+LAUNCH_SETTLE_TIMEOUT_MS = 6000
+LAUNCH_SETTLE_POLL_MS = 250
+
 # 打扰窗口预算（ms）。超过即认为"用户交互被中断"，该目标本轮拉黑并上报。
 #
 # 原依据：D1 实测滚动 12ms、全局配置变更 2526ms —— "中间没有灰色地带"。

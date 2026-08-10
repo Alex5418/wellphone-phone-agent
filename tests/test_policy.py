@@ -14,7 +14,7 @@ from harness.loop import Loop
 from harness.models import Item, Locator
 from harness.observe import build_observation, self_check
 from harness.planner import Planner
-from harness.policy import ActionPolicy, matches_global_config
+from harness.policy import ActionPolicy, launch_block_reason, matches_global_config
 from harness.tree import build_tree
 from tests.fake_device import FakeTransport
 from tests.test_loop import Script, sid_of
@@ -104,6 +104,17 @@ class TestPolicy(unittest.TestCase):
         warn = self.p.record_disturbance(it, 3406, ime_present=None)
         self.assertIn("排除出动作空间", warn)
         self.assertIsNotNone(self.p.block_reason(it))
+
+    # ---- F1 · launch 护栏（E19：启动 app 是重建组里最彻底的一次 Activity 重建，
+    #     而 launch 又不经过焦点归还，用户可能正在输入时必须拒）----
+
+    def test_launch_block_reason_allows_when_not_typing(self):
+        self.assertIsNone(launch_block_reason(False))
+
+    def test_launch_block_reason_rejects_unknown_ime(self):
+        """三值里的 None 按保守处理：读不到 ≠ 用户没在输入，照拒。"""
+        self.assertIsNotNone(launch_block_reason(None))
+        self.assertIsNotNone(launch_block_reason(True))
 
 
 class TestExclusionIsEnforced(unittest.TestCase):

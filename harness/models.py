@@ -134,6 +134,9 @@ class Item:
     blocked: str | None = None
 
     def render(self) -> str:
+        if self.kind == "app":
+            # 可启动应用的条目：没有状态、没有控件语义，只有包名（F1 §3.4 的格式）
+            return f"[{self.sid}] {self.label or '(无文字)'}"
         line = f"[{self.sid}] {self.label or '(无文字)'} | {self.kind}"
         if self.state:
             line += f" | {self.state}"

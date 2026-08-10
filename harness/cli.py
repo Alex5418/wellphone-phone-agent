@@ -116,7 +116,8 @@ def cmd_run(args) -> int:
         print(f"[{kind}] {msg}", flush=True)
 
     loop = Loop(tp, planner, target_pkg=args.pkg, max_steps=args.max_steps,
-                trace=trace, cross_check=not args.no_cross_check, on_event=on_event)
+                trace=trace, cross_check=not args.no_cross_check,
+                free_app=args.free_app, on_event=on_event)
     res = loop.run(args.task)
     print(f"\n=== {res.status}: {res.reason} ===")
     for s in res.steps:
@@ -170,6 +171,8 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--no-trace", action="store_true")
     r.add_argument("--no-cross-check", action="store_true",
                    help="关掉 dumpsys 交叉校验（只在没有 adb shell 权限时用）")
+    r.add_argument("--free-app", action="store_true",
+                   help="不锁定目标包：启用 launch 动作，且副屏上不是目标 app 不再致命")
     r.add_argument("--verbose", action="store_true", help="打印每轮 observation 全文")
     r.set_defaults(func=cmd_run)
 

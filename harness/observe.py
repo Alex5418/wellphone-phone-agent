@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from . import config
 from .compress import trim_for_display
-from .models import EnvState, Item, Step, Tree
+from .models import EnvState, Item, Locator, Step, Tree
 
 FATAL_ANOMALIES = ("secondary_display_missing", "target_app_not_on_secondary")
 
@@ -35,7 +35,7 @@ def pick_secondary_display(state: dict, primary: int = config.PRIMARY_DISPLAY) -
 
 def self_check(state: dict, expected_pkg: str, last_hash: str | None,
                tree: Tree | None = None, last_action_claimed_ok: bool = False,
-               secondary: int | None = None) -> EnvState:
+               secondary: int | None = None, free_app: bool = False) -> EnvState:
     anomalies: list[str] = []
     displays = [d.get("id") for d in state.get("displays", [])]
     sec = secondary if secondary is not None else pick_secondary_display(state)
@@ -79,9 +79,24 @@ def self_check(state: dict, expected_pkg: str, last_hash: str | None,
         ime_present=state.get("ime_present"),
         tree_hash=tree_hash,
         anomalies=anomalies,
-        fatal=any(a in FATAL_ANOMALIES for a in anomalies),
+        # free_app=True 时「副屏上不是目标 app」降级为普通异常：跨 app 任务的
+        # 目标本来就要靠 launch 现场启动，锁死目标包是自相矛盾。其余照旧致命。
+        fatal=any(a in FATAL_ANOMALIES for a in anomalies
+                  if not (free_app and a == "target_app_not_on_secondary")),
         displays=[d for d in displays if d is not None],
     )
+
+
+def app_items(apps: list[str], items: list[Item]) -> list[Item]:
+    """把可启动应用的包名列表转成条目，sid 接在界面条目最大 sid 之后。
+
+    与界面条目共用同一个编号空间：LLM 的 target 仍然是整数，解析层不用改
+    （F1 §3.4）。
+    """
+    base = (items[-1].sid + 1) if items else 0
+    return [Item(sid=base + i, label=pkg, kind="app", state=None,
+                 locator=Locator("L1"), anchor_idx=0, target_idx=0)
+            for i, pkg in enumerate(apps)]
 
 
 def mark_changes(items, prev):
@@ -111,7 +126,7 @@ def mark_changes(items, prev):
 def build_observation(task: str, env: EnvState, items: list[Item],
                       history: list[Step], politeness: str = config.POLITENESS,
                       max_items: int = config.MAX_ITEMS_SHOWN,
-                      prev_items=None) -> str:
+                      prev_items=None, apps: list[str] | None = None) -> str:
     out: list[str] = ["## 任务", task, "", "## 环境状态"]
 
     out.append(f"- 副屏: display {env.secondary_display} · {env.secondary_pkg or '未知'}"
@@ -151,6 +166,14 @@ def build_observation(task: str, env: EnvState, items: list[Item],
         out.append("")
         out.append("上一步之后**消失**的条目：" + "；".join(gone))
         out.append("（消失多半是被浮层顶掉或页面局部替换，不是需要滚动去找）")
+
+    # 可启动应用（F1）：只在 free_app 模式提供。启动走 PC 侧 adb、不经过 act，
+    # 没有焦点归还 —— 必须让 LLM 看得见这条路没有护栏兜底。
+    if apps:
+        out += ["", f"## 可启动的应用（副屏当前：{env.secondary_pkg or '未知'}）"]
+        for it in app_items(apps, items):
+            out.append(it.render())
+        out.append("（用 launch 打开其中一个。⚠ 该动作不经过焦点归还护栏）")
 
     if history:
         out += ["", "## 已执行"]
