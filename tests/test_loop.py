@@ -320,6 +320,71 @@ class TestLoop(unittest.TestCase):
         self.assertIn("⛔ 拒绝执行 launch", res.steps[0].note)
         self.assertEqual(res.status, "done")
 
+    def test_launch_waits_until_the_secondary_actually_switches(self):
+        """`am start` 立刻返回 ≠ 窗口起来了。
+
+        实测 runs/2026-08-09T19-39-00：日历要 3–4 s 才可观测，loop 紧接着 observe
+        读到的还是旧 app，agent 据此判了 impossible —— **启动其实成功了**。
+        这里用「第 3 次查询才换过去」的假设备复现那个竞态。
+        """
+        import harness.loop as loopmod
+        tp = FakeTransport()
+        polls = {"n": 0}
+        orig_state = tp.state
+
+        def slow_state():
+            polls["n"] += 1
+            st = orig_state()
+            if polls["n"] >= 3:            # 前两次还是旧 app，第三次才换过去
+                st["displays"] = [dict(d, windows=[{"pkg": "com.google.android.calendar"}])
+                                  if d.get("id") == tp.secondary else d
+                                  for d in st["displays"]]
+            return st
+
+        tp.state = slow_state
+        orig_launch, orig_apps = loopmod.adbutil.launch_app, loopmod.adbutil.launchable_apps
+        loopmod.adbutil.launch_app = lambda pkg, display: True
+        loopmod.adbutil.launchable_apps = lambda: ["com.google.android.calendar"]
+        orig_sleep, loopmod.time.sleep = loopmod.time.sleep, lambda s: None
+        app_sid = compress(build_tree(tp.observe(tp.secondary)))[-1].sid + 1
+        try:
+            planner = RawPlanner([Plan("", "launch", app_sid, None, False),
+                                  Plan("", "finish", None, None, True)])
+            res = Loop(tp, planner, free_app=True, trace=None, cross_check=False,
+                       recheck_ms=0).run("打开日历")
+        finally:
+            loopmod.adbutil.launch_app = orig_launch
+            loopmod.adbutil.launchable_apps = orig_apps
+            loopmod.time.sleep = orig_sleep
+        note = res.steps[0].note
+        self.assertIn("副屏", note)
+        self.assertIn("变为 com.google.android.calendar", note)
+        self.assertNotIn("未确认", note)
+
+    def test_launch_that_never_settles_is_unconfirmed_not_success(self):
+        """等不到不许折成成功，也不许折成失败 —— 三值里的"未确认"。"""
+        import harness.loop as loopmod
+        tp = FakeTransport()
+        orig_launch, orig_apps = loopmod.adbutil.launch_app, loopmod.adbutil.launchable_apps
+        loopmod.adbutil.launch_app = lambda pkg, display: True
+        loopmod.adbutil.launchable_apps = lambda: ["com.google.android.calendar"]
+        orig_sleep, loopmod.time.sleep = loopmod.time.sleep, lambda s: None
+        orig_to = config.LAUNCH_SETTLE_TIMEOUT_MS
+        config.LAUNCH_SETTLE_TIMEOUT_MS = 30      # 别让离线测试真等 6 秒
+        app_sid = compress(build_tree(tp.observe(tp.secondary)))[-1].sid + 1
+        try:
+            planner = RawPlanner([Plan("", "launch", app_sid, None, False),
+                                  Plan("", "finish", None, None, True)])
+            res = Loop(tp, planner, free_app=True, trace=None, cross_check=False,
+                       recheck_ms=0).run("打开日历")
+        finally:
+            loopmod.adbutil.launch_app = orig_launch
+            loopmod.adbutil.launchable_apps = orig_apps
+            loopmod.time.sleep = orig_sleep
+            config.LAUNCH_SETTLE_TIMEOUT_MS = orig_to
+        self.assertIn("未确认", res.steps[0].note)
+        self.assertNotIn("launch 成功", res.steps[0].note)
+
     def test_app_sids_follow_ui_items(self):
         """app 条目的 sid 接在界面条目最大 sid 之后，不重号。"""
         tp = FakeTransport()

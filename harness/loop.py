@@ -73,6 +73,35 @@ class Loop:
                 time.sleep(config.OBSERVE_RETRY_DELAY_MS / 1000.0)
         raise last  # type: ignore[misc]
 
+    def _secondary_pkg(self, sec) -> str | None:
+        """副屏当前的前台包名。读不到返回 None。"""
+        try:
+            state = self.tp.state()
+        except (TransportError, ValueError):
+            return None
+        for d in state.get("displays", []):
+            if d.get("id") == sec:
+                wins = d.get("windows") or []
+                return next((w.get("pkg") for w in wins if w.get("pkg")), None)
+        return None
+
+    def _await_launch(self, sec, pkg: str) -> tuple[bool, int]:
+        """等副屏真的换成 pkg。返回 (确认到了吗, 等了多少 ms)。
+
+        `am start` 立刻返回 —— 它只说明 intent 已下发，不说明窗口起来了。
+        实测（`runs/2026-08-09T19-39-00`）日历要 3–4 s 才可观测，而 loop 紧接着
+        就 observe，读到的还是旧 app，agent 因此判了 impossible —— 启动其实成功了。
+
+        **等不到不许折成失败。** 返回 False 的含义是"未确认"，调用方要如实上报。
+        """
+        deadline = time.time() + config.LAUNCH_SETTLE_TIMEOUT_MS / 1000.0
+        t0 = time.time()
+        while time.time() < deadline:
+            if (self._secondary_pkg(sec) or "") == pkg:
+                return True, int((time.time() - t0) * 1000)
+            time.sleep(config.LAUNCH_SETTLE_POLL_MS / 1000.0)
+        return False, int((time.time() - t0) * 1000)
+
     def _read_post(self, display, locator):
         """独立重读一次：目标节点 + 整棵树。返回 (probe, tree|None, err|None)。"""
         if locator is None:
@@ -243,13 +272,24 @@ class Loop:
                     continue
                 pkg = entry.label
                 ok = adbutil.launch_app(pkg, secondary)
-                note = ("launch 成功" if ok else "launch 失败")
+                # intent 下发 ≠ 窗口起来了。等副屏真的换过去再往下走，
+                # 否则下一轮观测读到的还是旧 app（实测见 _await_launch 的注释）。
+                settled, settle_ms = self._await_launch(secondary, pkg) if ok else (False, 0)
+                if not ok:
+                    note = "launch 失败：adb 未能下发"
+                elif settled:
+                    note = f"launch 成功，副屏 {settle_ms} ms 后变为 {pkg}"
+                else:
+                    # 三值：下发了但没确认。既不报成功也不报失败。
+                    note = (f"⚠ launch 已下发，但 {settle_ms} ms 内副屏仍不是 {pkg} —— "
+                            f"**未确认**，可能还在启动")
                 note += "；⚠ 该动作未经护栏：无焦点归还、无 disturb_ms"
                 history.append(Step(step_n, plan, entry, None, None, note=note))
                 self._emit("launch", note)
                 if self.trace:
                     self.trace.json(step_n, "launch.json", {
                         "pkg": pkg, "display": secondary, "ok": ok,
+                        "settled": settled if ok else None, "settle_ms": settle_ms,
                         "restore": None, "guarded": False,
                         "note": "PC 侧 adb 启动，不经过 act 的原子归还",
                     })

@@ -523,8 +523,9 @@ observation 文本 + 任务目标 + 历史摘要
 }
 ```
 
-`action` 取值：`click` / `long_click` / `set_text` / `scroll_forward` / `scroll_backward` / `wait` / `finish`
-（**没有 `back`** —— 见 ARCHITECTURE §5，解析层与 loop 两道都拒）
+`action` 取值：`click` / `long_click` / `set_text` / `scroll_forward` / `scroll_backward` / `wait` / `launch` / `finish`
+（**没有 `back`** —— 见 ARCHITECTURE §5，解析层与 loop 两道都拒。
+`launch` 只在 `--free-app` 下可用，且**不经过 `act`、没有焦点归还** —— 同见 §5）
 
 ### 解析要求
 

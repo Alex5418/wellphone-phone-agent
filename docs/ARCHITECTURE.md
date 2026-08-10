@@ -367,7 +367,37 @@ locator 的解析、降级、消歧全部由 harness 承担。
 | `long_click` | target | ✅ 实测有效 |
 | `focus` | target | ✅ 实测有效 |
 | ~~`back`~~ | — | ⛔ **已排除出动作空间**，见下 |
+| `launch` | app 包名 | ⚠ **不经过归还** —— 走 PC 侧 adb，见下 |
 | `wait` | condition, timeout | 无动作，不涉及归还 |
+
+### ⚠ `launch` —— 动作空间里唯一不受护栏保护的动作（`--free-app`，默认关）
+
+agent 自己启动副屏 app 的能力。**默认关闭**：不带 `--free-app` 时它不可用，
+`target_app_not_on_secondary` 仍是致命异常，行为与加这个功能之前完全一致。
+
+**它走 PC 侧 `adb am start --display N`，不经过 `act`，因此没有焦点归还。**
+这是有意的时间取舍（答辩前几小时），不是疏忽 —— 但代价是实测过的：
+
+```
+启动前  display 0: mCurrentFocus=Window{… com.android.chrome …}
+启动后  display 0: mCurrentFocus=null          ← 主屏无焦点持有者，无人归还
+        display 4: mCurrentFocus=… com.google.android.calendar …
+```
+
+主屏 `null` 正是 E7 量到「120/120 击键全部落进 agent 工作区（无还可归）」的那个状态。
+
+**因此这个洞在两处强制暴露**，不许被伪装成普通动作：
+
+1. observation 的「已执行」：`launch X → ⚠ 该动作未经护栏：无焦点归还、无 disturb_ms`
+2. trajectory 的 `launch.json`：`{"guarded": false, "restore": null}`
+
+**并且：`ime_present` 为 `True` 或 `None` 时一律拒发。** 按 E19，启动 app 是最彻底的
+一次 Activity 重建（重建组 13/30 抢走主屏键盘），而它又没有归还兜底 ——
+一个必然触发已知缺陷、且不受护栏管辖的动作，不能在用户可能打字时执行。
+「读不到」不当成「用户没在输入」。
+
+**正确的做法是把启动搬进设备侧**（`startActivity` + `setLaunchDisplayId`，
+并入 `act` 的原子流程），那样它就和其他动作一样受归还保护。**未做，时间原因。**
 
 ### ⛔ 排除项之一：`back` —— 归还护栏保证了它必然打错屏
 
